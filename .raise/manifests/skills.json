@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.0",
+  "raise_cli_version": "3.0.0a1",
+  "distributed_at": "2026-06-10T20:27:06.062613Z",
+  "skill_set": null,
+  "skills": {
+    "rai-session-close": {
+      "sha256": "340eb970ab30be8f0ec56f9308221acb1a7e45828687f41c03910c6c9d09ed64",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.115291Z"
+    },
+    "rai-session-diary": {
+      "sha256": "39dc66fa9ad471804714975d4d5fdeccc3cf16f22bb1696d0bc4e7de7d8d3517",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.125123Z"
+    },
+    "rai-session-start": {
+      "sha256": "5c2a5a5f3fa91046e069d5a2f4a3985c3292c6c1386c63bf0771e94ba447a5cd",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.140149Z"
+    },
+    "rai-mission-close": {
+      "sha256": "d1341c5b4d6243a9535dde10ee761fb18b7ad48ee2d7474b85d98d3c1eac8e5b",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.154175Z"
+    },
+    "rai-story-close": {
+      "sha256": "36e242baace00ebab2da8e60aaa6766ec153bcc9caadb3de705debeeeb9d3d8d",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.168796Z"
+    },
+    "rai-story-design": {
+      "sha256": "2f6bf531f1a9fa7792f8bb137186b15c500114f2619917793244f54a901f04d9",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.192291Z"
+    },
+    "rai-story-implement": {
+      "sha256": "479b5b35710128d084992b93777b533597a5bf435d90f58d6fe52ba1117a03da",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.207025Z"
+    },
+    "rai-story-plan": {
+      "sha256": "d8c0a1b443f0d395f26d9e44a53f2da8557852a156306953eae30e54fe2085e6",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.219438Z"
+    },
+    "rai-story-review": {
+      "sha256": "192ce8b3d209ca7f8404b826031a75e8be668b645ed8bd0d11d3d164b0c6aea9",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.233047Z"
+    },
+    "rai-story-start": {
+      "sha256": "7c7bf38536ce2cb2cadd68d2672ec98edfce09a974867e8ee9c994f57718bf1d",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.244479Z"
+    },
+    "rai-epic-close": {
+      "sha256": "36e92a1f0cdd351f29cad7f280040a63d3dce12e7b6c4c6c39de4c9ed2c6c925",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.258141Z"
+    },
+    "rai-epic-design": {
+      "sha256": "7d978c32b59797128d72bf9cdb96a56c4bd7036164d6867921970f868d21fd2f",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.271453Z"
+    },
+    "rai-epic-docs": {
+      "sha256": "077f240b7a1ba7b338a1ef0edf4527153e8e090c0a176a1332458f18e07daf8e",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.281844Z"
+    },
+    "rai-epic-plan": {
+      "sha256": "c83d0a799553613d564ef76999b58170cd70d357461f92b62a36156532d90611",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.294658Z"
+    },
+    "rai-epic-start": {
+      "sha256": "378bc168266932011ad125b87825946649b4444c74f966b877ba50dc7f154269",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.303933Z"
+    },
+    "rai-mr-create": {
+      "sha256": "189e6fd96086b954c6fb33a18d2c32e2cf2e01cd8fe65172aedd17d2c5c05e28",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.313795Z"
+    },
+    "rai-bugfix-analyse": {
+      "sha256": "78caf857d208c3fb45c98837c64f2fd527c44b03312f4cf3c7565e7d23aa7333",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.322815Z"
+    },
+    "rai-bugfix-close": {
+      "sha256": "ab2c8277485ff4b48f28f6f600db2be29130f058340d1d9a43ded8a35118f8ca",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.329682Z"
+    },
+    "rai-bugfix-fix": {
+      "sha256": "dba0b541ed3a7ef9bfeb8295be81be7c186092fb3708c28cb827cc072c347e3f",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.339191Z"
+    },
+    "rai-bugfix-plan": {
+      "sha256": "1e86fe1ddbf78f9517a96e78a0daa779a59bd236e0da2778475541b6c7849e52",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.348535Z"
+    },
+    "rai-bugfix-review": {
+      "sha256": "18c8969c7f516bb539e702cd4e6f5daf6d44ab0d1696a5ffd05404e08f25b868",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.356489Z"
+    },
+    "rai-bugfix-start": {
+      "sha256": "2ae32fe9a404f3d08dc5fe07d71f1c0be96006b8ced1046656760fb2150ab5cb",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.368961Z"
+    },
+    "rai-bugfix-triage": {
+      "sha256": "76d96f95163fb52bd3e8989334e1ba30280b4d16b59b5e0aee5db7660233428f",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.375696Z"
+    },
+    "rai-discover": {
+      "sha256": "3af7a3f5dfa91668eb26033495dd0d6e7337246a17f8c799c0e5e9f31fd990cc",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.386214Z"
+    },
+    "rai-project-create": {
+      "sha256": "4daa1738d5cc53e3b317495d5b3f82d82461003fc4c7e726770cf46793c15e90",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.392480Z"
+    },
+    "rai-project-onboard": {
+      "sha256": "1c7cafacdcd8a2664119f604df3814177bb1e6e16700f11655cfb3e6e6695809",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.399289Z"
+    },
+    "rai-welcome": {
+      "sha256": "01d59b54363b749b849ddb38aeec1b2d716c92c8c9da9feac2a9f67d88f4d868",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.414155Z"
+    },
+    "rai-docs-update": {
+      "sha256": "bf020c867815108e4b7ac57577856c547ebe392ce1a7471deeb1a48e431b6368",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.424942Z"
+    },
+    "rai-skill-create": {
+      "sha256": "21acb3ae4c5abda39c03ae8381094d1f4b8e5a57c5d98a347291edb1a2d52429",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.431147Z"
+    },
+    "rai-skillset-manage": {
+      "sha256": "155ad06acd766f7bbb7c26122d0a6b14faa24a1759470d5dea757d700ed9f7fc",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.444453Z"
+    },
+    "rai-mcp-add": {
+      "sha256": "a26ab6154d26109063391cdabf80d733d6adf840615bbda1190fab9ff15cdaf2",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.456892Z"
+    },
+    "rai-mcp-remove": {
+      "sha256": "0427e544246af10018352a34a3a66e7af23adf3a174c63be616cd16dfdade589",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.482342Z"
+    },
+    "rai-mcp-status": {
+      "sha256": "6ad5e7414729bb4fef259d3f8405186215736ff9c36b366c1c46167fa9c484cd",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.498933Z"
+    },
+    "rai-backlog-setup": {
+      "sha256": "9b6cbaf66d63c7decf27b5e8f56d5fb4d64071d00a0011d191b12734fbbc468c",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.509418Z"
+    },
+    "rai-docs-setup": {
+      "sha256": "df11b3c9dfc629d7bd3a61a43bb1d94199885a3fe59b6f39fa21e60fdfcacad6",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.521365Z"
+    },
+    "rai-architecture-review": {
+      "sha256": "0fd5b6169ebe96302acbef108e0487861221f16426a912d7d5d6555fc1c7e305",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.528907Z"
+    },
+    "rai-debug": {
+      "sha256": "756616e5b2df96217b821bcaf161d95a9617096ef6932f476451c5f6f5ec96db",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.536367Z"
+    },
+    "rai-doctor": {
+      "sha256": "b76b26c3608ac578878d443e31a4bfa672db0825ca793e2ebcbb025a75a83ad2",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.545773Z"
+    },
+    "rai-problem-shape": {
+      "sha256": "e62a6d4c70928b780c2bc5e08a5fbb046e84dba352ccf0049160b27f72220edf",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.556123Z"
+    },
+    "rai-quality-review": {
+      "sha256": "8254de69fbcfaf7859c15e5211d28350dcd4eeabca7ec612a581fd5e6ec6baaf",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.563046Z"
+    },
+    "rai-research": {
+      "sha256": "961c0c1483800d63433555ddc0e71270e0bca3b8e598ef7276357b9dce4179be",
+      "version": "3.0.0a1",
+      "origin": "framework",
+      "distributed_at": "2026-06-10T20:32:18.573937Z"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+
+# RaiSE personal directory (per-developer, not shared)
+.raise/rai/personal/
+.env
+!.env.example
+
+# Python virtual environment
+.venv/
+
+# Agent framework local dirs (not shared)
+.agent/
+.hermes/

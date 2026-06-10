@@ -1,0 +1,4 @@
+
+# RaiSE append-only JSONL files — merge=union avoids conflicts on concurrent appends
+.raise/rai/memory/calibration.jsonl merge=union
+.raise/rai/memory/sessions/index.jsonl merge=union

@@ -1,0 +1,23 @@
+version: '1.0'
+project:
+  name: demoIW
+  project_type: greenfield
+  language: null
+  test_command: null
+  lint_command: null
+  type_check_command: null
+  format_command: null
+  code_file_count: 0
+  detected_at: '2026-06-10T20:27:05.587811Z'
+  apps: null
+branches:
+  development: main
+  main: main
+ide:
+  type: claude
+agents:
+  types:
+  - claude
+tier: null
+backlog: null
+graph: null

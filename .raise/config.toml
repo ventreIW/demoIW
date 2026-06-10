@@ -1,0 +1,12 @@
+# RaiSE project configuration
+# Settings here apply to all contributors in this project.
+# Uncomment and set only what you need — all fields are optional.
+#
+# Full cascade (highest to lowest priority):
+#   CLI flags > env vars (RAI_*) > pyproject.toml [tool.rai]
+#   > this file > ~/.config/rai/config.toml > defaults
+
+[rai]
+# output_format = "human"   # human | json | table
+# verbosity = 0             # -1 (quiet) to 3 (debug)
+# color = true

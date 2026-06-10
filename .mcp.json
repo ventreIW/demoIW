@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "rai-workspace": {
+      "command": "rai-mcp-pipeline"
+    }
+  }
+}

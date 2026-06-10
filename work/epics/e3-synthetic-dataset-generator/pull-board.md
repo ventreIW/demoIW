@@ -1,0 +1,26 @@
+# Pull Board — E3: Synthetic Dataset Generator
+
+Last updated: 2026-06-10  
+Epic: logical container (no branch)  
+Status: **Proposed** — pending authorization
+
+---
+
+| Story | Title | Owner | State | Notes |
+|---|---|---|---|---|
+| s3.1 | Procedural data generation layer | — | backlog | No external deps — can start immediately |
+| s3.2 | OpenRouter adapter | — | backlog | Needs OPENROUTER_API_KEY in .env before real testing |
+| s3.3 | LLM enrichment layer | — | backlog | Depends on s3.1 (RawDataset) + s3.2 (ILLMPort) |
+| s3.4 | Generate scenario endpoint & UI | — | backlog | Depends on s3.3 (use case complete) |
+
+---
+
+## Execution order
+
+```
+s3.1 ─┐
+       ├─► s3.3 ─► s3.4
+s3.2 ─┘
+```
+
+s3.1 and s3.2 can be developed in parallel.
