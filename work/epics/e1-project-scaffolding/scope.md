@@ -6,9 +6,9 @@
 
 | Item | Story |
 |---|---|
-| Root repo structure and `.gitignore` | s1.1 |
-| Linting + formatting configs (Ruff, mypy, ESLint, Prettier) | s1.1 |
-| GitHub Actions CI workflow (typecheck + lint + test) | s1.1 |
+| Root repo structure and `.gitignore` | ~~s1.1~~ ✓ |
+| Linting + formatting configs (Ruff, mypy, ESLint, Prettier) | ~~s1.1~~ ✓ |
+| GitHub Actions CI workflow (typecheck + lint + test) | ~~s1.1~~ ✓ |
 | Next.js 15 App Router init with TypeScript strict | s1.2 |
 | Tailwind CSS + shadcn/ui base setup | s1.2 |
 | Basic layout shell (sidebar navigation placeholder + main area) | s1.2 |
