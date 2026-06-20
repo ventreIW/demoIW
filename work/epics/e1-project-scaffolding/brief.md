@@ -1,9 +1,9 @@
 # E1 Brief — Project Scaffolding & CI Baseline
 
 **Backlog source:** B-01  
-**Status:** Proposed — pending Gustavo authorization  
+**Status:** Active — approved by Gustavo (2026-06-19)  
 **Estimated size:** XS (~2 days)  
-**Branch:** `e1-project-scaffolding` (from `main`)
+**Branch:** stories from `main` (RaiSE 3.0 convention)
 
 ---
 
