@@ -3,10 +3,10 @@ project:
   name: demoIW
   project_type: greenfield
   language: null
-  test_command: null
-  lint_command: null
-  type_check_command: null
-  format_command: null
+  test_command: bash scripts/test.sh
+  lint_command: bash scripts/lint.sh
+  type_check_command: bash scripts/typecheck.sh
+  format_command: bash scripts/format-check.sh
   code_file_count: 0
   detected_at: '2026-06-10T20:27:05.587811Z'
   apps: null

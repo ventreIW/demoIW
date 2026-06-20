@@ -10,3 +10,19 @@
 # Agent framework local dirs (not shared)
 .agent/
 .hermes/
+
+# Node
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+htmlcov/
+.coverage
