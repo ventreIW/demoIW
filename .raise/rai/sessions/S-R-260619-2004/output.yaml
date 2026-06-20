@@ -1,0 +1,72 @@
+session_id: "S-R-260619-2004"
+summary: "SES-S-R-260619-2004: s1.1 Repo Scaffold & CI Pipeline — E1 story completo, 15/15 gates, merged a main"
+type: feature
+outcomes:
+  - "E1 activado — aprobación de Gustavo confirmada, brief actualizado a Active"
+  - "s1.1 ciclo completo: start → design → plan → implement → review → close"
+  - "backend/: pyproject.toml (ruff, mypy strict, pytest asyncio), requirements pinned, placeholder test verde"
+  - "frontend/: Next.js 15, TypeScript strict, ESLint flat config, Prettier ESM, Vitest con coverage thresholds"
+  - ".github/workflows/ci.yml: jobs paralelos frontend + backend en PR a main"
+  - "scripts/: lint.sh, typecheck.sh, test.sh, format-check.sh — rai gate check wired y operativo"
+  - "15/15 gates pasando en rai gate check --all"
+  - "3 nuevos patrones: PAT-1 (YAML gate scripts), PAT-2 (bootstrapping exception), PAT-3 (Next.js 15 ESM)"
+  - "s1.1 merged a main via --no-ff, branch eliminado"
+patterns:
+  - description: "YAML gate command escaping: use scripts/*.sh files instead of inline bash -c '...' in manifest.yaml — YAML multiline folding corrupts inner single quotes"
+    context: "yaml,shell,manifest,gate,escaping,configuration"
+    type: process
+  - description: "Bootstrapping gate exception: wire gate commands as final task of scaffolding story — T1/T2 use direct commands, T3 configures scripts/, all subsequent stories use rai gate check"
+    context: "bootstrapping,gates,manifest,scaffolding,tooling"
+    type: process
+  - description: "Next.js 15 ESM config friction: add type=module to package.json for prettier.config.js/vitest.config.ts; use eslint.config.mjs (flat config) not .eslintrc.json"
+    context: "nextjs,eslint,prettier,typescript,esm,module"
+    type: technical
+corrections: []
+coaching:
+  trust_level: "new"
+  relationship:
+    quality: "productive"
+    trajectory: "building"
+current_work:
+  epic: E1
+  story: s1.1
+  phase: closed
+  branch: main
+pending:
+  decisions: []
+  blockers:
+    - "python3 -m venv fails (ensurepip unavailable) — use uv venv --python 3.12 instead. Not blocking."
+  next_actions:
+    - "Iniciar s1.2: /rai-story-start s1.2 — Frontend skeleton (Next.js App Router, Tailwind, shadcn/ui, layout shell)"
+    - "Verificar que PostgreSQL está corriendo localmente antes de s1.3"
+narrative: |
+  ## Decisions
+  - E1 activado (aprobación de Gustavo confirmada 2026-06-19)
+  - Branch model: stories directamente desde main (RaiSE 3.0 convention confirmada)
+  - Gate commands: scripts/*.sh en lugar de inline bash en manifest.yaml (PAT-1 aprendido durante T3)
+  - AR gate usó escape hatch (RAISE_AR_SKIP_REASON=tooling-only) — válido para story sin código de producción
+  - uv venv usado en lugar de python3 -m venv (ensurepip no disponible en este sistema)
+
+  ## Artifacts
+  - backend/pyproject.toml, requirements.txt, requirements-dev.txt, app/__init__.py, tests/
+  - frontend/package.json, tsconfig.json, eslint.config.mjs, prettier.config.js, vitest.config.ts, src/placeholder.test.ts
+  - .github/workflows/ci.yml
+  - scripts/lint.sh, typecheck.sh, test.sh, format-check.sh
+  - .raise/manifest.yaml: gate commands configurados
+  - README.md: local dev setup completo
+  - work/epics/e1-project-scaffolding/stories/: design, plan, retrospective escritos y commiteados
+  - 3 patrones nuevos en graph: PAT-1, PAT-2, PAT-3
+
+  ## Branch State
+  - main: mergeado s1.1, 9+ commits ahead of origin/main
+  - story/s1.1/repo-scaffold: eliminado después del merge
+
+next_session_prompt: |
+  s1.1 cerrado y mergeado. Continuar con s1.2: Frontend skeleton.
+  Branch: story/s1.2/frontend-skeleton desde main.
+  Archivos de diseño ya existen en work/epics/e1-project-scaffolding/stories/s1.2-*.md
+  — verificar si el diseño necesita actualización (tsconfig y ESLint pueden haber cambiado
+  basado en lo aprendido en s1.1, especialmente ESLint flat config y "type":"module").
+  Antes de s1.3: PostgreSQL local debe estar corriendo (alembic upgrade head).
+  uv venv --python 3.12 es el comando correcto para crear venvs en este sistema.
+  RAISE_AR_SKIP_REASON se puede usar para tooling/docs stories sin código de producción.

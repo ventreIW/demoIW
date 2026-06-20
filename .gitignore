@@ -11,6 +11,9 @@
 .agent/
 .hermes/
 
+# RaiSE upgrade backups (auto-generated, ephemeral)
+.raise.backup-*/
+
 # Node
 node_modules/
 .next/
