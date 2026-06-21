@@ -10,7 +10,7 @@ Status: **Proposed** — pending authorization
 |---|---|---|---|---|
 | s1.1 | Repository scaffold & CI pipeline | — | backlog | No dependencies |
 | s1.2 | Frontend skeleton | — | backlog | Depends on s1.1 (configs must exist) |
-| s1.3 | Backend skeleton | — | backlog | Depends on s1.1 (configs must exist); s1.2 and s1.3 can run in parallel |
+| s1.3 | Backend skeleton | — | done | Completed 2026-06-20. 16 files, 2 tests. |
 
 ---
 
