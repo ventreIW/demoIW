@@ -1,6 +1,5 @@
 
 # RaiSE personal directory (per-developer, not shared)
-.raise/rai/personal/
 .env
 !.env.example
 
