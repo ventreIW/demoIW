@@ -1,16 +1,16 @@
 # Pull Board — E1: Project Scaffolding & CI Baseline
 
-Last updated: 2026-06-10  
-Epic: logical container (no branch)  
-Status: **Proposed** — pending authorization
+Last updated: 2026-06-23
+Epic: logical container (no branch)
+Status: **In Progress** — 2/3 stories complete
 
 ---
 
 | Story | Title | Owner | State | Notes |
 |---|---|---|---|---|
-| s1.1 | Repository scaffold & CI pipeline | — | backlog | No dependencies |
-| s1.2 | Frontend skeleton | — | backlog | Depends on s1.1 (configs must exist) |
-| s1.3 | Backend skeleton | — | done | Completed 2026-06-20. 16 files, 2 tests. |
+| s1.1 | Repository scaffold & CI pipeline | — | done ✓ | Merged 2026-06-19 |
+| s1.2 | Frontend skeleton | — | done ✓ | Merged 2026-06-23 |
+| s1.3 | Backend skeleton | — | done ✓ | Completed 2026-06-20 |
 
 ---
 

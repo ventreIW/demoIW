@@ -9,10 +9,10 @@
 | Root repo structure and `.gitignore` | ~~s1.1~~ ✓ |
 | Linting + formatting configs (Ruff, mypy, ESLint, Prettier) | ~~s1.1~~ ✓ |
 | GitHub Actions CI workflow (typecheck + lint + test) | ~~s1.1~~ ✓ |
-| Next.js 15 App Router init with TypeScript strict | s1.2 |
-| Tailwind CSS + shadcn/ui base setup | s1.2 |
-| Basic layout shell (sidebar navigation placeholder + main area) | s1.2 |
-| `GET /healthcheck` API route returning `{ status: "ok" }` | s1.2 |
+| Next.js 15 App Router init with TypeScript strict | ~~s1.2~~ ✓ |
+| Tailwind CSS + shadcn/ui base setup | ~~s1.2~~ ✓ |
+| Basic layout shell (sidebar navigation placeholder + main area) | ~~s1.2~~ ✓ |
+| `GET /healthcheck` API route returning `{ status: "ok" }` | ~~s1.2~~ ✓ |
 | FastAPI app factory with lifespan context manager | s1.3 |
 | Pydantic Settings v2 loading from `.env` | s1.3 |
 | Async SQLAlchemy 2.0 engine + session factory | s1.3 |
