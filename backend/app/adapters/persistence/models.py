@@ -24,9 +24,7 @@ class ClientORM(Base):
     __tablename__ = "clients"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    scenario_id: Mapped[str] = mapped_column(
-        ForeignKey("scenarios.id", ondelete="CASCADE")
-    )
+    scenario_id: Mapped[str] = mapped_column(ForeignKey("scenarios.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(200))
     sector_description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     payment_history_pattern: Mapped[str] = mapped_column(String(50))
@@ -36,9 +34,7 @@ class InvoiceORM(Base):
     __tablename__ = "invoices"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    client_id: Mapped[str] = mapped_column(
-        ForeignKey("clients.id", ondelete="CASCADE")
-    )
+    client_id: Mapped[str] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
     folio: Mapped[str] = mapped_column(String(50))
     amount: Mapped[float] = mapped_column(Float)
     issue_date: Mapped[datetime] = mapped_column()
@@ -51,9 +47,7 @@ class PaymentORM(Base):
     __tablename__ = "payments"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    invoice_id: Mapped[str] = mapped_column(
-        ForeignKey("invoices.id", ondelete="CASCADE")
-    )
+    invoice_id: Mapped[str] = mapped_column(ForeignKey("invoices.id", ondelete="CASCADE"))
     amount: Mapped[float] = mapped_column(Float)
     payment_date: Mapped[datetime] = mapped_column()
     method: Mapped[str] = mapped_column(String(50))
@@ -63,12 +57,8 @@ class ScoreORM(Base):
     __tablename__ = "scores"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    client_id: Mapped[str] = mapped_column(
-        ForeignKey("clients.id", ondelete="CASCADE")
-    )
-    scenario_id: Mapped[str] = mapped_column(
-        ForeignKey("scenarios.id", ondelete="CASCADE")
-    )
+    client_id: Mapped[str] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
+    scenario_id: Mapped[str] = mapped_column(ForeignKey("scenarios.id", ondelete="CASCADE"))
     score_value: Mapped[float] = mapped_column(Float)
     category: Mapped[str] = mapped_column(String(20))
     explanation: Mapped[str] = mapped_column(Text)
@@ -79,12 +69,8 @@ class CommunicationORM(Base):
     __tablename__ = "communications"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    client_id: Mapped[str] = mapped_column(
-        ForeignKey("clients.id", ondelete="CASCADE")
-    )
-    scenario_id: Mapped[str] = mapped_column(
-        ForeignKey("scenarios.id", ondelete="CASCADE")
-    )
+    client_id: Mapped[str] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
+    scenario_id: Mapped[str] = mapped_column(ForeignKey("scenarios.id", ondelete="CASCADE"))
     channel: Mapped[str] = mapped_column(String(20))
     tone: Mapped[str] = mapped_column(String(20))
     draft_text: Mapped[str] = mapped_column(Text)
@@ -96,9 +82,7 @@ class ContactResultORM(Base):
     __tablename__ = "contact_results"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    client_id: Mapped[str] = mapped_column(
-        ForeignKey("clients.id", ondelete="CASCADE")
-    )
+    client_id: Mapped[str] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
     communication_id: Mapped[str] = mapped_column(
         ForeignKey("communications.id", ondelete="CASCADE")
     )

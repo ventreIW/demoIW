@@ -32,9 +32,7 @@ def upgrade() -> None:
             server_default="{}",
         ),
         sa.Column("source", sa.String(50), nullable=False),
-        sa.Column(
-            "status", sa.String(20), nullable=False, server_default="inactive"
-        ),
+        sa.Column("status", sa.String(20), nullable=False, server_default="inactive"),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(timezone=True),
