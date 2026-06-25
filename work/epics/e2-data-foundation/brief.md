@@ -1,7 +1,7 @@
 # E2 Brief — Data Foundation
 
 **Backlog source:** B-02, B-07  
-**Status:** Proposed — pending Gustavo authorization  
+**Status:** Active — started 2026-06-25  
 **Estimated size:** S (~3–4 days)  
 **Branch:** `e2-data-foundation` (from `main`, after E1 merges)
 

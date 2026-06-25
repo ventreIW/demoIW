@@ -1,8 +1,8 @@
 # Pull Board — E2: Data Foundation
 
-Last updated: 2026-06-10  
+Last updated: 2026-06-25  
 Epic: logical container (no branch)  
-Status: **Proposed** — pending authorization
+Status: **Active** — started 2026-06-25
 
 ---
 
