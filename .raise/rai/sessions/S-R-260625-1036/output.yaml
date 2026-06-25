@@ -1,0 +1,102 @@
+session_id: "S-R-260625-1036"
+summary: "SES-S-R-260625-1036: E1 cerrado + E2 activado + S2.1 Domain Schema completo (28 tests, merge a main)"
+type: feature
+
+outcomes:
+  - "E1 Project Scaffolding cerrado: retrospectiva, ADR-001 (App Router), gates verificados, tag epic/e1-complete pusheado"
+  - "E2 Data Foundation activado: brief.md status actualizado, push a origin"
+  - "S2.1 Domain Schema & Migrations completado: 7 entidades Pydantic, 7 modelos ORM SQLAlchemy 2.0, 14 mappers, migrations 0002+0003, ADR-002, 28 tests passing"
+  - "3 patrones nuevos: PAT-7 (SQLite timezone _utc()), PAT-8 (with_variant API / JSON vs JSONB), PAT-9 (Base en database.py)"
+  - "main pusheado a origin — Nano y Renata pueden hacer pull y empezar s2.2/s2.3"
+
+patterns:
+  - description: "SQLite strips timezone from datetime on storage. Use _utc() guard in all orm_to_domain mappers: dt.replace(tzinfo=UTC) if dt.tzinfo is None. No-op in PostgreSQL."
+    context: "sqlalchemy,sqlite,datetime,timezone,mapper,testing"
+    type: technical
+  - description: "SQLAlchemy with_variant(type, dialect) — both args are SQLAlchemy type objects. Cross-dialect pattern: JSON in ORM models (SQLite compat), JSONB in Alembic migrations (PostgreSQL-native). ORM column type and migration DDL type can differ."
+    context: "sqlalchemy,jsonb,json,cross-dialect,orm,migration"
+    type: technical
+  - description: "Place Base = DeclarativeBase() in infrastructure/database.py (where the async engine lives), not in models.py. Alembic env.py imports Base.metadata from that module for autogenerate."
+    context: "sqlalchemy,alembic,base,declarativebase,architecture"
+    type: architecture
+  - description: "rai gate check must be run from the repo root (where .raise/manifest.yaml lives). Running from a subdirectory produces 'No .raise/manifest.yaml found' errors."
+    context: "rai,gate,cli,manifest"
+    type: process
+
+corrections:
+  - what: "rai-session-start skill does not include a git pull step"
+    lesson: "Session start should fetch/pull from origin before loading context bundle. Missing pull caused stale context (s1.2 and s1.3 not shown as merged when they were). Add git pull origin {dev_branch} as Step 0 before working tree check."
+  - what: "Design code examples used Text().with_variant('jsonb', 'postgresql') — both args must be SQLAlchemy types, not strings"
+    lesson: "Design ORM code examples must be runnable, not illustrative. One import-time test at design phase would have caught this. Future backend story designs: verify ORM column type examples compile before committing design doc."
+
+coaching:
+  autonomy: "high within defined scope"
+  relationship:
+    quality: "productive"
+    trajectory: "stable"
+
+current_work:
+  epic: E2
+  story: S2.2
+  phase: ready-to-start
+  branch: main
+
+pending:
+  decisions: []
+  blockers:
+    - "alembic upgrade head manual verification pending — PostgreSQL not running locally during session. Run: cd backend && source .venv/bin/activate && alembic upgrade head && psql $DATABASE_URL -c 'SELECT count(*) FROM scenarios;' (should return 3)"
+  next_actions:
+    - "Start s2.2: /rai-story-start s2.2 — Scenario management API (POST/GET/PATCH endpoints + repository + integration tests)"
+    - "Verify alembic upgrade head before s2.2 implementation (needs live PostgreSQL)"
+
+narrative: |
+  ## Decisions
+  - E1 activated (approved 2026-06-19 by Gustavo) — closed today after pulling s1.2 + s1.3 from Nano/Renata
+  - E2 was pre-designed; activated by updating brief.md status + commit
+  - S2.1: Base = DeclarativeBase() placed in infrastructure/database.py (not models.py) — env.py already imported from there
+  - S2.1: ORM models use JSON (cross-dialect, SQLite compat); migrations use JSONB (PostgreSQL-native)
+  - S2.1: _utc() helper added to all orm_to_domain mappers — SQLite drops tzinfo on datetime storage
+  - AR gate used escape hatch (RAISE_AR_SKIP_REASON) — RAISE_CC_SESSION_ID not set in shell; AR reviewed inline (P1=net-new, P2=1:1 mapping, P3=conventions followed)
+
+  ## Artifacts
+  - work/epics/e1-project-scaffolding/retrospective.md — E1 retrospective
+  - dev/decisions/adr-001-nextjs-app-router.md — ADR-001
+  - dev/decisions/adr-002-active-scenario-constraint.md — ADR-002 (partial unique index)
+  - backend/app/domain/ — 7 entities, 8 enums, 2 exceptions
+  - backend/app/adapters/persistence/models.py — 7 ORM models
+  - backend/app/adapters/persistence/mappers.py — 14 mapper functions + _utc()
+  - backend/alembic/versions/0002_domain_schema.py — all 7 tables + uix_scenarios_active
+  - backend/alembic/versions/0003_seed_scenarios.py — 3 blank seed scenarios
+  - work/epics/e2-data-foundation/stories/s2.1-{design,plan,retrospective}.md
+
+  ## Branch State
+  - main: all work merged, 2 commits ahead of origin/main at session end → pushed
+  - story/s2.1/domain-schema: deleted after merge
+  - tag epic/e1-complete pushed to origin
+
+  ## Infra fixes applied this session
+  - backend/requirements.txt: added orjson (E1 close), psycopg2-binary (S2.1 T0)
+  - backend/requirements-dev.txt: added aiosqlite (S2.1 T0)
+  - scripts/test.sh: added optional $1 scope argument for rai gate check --scope
+
+next_session_prompt: |
+  S2.1 cerrado y mergeado. Continuar con s2.2: Scenario Management API.
+  Branch: story/s2.2/scenario-api desde main.
+  Design doc existe en work/epics/e2-data-foundation/stories/s2.2-design.md — revisar
+  contra lo que s2.1 realmente shippeó (modelos ORM, mappers) antes de implementar.
+
+  ANTES de implementar s2.2: verificar alembic upgrade head con PostgreSQL corriendo.
+    cd backend && source .venv/bin/activate
+    alembic upgrade head
+    psql $DATABASE_URL -c "SELECT count(*) FROM scenarios;"  # debe retornar 3
+
+  Patrones nuevos activos para s2.2:
+  - PAT-7: _utc() en mappers orm_to_domain (SQLite CI strips tzinfo)
+  - PAT-8: JSON en ORM models, JSONB en migrations
+  - PAT-9: Base en infrastructure/database.py
+
+  RAISE_CC_SESSION_ID no se setea automáticamente en el shell — AR gate requirió
+  escape hatch. Verificar si hay forma de setearlo antes de gate-ar-story.
+
+  rai gate check siempre desde repo root (donde está .raise/manifest.yaml).
+  rai session start: agregar git pull como primer paso (gap detectado hoy).
