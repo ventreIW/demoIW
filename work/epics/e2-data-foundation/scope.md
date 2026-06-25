@@ -4,12 +4,12 @@
 
 | Item | Story |
 |---|---|
-| SQLAlchemy ORM models for all 7 entity tables | s2.1 |
-| Domain entity Pydantic models (separate from ORM) | s2.1 |
-| ORM ↔ domain mappers | s2.1 |
-| Alembic migration `0002_domain_schema.py` | s2.1 |
-| Alembic data migration `0003_seed_scenarios.py` (3 blank scenarios) | s2.1 |
-| Partial unique index on `scenarios.status = 'active'` | s2.1 |
+| ~~SQLAlchemy ORM models for all 7 entity tables~~ | ~~s2.1~~ ✓ |
+| ~~Domain entity Pydantic models (separate from ORM)~~ | ~~s2.1~~ ✓ |
+| ~~ORM ↔ domain mappers~~ | ~~s2.1~~ ✓ |
+| ~~Alembic migration `0002_domain_schema.py`~~ | ~~s2.1~~ ✓ |
+| ~~Alembic data migration `0003_seed_scenarios.py` (3 blank scenarios)~~ | ~~s2.1~~ ✓ |
+| ~~Partial unique index on `scenarios.status = 'active'`~~ | ~~s2.1~~ ✓ |
 | `POST /api/scenarios`, `GET /api/scenarios`, `GET /api/scenarios/{id}` | s2.2 |
 | `PATCH /api/scenarios/{id}/activate`, `GET /api/scenarios/active` | s2.2 |
 | Scenario repository (SQLAlchemy implementation of IScenarioRepository) | s2.2 |
@@ -21,7 +21,7 @@
 | `POST /api/scenarios/upload-csv` endpoint | s2.4 |
 | CSV validation (required columns, error detail on 422) | s2.4 |
 | File picker UI in scenario selector | s2.4 |
-| ADR-002: active scenario constraint | s2.1 |
+| ~~ADR-002: active scenario constraint~~ | ~~s2.1~~ ✓ |
 
 ## Explicitly out of scope
 
