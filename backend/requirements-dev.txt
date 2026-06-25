@@ -6,3 +6,4 @@ mypy==1.13.0
 ruff==0.8.4
 httpx==0.28.1
 pydantic[mypy]==2.10.3
+aiosqlite==0.22.1

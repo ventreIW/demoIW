@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.infrastructure.database import get_session
+from app.infrastructure.database import Base, get_session
 from app.main import app
 
 # SQLite in-memory URL for CI/testing (working DB)
@@ -64,3 +64,18 @@ async def client_unavailable() -> AsyncGenerator[AsyncClient, None]:
 
     await bad_engine.dispose()
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """SQLite in-memory session with all ORM tables created. For unit-level mapper tests."""
+    # Import models so they register with Base.metadata before create_all
+    import app.adapters.persistence.models  # noqa: F401
+
+    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with session_maker() as session:
+        yield session
+    await engine.dispose()
