@@ -30,7 +30,6 @@ async def test_create_scenario_returns_201(client: AsyncClient) -> None:
 @pytest.mark.anyio
 async def test_get_scenario_returns_200(client: AsyncClient) -> None:
     """GET /api/v1/scenarios/{id} returns full scenario detail."""
-    # Create a scenario first
     create_resp = await client.post(
         "/api/v1/scenarios", json={"name": "Detail Test", "sector": "manufacturing"}
     )
@@ -53,3 +52,58 @@ async def test_get_scenario_returns_404(client: AsyncClient) -> None:
     fake_id = str(uuid.uuid4())
     response = await client.get(f"/api/v1/scenarios/{fake_id}")
     assert response.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_activate_scenario_happy_path(client: AsyncClient) -> None:
+    """PATCH /{id}/activate sets scenario to active and deactivates others."""
+    # Create two scenarios
+    r1 = await client.post(
+        "/api/v1/scenarios", json={"name": "First", "sector": "retail"}
+    )
+    r2 = await client.post(
+        "/api/v1/scenarios", json={"name": "Second", "sector": "manufacturing"}
+    )
+    id1 = r1.json()["id"]
+    id2 = r2.json()["id"]
+
+    # Activate first
+    resp = await client.patch(f"/api/v1/scenarios/{id1}/activate")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "active"
+
+    # Activate second — deactivates first
+    resp = await client.patch(f"/api/v1/scenarios/{id2}/activate")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "active"
+
+    # Verify first is now inactive
+    check = await client.get(f"/api/v1/scenarios/{id1}")
+    assert check.json()["status"] == "inactive"
+
+
+@pytest.mark.anyio
+async def test_activate_scenario_idempotent(client: AsyncClient) -> None:
+    """Activating an already-active scenario is idempotent (200)."""
+    create_resp = await client.post(
+        "/api/v1/scenarios", json={"name": "Only", "sector": "professional_services"}
+    )
+    sid = create_resp.json()["id"]
+
+    # Activate once
+    r1 = await client.patch(f"/api/v1/scenarios/{sid}/activate")
+    assert r1.status_code == 200
+    assert r1.json()["status"] == "active"
+
+    # Activate again — idempotent
+    r2 = await client.patch(f"/api/v1/scenarios/{sid}/activate")
+    assert r2.status_code == 200
+    assert r2.json()["status"] == "active"
+
+
+@pytest.mark.anyio
+async def test_activate_scenario_not_found(client: AsyncClient) -> None:
+    """PATCH /{id}/activate returns 404 for unknown ID."""
+    fake_id = str(uuid.uuid4())
+    resp = await client.patch(f"/api/v1/scenarios/{fake_id}/activate")
+    assert resp.status_code == 404

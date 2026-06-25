@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.container import get_scenario_repo
 from app.domain.entities.scenario import Scenario
 from app.domain.enums import ScenarioStatus, Sector
+from app.domain.exceptions import EntityNotFoundError
 from app.ports.repositories import IScenarioRepository
 
 router = APIRouter(prefix="/api/v1/scenarios", tags=["scenarios"])
@@ -86,6 +87,32 @@ async def get_scenario(
 ) -> ScenarioDetail:
     scenario = await repo.get_by_id(scenario_id)
     if scenario is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Scenario with id={scenario_id} not found",
+        )
+    count = await repo.get_client_count(scenario_id)
+    return ScenarioDetail(
+        id=scenario.id,
+        name=scenario.name,
+        sector=scenario.sector,
+        status=scenario.status.value,
+        client_count=count,
+        created_at=scenario.created_at,
+        seed=scenario.seed,
+        parameters=scenario.parameters,
+        source=scenario.source,
+    )
+
+
+@router.patch("/{scenario_id}/activate", response_model=ScenarioDetail)
+async def activate_scenario(
+    scenario_id: UUID,
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> ScenarioDetail:
+    try:
+        scenario = await repo.set_active(scenario_id)
+    except EntityNotFoundError:
         raise HTTPException(
             status_code=404,
             detail=f"Scenario with id={scenario_id} not found",
