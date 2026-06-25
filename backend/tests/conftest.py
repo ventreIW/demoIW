@@ -20,7 +20,15 @@ BAD_DATABASE_URL = "sqlite+aiosqlite:///nonexistent/path/to/db.sqlite"
 
 @pytest.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Create an async test client with SQLite in-memory database."""
+    """Create an async test client with SQLite in-memory database.
+
+    Tables are created before the client is yielded so integration tests
+    can query domain tables. Seed data is NOT inserted — each test seeds
+    what it needs.
+    """
+    # Import models so they register with Base.metadata before create_all
+    from app.adapters.persistence import models as _  # noqa: F401
+
     test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
     test_session_maker = async_sessionmaker(
         test_engine,
@@ -33,6 +41,9 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
             yield session
 
     app.dependency_overrides[get_session] = override_get_session
+
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

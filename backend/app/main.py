@@ -7,6 +7,7 @@ from app.config import settings
 from app.infrastructure.database import engine
 from app.infrastructure.logging import setup_logging
 from app.routers.health import router as health_router
+from app.routers.scenarios import router as scenarios_router
 
 
 @asynccontextmanager
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(health_router)
+    app.include_router(scenarios_router)
     return app
 
 
