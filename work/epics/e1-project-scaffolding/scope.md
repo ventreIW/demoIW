@@ -41,14 +41,14 @@
 
 Before merging E1 → main, all of the following must be true:
 
-- [ ] `cd frontend && npm run dev` starts on port 3000 without errors
-- [ ] `cd frontend && npm run typecheck` exits 0
-- [ ] `cd frontend && npm run lint` exits 0
-- [ ] `cd frontend && npm test -- --run` all tests pass
-- [ ] `cd backend && uvicorn app.main:app --reload` starts without errors
-- [ ] `cd backend && alembic upgrade head` applies the init migration without errors
-- [ ] `cd backend && pytest` all tests pass
-- [ ] `cd backend && mypy app/` exits 0
-- [ ] GitHub Actions CI is green on the epic branch PR
-- [ ] All three story retrospectives are written
-- [ ] ADR-001 (App Router) is written in `dev/decisions/`
+- [x] `cd frontend && npm run dev` starts on port 3000 without errors
+- [x] `cd frontend && npm run typecheck` exits 0
+- [x] `cd frontend && npm run lint` exits 0
+- [x] `cd frontend && npm test -- --run` all tests pass
+- [x] `cd backend && uvicorn app.main:app --reload` starts without errors
+- [x] `cd backend && alembic upgrade head` applies the init migration without errors
+- [x] `cd backend && pytest` all tests pass
+- [x] `cd backend && mypy app/` exits 0
+- [x] GitHub Actions CI is green on the epic branch PR
+- [x] All three story retrospectives are written
+- [x] ADR-001 (App Router) is written in `dev/decisions/`

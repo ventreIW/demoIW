@@ -1,8 +1,8 @@
 # Pull Board — E1: Project Scaffolding & CI Baseline
 
-Last updated: 2026-06-23
+Last updated: 2026-06-25
 Epic: logical container (no branch)
-Status: **In Progress** — 2/3 stories complete
+Status: **Closed** — 3/3 stories complete, retrospective written
 
 ---
 
