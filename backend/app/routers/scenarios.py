@@ -80,6 +80,30 @@ async def create_scenario(
     )
 
 
+@router.get("/active", response_model=ScenarioDetail)
+async def get_active(
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> ScenarioDetail:
+    scenario = await repo.get_active()
+    if scenario is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No active scenario found",
+        )
+    count = await repo.get_client_count(scenario.id)
+    return ScenarioDetail(
+        id=scenario.id,
+        name=scenario.name,
+        sector=scenario.sector,
+        status=scenario.status.value,
+        client_count=count,
+        created_at=scenario.created_at,
+        seed=scenario.seed,
+        parameters=scenario.parameters,
+        source=scenario.source,
+    )
+
+
 @router.get("/{scenario_id}", response_model=ScenarioDetail)
 async def get_scenario(
     scenario_id: UUID,

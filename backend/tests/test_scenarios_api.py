@@ -107,3 +107,28 @@ async def test_activate_scenario_not_found(client: AsyncClient) -> None:
     fake_id = str(uuid.uuid4())
     resp = await client.patch(f"/api/v1/scenarios/{fake_id}/activate")
     assert resp.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_get_active_returns_200(client: AsyncClient) -> None:
+    """GET /api/v1/scenarios/active returns the active scenario."""
+    # Create and activate a scenario
+    create_resp = await client.post(
+        "/api/v1/scenarios", json={"name": "Active One", "sector": "retail"}
+    )
+    sid = create_resp.json()["id"]
+    await client.patch(f"/api/v1/scenarios/{sid}/activate")
+
+    response = await client.get("/api/v1/scenarios/active")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == sid
+    assert body["status"] == "active"
+    assert body["name"] == "Active One"
+
+
+@pytest.mark.anyio
+async def test_get_active_returns_404(client: AsyncClient) -> None:
+    """GET /api/v1/scenarios/active returns 404 when no scenario is active."""
+    response = await client.get("/api/v1/scenarios/active")
+    assert response.status_code == 404
