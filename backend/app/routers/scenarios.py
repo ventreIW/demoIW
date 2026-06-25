@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.container import get_scenario_repo
@@ -24,6 +24,12 @@ class ScenarioSummary(BaseModel):
     status: str
     client_count: int
     created_at: datetime
+
+
+class ScenarioDetail(ScenarioSummary):
+    seed: int | None
+    parameters: dict[str, object]
+    source: str
 
 
 @router.get("", response_model=list[ScenarioSummary])
@@ -70,4 +76,29 @@ async def create_scenario(
         status=saved.status.value,
         client_count=0,
         created_at=saved.created_at,
+    )
+
+
+@router.get("/{scenario_id}", response_model=ScenarioDetail)
+async def get_scenario(
+    scenario_id: UUID,
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> ScenarioDetail:
+    scenario = await repo.get_by_id(scenario_id)
+    if scenario is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Scenario with id={scenario_id} not found",
+        )
+    count = await repo.get_client_count(scenario_id)
+    return ScenarioDetail(
+        id=scenario.id,
+        name=scenario.name,
+        sector=scenario.sector,
+        status=scenario.status.value,
+        client_count=count,
+        created_at=scenario.created_at,
+        seed=scenario.seed,
+        parameters=scenario.parameters,
+        source=scenario.source,
     )

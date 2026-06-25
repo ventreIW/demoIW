@@ -38,7 +38,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
         # Ensure a new UUID is assigned server-side
         orm.id = str(uuid4())
         self._session.add(orm)
-        await self._session.flush()
+        await self._session.commit()
         return scenario_orm_to_domain(orm)
 
     async def set_active(self, scenario_id: UUID) -> Scenario:
@@ -66,7 +66,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
             .values(status=ScenarioStatus.ACTIVE.value)
         )
 
-        await self._session.flush()
+        await self._session.commit()
 
         # Refresh to get updated state
         refreshed = await self._session.execute(
