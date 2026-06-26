@@ -139,6 +139,23 @@ rai gate check gate-types
 
 If verification fails: fix and re-verify (max 3 attempts before escalating).
 
+### Pitfalls
+
+#### WSL cross-filesystem gate slowness
+
+When working on WSL with the project on `/mnt/c/` (Windows filesystem), several gates become unusably slow:
+- `vitest`: 100-180s per scoped run (functional, just slow — use `--no-coverage`)
+- `eslint`: may timeout entirely (>300s) — skip per-task, run at story close or CI
+- `prettier`: may timeout entirely — skip per-task, run at story close or CI
+- `tsc --noEmit`: use `node node_modules/typescript/bin/tsc --noEmit` (the `.bin/tsc` symlink breaks on cross-filesystem)
+
+If gates timeout, fall back to:
+1. `tsc --noEmit` (using direct path) for type safety
+2. `node --check <file>` for syntax validation
+3. Full `vitest` run scoped to changed test files
+
+Never skip type checking or tests — only lint/format gates are skippable on WSL.
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.
@@ -242,3 +259,5 @@ rai signal emit-work story "{story_id}" --event complete --phase implement 2>/de
 
 - Gate: `gates/gate-code.md`
 - Progress template: `references/progress-template.md`
+- Vitest patterns: `references/nextjs-vitest-patterns.md` (globals, route handlers, API routes, shadcn init, toBeDisabled, useRouter mock, getByText duplicates, WSL tsc)
+- shadcn init: `references/shadcn-v4-init.md`
