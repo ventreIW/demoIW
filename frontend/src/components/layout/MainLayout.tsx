@@ -19,7 +19,7 @@ function Sidebar() {
         <nav className="flex-1 space-y-1 p-4">
           <SidebarLink href="#">Operaciones</SidebarLink>
           <SidebarLink href="#">Ejecutivo</SidebarLink>
-          <SidebarLink href="#">Escenarios</SidebarLink>
+          <SidebarLink href="/scenarios">Escenarios</SidebarLink>
         </nav>
       </div>
     </aside>
