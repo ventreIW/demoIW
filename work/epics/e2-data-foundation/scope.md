@@ -14,10 +14,10 @@
 | `PATCH /api/scenarios/{id}/activate`, `GET /api/scenarios/active` | s2.2 |
 | Scenario repository (SQLAlchemy implementation of IScenarioRepository) | s2.2 |
 | Integration tests for all scenario endpoints | s2.2 |
-| Scenario selector UI at `/scenarios` | s2.3 |
-| Scenario card component (name, sector badge, status, client count) | s2.3 |
-| Route guard (redirect to `/scenarios` if no active scenario) | s2.3 |
-| "Generar nuevo" button (stub — disabled until E3) | s2.3 |
+|| ~~Scenario selector UI at `/scenarios`~~ | ~~s2.3~~ ✓ ||
+|| ~~Scenario card component (name, sector badge, status, client count)~~ | ~~s2.3~~ ✓ ||
+|| ~~Route guard (redirect to `/scenarios` if no active scenario)~~ | ~~s2.3~~ ✓ ||
+|| ~~"Generar nuevo" button (stub — disabled until E3)~~ | ~~s2.3~~ ✓ ||
 | `POST /api/scenarios/upload-csv` endpoint | s2.4 |
 | CSV validation (required columns, error detail on 422) | s2.4 |
 | File picker UI in scenario selector | s2.4 |
