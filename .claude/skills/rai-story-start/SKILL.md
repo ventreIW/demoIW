@@ -104,7 +104,9 @@ On story branch created from `{dev_branch}`.
 
 ### Step 3: Define Scope & Commit
 
-Create TWO artifacts:
+Create TWO artifacts. If either file already exists, **read it first** and check compliance with `templates/story.md`. Pre-existing files often use checkbox-style ACs — rewrite to Gherkin + SbE format regardless. Incomplete template compliance is a defect; fix it before committing.
+
+**Fallback:** When the docs adapter is not configured (`backlog: null` in manifest) or `rai docs write` fails, use `write_file` directly with the template structure. The output is identical — the commit is what matters.
 
 1. `work/epics/e{N}-{name}/stories/s{N}.{M}-story.md` — publish via docs adapter using `templates/story.md` as structure:
 
@@ -252,6 +254,12 @@ rai signal emit-work story "{story_id}" --event complete --phase init 2>/dev/nul
 ## Quality Checklist
 
 - [ ] NEVER create story branch from anything other than `{dev_branch}`
+
+## Pitfalls
+
+- **Pre-existing story files with checkbox ACs**: When a story file already exists in the work directory but uses `- [ ]` checkbox format for acceptance criteria, rewrite it to Gherkin format following `templates/story.md`. Checkbox ACs are ambiguous and lack concrete scenarios — the template's Gherkin + SbE format is mandatory. Always read existing files before committing; do not assume they're template-compliant.
+- **`git stash` with path spec may not clear staged changes**: When working tree hygiene requires discarding a modified tracked file, a plain `git stash push -- <file>` may not include staged changes. If the file reappears after stash, use `git checkout -- <file>` for unstaged or `git reset HEAD <file>` for staged modifications.
+- **`rai docs write` requires a configured docs adapter**: If the manifest has no docs target and the command fails with "unknown artifact type", fall back to `write_file` with the template structure. The commit is the deliverable; the dual-write to a remote target is best-effort.
 
 ## References
 

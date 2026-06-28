@@ -94,7 +94,7 @@ Working tree is clean (or user explicitly chose to keep changes). No orphan stag
 
 ### Step 0.5: Storage Health Check (non-blocking)
 
-Quick sanity check on SQLite storage. **Never blocks session start** — warn and continue.
+Quick sanity check on SQLite storage. **Never blocks session start** — warn and continue. If the `rai` command is not found, ensure the RaiSE CLI is installed and the virtual environment is activated (e.g., `source .venv/bin/activate`).
 
 ```bash
 rai db check 2>&1 || true
