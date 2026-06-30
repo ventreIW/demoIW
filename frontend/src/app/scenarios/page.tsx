@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import MainLayout from "@/components/layout/MainLayout"
 import ScenarioGrid from "@/components/scenarios/ScenarioGrid"
+import CsvUploadWrapper from "./CsvUploadWrapper"
 import { listScenarios } from "@/lib/api/scenarios"
 import type { ScenarioSummary } from "@/types/scenario"
 
@@ -42,12 +43,7 @@ export default async function ScenariosPage() {
           >
             Generar nuevo
           </button>
-          <button
-            disabled
-            className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-400"
-          >
-            Subir CSV
-          </button>
+          <CsvUploadWrapper />
         </div>
       </div>
     </MainLayout>
