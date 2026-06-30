@@ -18,9 +18,9 @@
 || ~~Scenario card component (name, sector badge, status, client count)~~ | ~~s2.3~~ ✓ ||
 || ~~Route guard (redirect to `/scenarios` if no active scenario)~~ | ~~s2.3~~ ✓ ||
 || ~~"Generar nuevo" button (stub — disabled until E3)~~ | ~~s2.3~~ ✓ ||
-| `POST /api/scenarios/upload-csv` endpoint | s2.4 |
-| CSV validation (required columns, error detail on 422) | s2.4 |
-| File picker UI in scenario selector | s2.4 |
+| ~~`POST /api/v1/scenarios/upload-csv` endpoint~~ | s2.4 ✓ (Nano) |
+| ~~CSV validation (required columns, error detail on 422)~~ | s2.4 ✓ (Nano) |
+| ~~File picker UI in scenario selector~~ | s2.4 ✓ |
 | ~~ADR-002: active scenario constraint~~ | ~~s2.1~~ ✓ |
 
 ## Explicitly out of scope
@@ -39,7 +39,7 @@
 - [ ] `GET /api/scenarios/active` returns the seed scenario after activating one
 - [ ] Scenario selector renders in browser; scenario card shows "Sin datos" badge
 - [ ] Route guard redirects `/` → `/scenarios` when no scenario is active
-- [ ] CSV upload with valid file creates a scenario; invalid file returns 422 with column errors
+- [ ] CSV upload with valid file creates a scenario; invalid file returns 422 with column errors (blocked: pending Nano's backend endpoint integration test)
 - [ ] `mypy app/`, `npm run typecheck`, all tests pass
 - [ ] ADR-002 written
 - [ ] All 4 story retrospectives written
