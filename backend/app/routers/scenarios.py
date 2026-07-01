@@ -1,7 +1,9 @@
+import csv
 from datetime import UTC, datetime
+from io import StringIO
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.container import get_scenario_repo
@@ -152,4 +154,95 @@ async def activate_scenario(
         seed=scenario.seed,
         parameters=scenario.parameters,
         source=scenario.source,
+    )
+
+
+REQUIRED_COLUMNS = {"client_name", "amount", "due_date", "invoice_id"}
+
+
+@router.post("/upload-csv", response_model=ScenarioSummary, status_code=201)
+async def upload_csv(
+    file: UploadFile,
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> ScenarioSummary:
+    """Create a scenario from a CSV file.
+
+    Required columns: client_name, amount, due_date, invoice_id.
+    """
+    content = await file.read()
+
+    if not content:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": "Empty file"}],
+        )
+
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": "File must be UTF-8 encoded"}],
+        )
+
+    try:
+        reader = csv.DictReader(StringIO(text))
+    except csv.Error:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": "Could not parse CSV file"}],
+        )
+
+    if reader.fieldnames is None:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": "Could not parse CSV headers"}],
+        )
+
+    actual_columns = set(reader.fieldnames)
+    missing = REQUIRED_COLUMNS - actual_columns
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": f"Missing required columns: {', '.join(sorted(missing))}"}],
+        )
+
+    rows: list[dict[str, str]] = []
+    try:
+        rows = list(reader)
+    except csv.Error as e:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": f"CSV parse error: {e}"}],
+        )
+
+    if not rows:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"msg": "CSV file has no data rows"}],
+        )
+
+    # Derive scenario name from filename (without extension)
+    name = file.filename.rsplit(".", 1)[0] if file.filename else "csv_import"
+
+    domain = Scenario(
+        id=uuid4(),
+        name=name,
+        sector=Sector.RETAIL,
+        seed=None,
+        parameters={},
+        source="csv_upload",
+        status=ScenarioStatus.INACTIVE,
+        created_at=datetime.now(UTC),
+    )
+
+    saved = await repo.create_from_csv(domain, rows)
+    count = await repo.get_client_count(saved.id)
+    return ScenarioSummary(
+        id=saved.id,
+        name=saved.name,
+        sector=saved.sector,
+        status=saved.status.value,
+        client_count=count,
+        created_at=saved.created_at,
     )
