@@ -18,6 +18,7 @@ ide:
 agents:
   types:
   - claude
+  - hermes
 tier: null
 backlog: null
 graph: null

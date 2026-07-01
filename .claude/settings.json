@@ -1,5 +1,5 @@
 {
   "env": {
-    "PATH": "/home/rodrigoventre/demoIW/.venv/bin:/home/rodrigoventre/.local/bin:/home/rodrigoventre/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    "PATH": "/home/berna/demoIW/.venv/bin:/home/berna/.local/bin:/home/berna/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   }
 }
