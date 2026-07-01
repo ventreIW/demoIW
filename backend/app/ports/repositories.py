@@ -36,3 +36,10 @@ class IScenarioRepository(ABC):
     async def get_client_count(self, scenario_id: UUID) -> int:
         """Return the number of clients associated with a scenario."""
         ...
+
+    @abstractmethod
+    async def create_from_csv(
+        self, scenario: Scenario, rows: list[dict[str, str]]
+    ) -> Scenario:
+        """Create a scenario with clients and invoices from parsed CSV rows."""
+        ...
