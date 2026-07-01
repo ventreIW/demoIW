@@ -10,10 +10,10 @@
 | ~~Alembic migration `0002_domain_schema.py`~~ | ~~s2.1~~ ✓ |
 | ~~Alembic data migration `0003_seed_scenarios.py` (3 blank scenarios)~~ | ~~s2.1~~ ✓ |
 | ~~Partial unique index on `scenarios.status = 'active'`~~ | ~~s2.1~~ ✓ |
-| `POST /api/scenarios`, `GET /api/scenarios`, `GET /api/scenarios/{id}` | s2.2 |
-| `PATCH /api/scenarios/{id}/activate`, `GET /api/scenarios/active` | s2.2 |
-| Scenario repository (SQLAlchemy implementation of IScenarioRepository) | s2.2 |
-| Integration tests for all scenario endpoints | s2.2 |
+| ~~`POST /api/scenarios`, `GET /api/scenarios`, `GET /api/scenarios/{id}`~~ | ~~s2.2~~ ✓ |
+| ~~`PATCH /api/scenarios/{id}/activate`, `GET /api/scenarios/active`~~ | ~~s2.2~~ ✓ |
+| ~~Scenario repository (SQLAlchemy implementation of IScenarioRepository)~~ | ~~s2.2~~ ✓ |
+| ~~Integration tests for all scenario endpoints~~ | ~~s2.2~~ ✓ |
 || ~~Scenario selector UI at `/scenarios`~~ | ~~s2.3~~ ✓ ||
 || ~~Scenario card component (name, sector badge, status, client count)~~ | ~~s2.3~~ ✓ ||
 || ~~Route guard (redirect to `/scenarios` if no active scenario)~~ | ~~s2.3~~ ✓ ||
@@ -34,12 +34,12 @@
 
 ## Acceptance gate checklist
 
-- [ ] `alembic upgrade head` creates all 7 tables + unique index + 3 seed scenarios
-- [ ] All scenario API endpoints covered by integration tests (pytest, passing)
-- [ ] `GET /api/scenarios/active` returns the seed scenario after activating one
-- [ ] Scenario selector renders in browser; scenario card shows "Sin datos" badge
-- [ ] Route guard redirects `/` → `/scenarios` when no scenario is active
+- [x] `alembic upgrade head` creates all 7 tables + unique index + 3 seed scenarios
+- [x] All scenario API endpoints covered by integration tests (pytest, passing)
+- [x] `GET /api/scenarios/active` returns the seed scenario after activating one
+- [x] Scenario selector renders in browser; scenario card shows "Sin datos" badge
+- [x] Route guard redirects `/` → `/scenarios` when no scenario is active
 - [ ] CSV upload with valid file creates a scenario; invalid file returns 422 with column errors (blocked: pending Nano's backend endpoint integration test)
-- [ ] `mypy app/`, `npm run typecheck`, all tests pass
-- [ ] ADR-002 written
-- [ ] All 4 story retrospectives written
+- [x] `mypy app/`, `npm run typecheck`, all tests pass
+- [x] ADR-002 written
+- [x] All 4 story retrospectives written
