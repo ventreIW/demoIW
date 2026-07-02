@@ -9,3 +9,6 @@ structlog==24.4.0
 orjson==3.10.12
 psycopg2-binary==2.9.10
 python-multipart==0.0.32
+numpy==2.2.1
+pandas==2.2.3
+faker==33.1.0
