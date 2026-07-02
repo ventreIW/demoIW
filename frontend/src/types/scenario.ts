@@ -1,8 +1,8 @@
 /** Backend API types matching Pydantic schemas from backend/app/routers/scenarios.py */
 
-export type Sector = "manufacturing" | "retail" | "professional_services"
+export type Sector = 'manufacturing' | 'retail' | 'professional_services'
 
-export type ScenarioStatus = "active" | "inactive"
+export type ScenarioStatus = 'active' | 'inactive'
 
 export interface ScenarioSummary {
   id: string

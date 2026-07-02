@@ -76,24 +76,18 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
 
     async def get_active(self) -> Scenario | None:
         result = await self._session.execute(
-            select(ScenarioORM).where(
-                ScenarioORM.status == ScenarioStatus.ACTIVE.value
-            )
+            select(ScenarioORM).where(ScenarioORM.status == ScenarioStatus.ACTIVE.value)
         )
         orm = result.scalar_one_or_none()
         return scenario_orm_to_domain(orm) if orm else None
 
     async def get_client_count(self, scenario_id: UUID) -> int:
         result = await self._session.execute(
-            select(func.count()).where(
-                ClientORM.scenario_id == str(scenario_id)
-            )
+            select(func.count()).where(ClientORM.scenario_id == str(scenario_id))
         )
         return result.scalar_one()
 
-    async def create_from_csv(
-        self, scenario: Scenario, rows: list[dict[str, str]]
-    ) -> Scenario:
+    async def create_from_csv(self, scenario: Scenario, rows: list[dict[str, str]]) -> Scenario:
         """Create a scenario with clients and invoices from parsed CSV rows."""
         from datetime import UTC, datetime
 
@@ -112,9 +106,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
             )
             self._session.add(client_orm)
 
-            due_date = datetime.strptime(row["due_date"], "%Y-%m-%d").replace(
-                tzinfo=UTC
-            )
+            due_date = datetime.strptime(row["due_date"], "%Y-%m-%d").replace(tzinfo=UTC)
             days_overdue = max(0, (datetime.now(UTC) - due_date).days)
             invoice_orm = InvoiceORM(
                 id=str(uuid4()),

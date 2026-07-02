@@ -1,8 +1,5 @@
-from io import BytesIO
-
 import pytest
 from httpx import AsyncClient
-
 
 VALID_CSV = (
     "client_name,amount,due_date,invoice_id\n"
@@ -11,10 +8,7 @@ VALID_CSV = (
     "Gamma Inc,875.00,2026-07-30,INV-003\n"
 )
 
-CSV_MISSING_AMOUNT = (
-    "client_name,due_date,invoice_id\n"
-    "Acme Corp,2026-08-15,INV-001\n"
-)
+CSV_MISSING_AMOUNT = "client_name,due_date,invoice_id\n" "Acme Corp,2026-08-15,INV-001\n"
 
 
 @pytest.mark.anyio
@@ -38,9 +32,7 @@ async def test_upload_csv_missing_columns_returns_422(client: AsyncClient) -> No
     """POST /api/v1/scenarios/upload-csv with missing columns returns 422."""
     response = await client.post(
         "/api/v1/scenarios/upload-csv",
-        files={
-            "file": ("bad.csv", CSV_MISSING_AMOUNT.encode("utf-8"), "text/csv")
-        },
+        files={"file": ("bad.csv", CSV_MISSING_AMOUNT.encode("utf-8"), "text/csv")},
     )
     assert response.status_code == 422
     body = response.json()

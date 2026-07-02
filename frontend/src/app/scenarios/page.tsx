@@ -1,9 +1,9 @@
-import { cookies } from "next/headers"
-import MainLayout from "@/components/layout/MainLayout"
-import ScenarioGrid from "@/components/scenarios/ScenarioGrid"
-import CsvUploadWrapper from "./CsvUploadWrapper"
-import { listScenarios } from "@/lib/api/scenarios"
-import type { ScenarioSummary } from "@/types/scenario"
+import { cookies } from 'next/headers'
+import MainLayout from '@/components/layout/MainLayout'
+import ScenarioGrid from '@/components/scenarios/ScenarioGrid'
+import CsvUploadWrapper from './CsvUploadWrapper'
+import { listScenarios } from '@/lib/api/scenarios'
+import type { ScenarioSummary } from '@/types/scenario'
 
 export default async function ScenariosPage() {
   let scenarios: ScenarioSummary[] = []
@@ -12,11 +12,11 @@ export default async function ScenariosPage() {
   try {
     scenarios = await listScenarios()
   } catch (e) {
-    error = e instanceof Error ? e.message : "Error al cargar escenarios"
+    error = e instanceof Error ? e.message : 'Error al cargar escenarios'
   }
 
   const cookieStore = await cookies()
-  const activeId = cookieStore.get("active_scenario_id")?.value ?? null
+  const activeId = cookieStore.get('active_scenario_id')?.value ?? null
 
   return (
     <MainLayout>
