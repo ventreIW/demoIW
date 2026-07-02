@@ -38,8 +38,6 @@ class IScenarioRepository(ABC):
         ...
 
     @abstractmethod
-    async def create_from_csv(
-        self, scenario: Scenario, rows: list[dict[str, str]]
-    ) -> Scenario:
+    async def create_from_csv(self, scenario: Scenario, rows: list[dict[str, str]]) -> Scenario:
         """Create a scenario with clients and invoices from parsed CSV rows."""
         ...

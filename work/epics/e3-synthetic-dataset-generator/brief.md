@@ -1,7 +1,7 @@
 # E3 Brief — Synthetic Dataset Generator
 
 **Backlog source:** B-03, B-04  
-**Status:** Proposed — pending Gustavo authorization  
+**Status:** Active — authorized 2026-07-02 (Gustavo)  
 **Estimated size:** M (~5–7 days)  
 **Branch:** `e3-synthetic-dataset-generator` (from `main`, after E2 merges)
 

@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import { useRef, useState } from "react"
-import { uploadCsv } from "@/lib/api/scenarios"
+import { useRef, useState } from 'react'
+import { uploadCsv } from '@/lib/api/scenarios'
 
 interface CsvUploadProps {
   onUploadComplete: () => void
@@ -36,7 +36,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
       setFile(null)
       onUploadComplete()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al subir el archivo.")
+      setError(e instanceof Error ? e.message : 'Error al subir el archivo.')
     } finally {
       setUploading(false)
     }
@@ -65,20 +65,22 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
           </button>
         ) : (
           <>
-            <span className="text-sm text-slate-600 truncate max-w-[200px]">
-              {file.name}
-            </span>
+            <span className="max-w-[200px] truncate text-sm text-slate-600">{file.name}</span>
             <button
               type="button"
               onClick={handleUpload}
               disabled={uploading}
               className="inline-flex h-8 items-center justify-center rounded-lg border border-transparent bg-slate-800 px-3 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
             >
-              {uploading ? "Subiendo..." : "Subir"}
+              {uploading ? 'Subiendo...' : 'Subir'}
             </button>
             <button
               type="button"
-              onClick={() => { setFile(null); setError(null); setSuccess(null) }}
+              onClick={() => {
+                setFile(null)
+                setError(null)
+                setSuccess(null)
+              }}
               disabled={uploading}
               className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-500 hover:text-slate-700 disabled:opacity-50"
               aria-label="Cancelar seleccion"

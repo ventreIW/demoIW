@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import ScenarioCard from "./ScenarioCard"
-import { activateScenario } from "@/lib/api/scenarios"
-import type { ScenarioSummary } from "@/types/scenario"
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import ScenarioCard from './ScenarioCard'
+import { activateScenario } from '@/lib/api/scenarios'
+import type { ScenarioSummary } from '@/types/scenario'
 
 interface ScenarioGridProps {
   scenarios: ScenarioSummary[]

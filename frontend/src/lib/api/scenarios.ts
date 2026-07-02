@@ -1,9 +1,9 @@
-import type { ScenarioSummary } from "@/types/scenario"
+import type { ScenarioSummary } from '@/types/scenario'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 export async function listScenarios(): Promise<ScenarioSummary[]> {
-  const res = await fetch(`${API_BASE}/api/v1/scenarios`, { cache: "no-store" })
+  const res = await fetch(`${API_BASE}/api/v1/scenarios`, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error(`Failed to list scenarios: ${res.status}`)
   }
@@ -12,7 +12,7 @@ export async function listScenarios(): Promise<ScenarioSummary[]> {
 
 export async function activateScenario(id: string): Promise<ScenarioSummary> {
   const res = await fetch(`${API_BASE}/api/v1/scenarios/${id}/activate`, {
-    method: "PATCH",
+    method: 'PATCH',
   })
   if (!res.ok) {
     throw new Error(`Failed to activate scenario: ${res.status}`)
@@ -22,16 +22,14 @@ export async function activateScenario(id: string): Promise<ScenarioSummary> {
 
 export async function uploadCsv(file: File): Promise<ScenarioSummary> {
   const formData = new FormData()
-  formData.append("file", file)
+  formData.append('file', file)
   const res = await fetch(`${API_BASE}/api/v1/scenarios/upload-csv`, {
-    method: "POST",
+    method: 'POST',
     body: formData,
   })
   if (!res.ok) {
     const body = await res.json()
-    const messages = body.detail
-      ?.map((d: { msg: string }) => d.msg)
-      .join(", ")
+    const messages = body.detail?.map((d: { msg: string }) => d.msg).join(', ')
     throw new Error(messages || `Error al subir: ${res.status}`)
   }
   return res.json()

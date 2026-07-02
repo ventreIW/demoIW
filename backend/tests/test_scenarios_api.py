@@ -58,12 +58,8 @@ async def test_get_scenario_returns_404(client: AsyncClient) -> None:
 async def test_activate_scenario_happy_path(client: AsyncClient) -> None:
     """PATCH /{id}/activate sets scenario to active and deactivates others."""
     # Create two scenarios
-    r1 = await client.post(
-        "/api/v1/scenarios", json={"name": "First", "sector": "retail"}
-    )
-    r2 = await client.post(
-        "/api/v1/scenarios", json={"name": "Second", "sector": "manufacturing"}
-    )
+    r1 = await client.post("/api/v1/scenarios", json={"name": "First", "sector": "retail"})
+    r2 = await client.post("/api/v1/scenarios", json={"name": "Second", "sector": "manufacturing"})
     id1 = r1.json()["id"]
     id2 = r2.json()["id"]
 
