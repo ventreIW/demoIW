@@ -1,0 +1,81 @@
+session_id: "S-R-260702-1518"
+summary: "SES-S-R-260702-1518: s3.1 Procedural Generator cerrado (pattern-driven, ADR-003/004) + E4–E7 roadmap planeado"
+type: feature
+outcomes:
+  - "s3.1 Procedural Data Generation Layer: full RaiSE lifecycle (start→design→plan→implement→review→close), merged to main, pushed"
+  - "ProceduralGenerator (sync IDatasetPort) — seed-deterministic, RNG-derived UUIDs, pandas RawDataset; 16 tests, mypy strict clean"
+  - "Causal behavioural model (ADR-004): payment pattern drives overdue/ageing/payments; overdue rate emerges from sector mix (ON_TIME 0.05 → DEFAULT 0.85)"
+  - "ADR-003 (procedural+LLM hybrid) + ADR-004 (pattern-driven model) written"
+  - "docs/ folder: 01-what-is-demoIW.md (project explainer) + 02-probability-and-statistics-decisions.md"
+  - "Cleared pre-existing lint/format debt on main (E2 files) + synced epic trackers (E2 closed 5/5, E3 activated)"
+  - "Renumbered s3.3 ADR to ADR-005 (ADR-004 taken); gitignored .raise/drift/ cache"
+  - "Planned E4–E7 epic briefs (Proposed, not activated); i18n pulled into E4 as s4.1"
+patterns:
+  - description: "Seed-based generators must derive UUIDs from the seeded RNG (rng.bytes(16)), never uuid.uuid4() — uuid4 reads OS entropy and breaks determinism even when numeric draws are seeded"
+    context: "determinism,procedural-generation,numpy,uuid,testing"
+    type: technical
+  - description: "Synthetic-data generators for ML demos must make labelled attributes causal, not decorative — if a category label doesn't drive outcomes, downstream ML finds no signal and the demo underperforms"
+    context: "synthetic-data,ml,demo,causality,scoring"
+    type: technical
+  - description: "Under mypy strict, treat pandas as ignore_missing_imports at its module boundary (pandas-stubs too noisy for df-heavy code); confine DataFrames in a frozen VO so Any doesn't leak into domain"
+    context: "mypy,strict,pandas,typing,value-object"
+    type: technical
+  - description: "uv-managed venvs have no pip and drift from requirements.txt; install via 'uv pip install --python .venv/bin/python -r requirements.txt' to add deps and re-sync"
+    context: "uv,venv,dependencies,backend,setup"
+    type: codebase
+corrections:
+  - what: "User asked 'did you assume some probability distribution?' after implement — surfaced that payment pattern was decorative"
+    lesson: "For ML-demo synthetic data, proactively verify that labelled attributes causally drive outcomes; realism IS the product for a catalog asset"
+current_work:
+  epic: E3
+  story: S3.1
+  phase: closed
+  branch: main
+pending:
+  decisions:
+    - "E7 EN translation pass: keep or drop if demo is Spanish-only (decide at E6 close with Gustavo)"
+    - "E4–E7 briefs are Proposed — need Gustavo authorization before /rai-epic-start"
+  blockers: []
+  next_actions:
+    - "E3 s3.2 — OpenRouter adapter (ILLMPort): natural next pickup; unblocks s3.3/s3.4 + E5 comms + E6 NL query. Needs OPENROUTER_API_KEY in .env"
+    - "Then s3.3 (LLM enrichment) → s3.4 (generate endpoint & UI) to finish E3"
+narrative: |
+  ## Decisions
+  - Grouped remaining work into 4 epics (E4 Intelligence, E5 Operator Workspace,
+    E6 Executive, E7 Demo Readiness). Rationale: prioritization rides with scoring
+    (derived), comms rides with ops panel (RF-05.5 triggers it), executive self-contained,
+    cross-cutting NFRs = trimmable buffer. i18n pulled into E4 as s4.1 (ES-first by
+    construction; retrofit is painful).
+  - s3.1: made payment pattern causal (ADR-004) after review — replaced global overdue_rate
+    /days_overdue_lambda knobs with per-pattern _PatternProfile. Dropped misnamed
+    days_overdue_lambda (was a scale, not a rate). Added reference_date for cross-day determinism.
+  - mypy: pandas ignored at boundary (documented decision), numpy/faker strict.
+  - Committed epic-tracker chores + pre-existing lint/format debt fix directly to main
+    (matches project convention; user authorized) to keep s3.1 history clean.
+  ## Artifacts
+  - backend/app/adapters/dataset/procedural_generator.py, app/ports/dataset_port.py,
+    app/domain/value_objects/raw_dataset.py, app/application/use_cases/generate_dataset.py
+  - backend/tests/adapters/test_procedural_generator.py (16 tests)
+  - dev/decisions/adr-003-*, adr-004-*
+  - docs/01-what-is-demoIW.md, docs/02-probability-and-statistics-decisions.md
+  - work/epics/e{4,5,6,7}-*/brief.md (Proposed)
+  - Memory: epic-roadmap-e4-e7, s32-openrouter-shared-dependency
+  ## Branch State
+  - main @ c3e54a5, clean, pushed to origin. story/s3.1 branch merged + deleted.
+  ## Framework issues found (parked)
+  - rai session start should sync backend venv to requirements.txt
+  - rai-story-implement orphan-check uses reversed git diff range (false positives)
+next_session_prompt: |
+  s3.1 cerrado y mergeado. E3 continúa con s3.2 — OpenRouter adapter (ILLMPort).
+  Es el siguiente pickup natural: desbloquea s3.3/s3.4 (resto de E3) Y las features de
+  IA de E5 (comms) y E6 (NL query). ANTES: verificar OPENROUTER_API_KEY en backend/.env.
+  Guardrail: backend siempre agnóstico de proveedor — sólo vía OpenRouter, nunca un vendor.
+
+  E4–E7 ya tienen brief.md (Proposed, no activados). Requieren autorización de Gustavo
+  antes de /rai-epic-start. Al arrancar E4, i18n (s4.1) va primero.
+
+  Recordar patrones nuevos: UUIDs desde el RNG sembrado (no uuid4); atributos etiquetados
+  en data sintética deben ser causales; venv uv sin pip (usar uv pip install --python).
+
+  Nota: RAISE_CC_SESSION_ID no se setea en el shell — para gate-ar-story creé el marker
+  manualmente en .raise/rai/sessions/$ID/ar-reviewed tras revisar P1/P2/P3 inline.
