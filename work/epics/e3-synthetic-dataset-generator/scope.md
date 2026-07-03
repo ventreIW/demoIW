@@ -4,12 +4,12 @@
 
 | Item | Story |
 |---|---|
-| `GenerationParams` Pydantic model | s3.1 |
-| `ProceduralGenerator` implementing `IDatasetPort` | s3.1 |
-| NumPy seed-based distributions (amount, days overdue, payment patterns) | s3.1 |
-| Faker es_MX synthetic identities | s3.1 |
-| Pandas DataFrame assembly + `RawDataset` output | s3.1 |
-| Unit tests: reproducibility, distribution sanity checks | s3.1 |
+| `GenerationParams` Pydantic model | s3.1 ✅ |
+| `ProceduralGenerator` implementing `IDatasetPort` | s3.1 ✅ |
+| NumPy seed-based distributions (amount, days overdue, payment patterns) | s3.1 ✅ |
+| Faker es_MX synthetic identities | s3.1 ✅ |
+| Pandas DataFrame assembly + `RawDataset` output | s3.1 ✅ |
+| Unit tests: reproducibility, distribution sanity checks | s3.1 ✅ |
 | `OpenRouterAdapter` implementing `ILLMPort` | s3.2 |
 | Retry logic (3 attempts, exponential backoff) | s3.2 |
 | Config-driven model selection per use case (GR-AI-002) | s3.2 |
@@ -24,7 +24,7 @@
 | "Generar nuevo" frontend form (sector, count, overdue rate, seed) | s3.4 |
 | Loading state + success redirect | s3.4 |
 | `.env.example` updated with `OPENROUTER_API_KEY`, model env vars | s3.2 |
-| ADR-003 (procedural generation choice) | s3.1 |
+| ADR-003 (procedural generation choice) | s3.1 ✅ |
 | ADR-004 (batched enrichment) | s3.3 |
 
 ## Explicitly out of scope
