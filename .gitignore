@@ -1,6 +1,9 @@
 
 # RaiSE personal directory (per-developer, not shared)
 .raise/rai/personal/
+
+# RaiSE drift-check cache (auto-generated, per-run)
+.raise/drift/
 .env
 !.env.example
 

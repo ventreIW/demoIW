@@ -25,7 +25,7 @@
 | Loading state + success redirect | s3.4 |
 | `.env.example` updated with `OPENROUTER_API_KEY`, model env vars | s3.2 |
 | ADR-003 (procedural generation choice) | s3.1 ✅ |
-| ADR-004 (batched enrichment) | s3.3 |
+| ADR-005 (batched enrichment) | s3.3 |
 
 ## Explicitly out of scope
 
@@ -43,5 +43,7 @@
 - [ ] LLM enrichment runs (company names are not raw Faker names)
 - [ ] All unit and integration tests pass (pytest + vitest)
 - [ ] `mypy app/` and `npm run typecheck` pass
-- [ ] ADR-003 and ADR-004 written
+- [x] ADR-003 (procedural + LLM hybrid) written — s3.1
+- [x] ADR-004 (pattern-driven behavioural model) written — s3.1
+- [ ] ADR-005 (batched enrichment) written — s3.3
 - [ ] All 4 story retrospectives written
