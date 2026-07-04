@@ -156,6 +156,30 @@ If gates timeout, fall back to:
 
 Never skip type checking or tests — only lint/format gates are skippable on WSL.
 
+#### `rai gate check --scope` with nested project structures
+
+When the project has a nested structure (e.g., `backend/` with its own `tests/`), `rai gate check gate-tests --scope backend/tests/` may fail with "file or directory not found" because the `test_command` in `.raise/manifest.yaml` runs from project root and can't resolve the nested path.
+
+Fall back to running the test runner directly from the subdirectory:
+```bash
+cd backend && uv run pytest tests/ -q   # or equivalent per project
+```
+
+Then run type/lint checks separately. The gate runner is a convenience, not a hard requirement — verified test output matters more than which CLI produced it.
+
+#### Stale Python `__pycache__` after code changes
+
+When you edit Python files under an `app/` directory (adding new imports, changing function signatures, adding new routes), stale `.pyc` files in `__pycache__/` can retain old bytecode that produces confusing errors on the next run — e.g., `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'` when the current source doesn't even mention `on_startup`.
+
+After any edit that changes imports or class/function signatures, clear the cache for the affected directories:
+```bash
+find . -path "*/app/*/__pycache__" -exec rm -rf {} + 2>/dev/null
+# or more targeted:
+rm -rf app/routers/__pycache__ app/__pycache__
+```
+
+This is especially common after adding new FastAPI routes (new imports like `UploadFile`) or modifying repository method signatures. The error message will reference code that doesn't exist in the current source — that's the tell.
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.

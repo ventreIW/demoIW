@@ -110,6 +110,8 @@ This exists because RCA s2092.1 showed E1323 ("eliminate subprocess layer") clos
 All stories marked complete in epic scope AND each "In scope" / "Done when" item re-verified against code. Elimination commitments resolved (fulfilled | descoped-with-link | not-fulfilled-stop).
 </verification>
 
+**1c. Implementation verification**: For each story marked as done in the scope, verify that actual implementation exists: check that the story's changes are present in the codebase (e.g., via `git log --grep` or reviewing the story's branch merge) and that its tests pass. A story can be marked as done in the scope but lack code or tests; this step catches drift between documentation and reality.
+
 ### Step 1.5: Reconcile Jira Child Story Status (RAISE-1847)
 
 Query Jira for child stories that are NOT in Done status:

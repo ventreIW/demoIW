@@ -128,6 +128,7 @@ Fix the root cause (not symptoms). Write the regression test first (RED), then f
 - [ ] Regression test written (RED → GREEN)
 - [ ] Original problem no longer reproduces
 - [ ] All existing tests pass
+- [ ] If import errors appear after code changes, clear Python bytecode caches (`find . -type d -name __pycache__ -exec rm -rf {} +`)
 
 Prevention (choose what applies):
 - Regression test (always for S+)
