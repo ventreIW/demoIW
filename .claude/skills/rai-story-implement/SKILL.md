@@ -180,6 +180,18 @@ rm -rf app/routers/__pycache__ app/__pycache__
 
 This is especially common after adding new FastAPI routes (new imports like `UploadFile`) or modifying repository method signatures. The error message will reference code that doesn't exist in the current source — that's the tell.
 
+#### Testing Python abstract base classes
+
+When writing tests for abstract base classes (ABCs) in Python, avoid using the `isabstract` attribute on the method object (which does not exist). Instead, check the `__isabstractmethod__` attribute on the method function.
+
+Example:
+```python
+assert ILLMPort.generate.__isabstractmethod__ is True
+assert ILLMPort.query.__isabstractmethod__ is True
+```
+
+Using `method.isabstract` will raise an `AttributeError` because the attribute name is `__isabstractmethod__`.
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.
