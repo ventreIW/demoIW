@@ -33,3 +33,5 @@ __pycache__/
 htmlcov/
 .coverage
 .raise/rai/sessions.db
+.raise/rai/sessions.db
+.raise/rai/sessions.db
