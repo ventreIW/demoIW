@@ -180,6 +180,26 @@ rm -rf app/routers/__pycache__ app/__pycache__
 
 This is especially common after adding new FastAPI routes (new imports like `UploadFile`) or modifying repository method signatures. The error message will reference code that doesn't exist in the current source — that's the tell.
 
+#### Testing Python abstract base classes
+
+When writing tests for abstract base classes (ABCs) in Python, avoid using the `isabstract` attribute on the method object (which does not exist). Instead, check the `__isabstractmethod__` attribute on the method function.
+
+Example:
+```python
+assert ILLMPort.generate.__isabstractmethod__ is True
+assert ILLMPort.query.__isabstractmethod__ is True
+```
+
+Using `method.isabstract` will raise an `AttributeError` because the attribute name is `__isabstractmethod__`.
+
+#### Scope creep: modifying files outside the story's designated directories
+
+Stories define a clear scope (e.g., only `app/adapters/llm/` and its tests). Editing files outside this scope can introduce unintended side effects, violate ownership, and create merge conflicts. Before making changes, verify that the file path lies within the allowed directories listed in the story's scope. If you need to modify a shared file, first confirm with the team or create a separate story for that change.
+
+#### Dependency version mismatches causing test failures
+
+Tests may fail mysteriously due to version mismatches in transitive dependencies (e.g., `starlette` version incompatible with the pinned `FastAPI` version). If you encounter import errors in `conftest.py` or sudden test failures after a clean install, check the installed versions of key packages (`pip list`) and compare them with the versions declared in `requirements.txt` or `pyproject.toml`. Re‑install the problematic package with the correct version (e.g., `pip install fastapi==0.115.6 --force-reinstall`) or use `pytest --noconftest` to isolate unit tests from problematic project‑wide fixtures.
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.

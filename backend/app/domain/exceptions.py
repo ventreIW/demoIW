@@ -7,3 +7,8 @@ class EntityNotFoundError(Exception):
 
 class InvalidOperationError(Exception):
     pass
+
+
+class ExternalServiceError(Exception):
+    """Raised when an external service (e.g., LLM API) returns an error."""
+    pass
