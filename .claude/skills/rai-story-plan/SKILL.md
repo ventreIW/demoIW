@@ -218,3 +218,4 @@ rai signal emit-work story "{story_id}" --event complete --phase plan 2>/dev/nul
 - Gate: `gates/gate-plan.md`
 - Previous: `/rai-story-design`
 - Next: `/rai-story-implement`
+- `references/adr-005-llm-batching.md` – summary of ADR-005 on LLM enrichment batching strategy
