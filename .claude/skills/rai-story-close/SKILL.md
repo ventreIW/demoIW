@@ -7,7 +7,7 @@ allowed-tools:
 - Glob
 - Bash(rai:*)
 - Bash(git:*)
-description: Merge story branch to dev and update tracking. Use after story review.
+description: Merge story branch to dev and update tracking. Use after story review. When editing files, always show current content and proposed diff before making changes.
 license: MIT
 metadata:
   raise.adaptable: 'true'
