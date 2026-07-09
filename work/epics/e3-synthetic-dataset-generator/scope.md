@@ -45,5 +45,5 @@
 - [ ] `mypy app/` and `npm run typecheck` pass
 - [x] ADR-003 (procedural + LLM hybrid) written — s3.1
 - [x] ADR-004 (pattern-driven behavioural model) written — s3.1
-- [ ] ADR-005 (batched enrichment) written — s3.3
+- [x] ADR-005 (batched enrichment) written — s3.3
 - [ ] All 4 story retrospectives written
