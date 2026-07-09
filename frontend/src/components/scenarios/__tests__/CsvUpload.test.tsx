@@ -1,5 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderWithIntl } from '@/test-utils/i18n'
 import type { ScenarioSummary } from '@/types/scenario'
 
 vi.mock('@/lib/api/scenarios', () => ({
@@ -36,7 +37,7 @@ describe('CsvUpload', () => {
   })
 
   it('renders file input with accept=.csv and trigger button', () => {
-    render(<CsvUpload onUploadComplete={vi.fn()} />)
+    renderWithIntl(<CsvUpload onUploadComplete={vi.fn()} />)
 
     const input = screen.getByLabelText('Seleccionar archivo CSV')
     expect((input as HTMLInputElement).type).toBe('file')
@@ -46,7 +47,7 @@ describe('CsvUpload', () => {
   })
 
   it('shows selected file name after file selection', () => {
-    render(<CsvUpload onUploadComplete={vi.fn()} />)
+    renderWithIntl(<CsvUpload onUploadComplete={vi.fn()} />)
 
     const input = screen.getByLabelText('Seleccionar archivo CSV') as HTMLInputElement
     const file = createCsvFile('mi_escenario.csv')
@@ -59,7 +60,7 @@ describe('CsvUpload', () => {
   it('disables button and shows loading text during upload', async () => {
     mockUploadCsv.mockImplementation(() => new Promise(() => {}))
 
-    render(<CsvUpload onUploadComplete={vi.fn()} />)
+    renderWithIntl(<CsvUpload onUploadComplete={vi.fn()} />)
 
     const input = screen.getByLabelText('Seleccionar archivo CSV') as HTMLInputElement
     fireEvent.change(input, { target: { files: [createCsvFile()] } })
@@ -78,7 +79,7 @@ describe('CsvUpload', () => {
     mockUploadCsv.mockResolvedValue(mockScenario)
     const onUploadComplete = vi.fn()
 
-    render(<CsvUpload onUploadComplete={onUploadComplete} />)
+    renderWithIntl(<CsvUpload onUploadComplete={onUploadComplete} />)
 
     const input = screen.getByLabelText('Seleccionar archivo CSV') as HTMLInputElement
     fireEvent.change(input, { target: { files: [createCsvFile()] } })
@@ -95,7 +96,7 @@ describe('CsvUpload', () => {
     mockUploadCsv.mockRejectedValue(new Error('Missing required column: sector'))
     const onUploadComplete = vi.fn()
 
-    render(<CsvUpload onUploadComplete={onUploadComplete} />)
+    renderWithIntl(<CsvUpload onUploadComplete={onUploadComplete} />)
 
     const input = screen.getByLabelText('Seleccionar archivo CSV') as HTMLInputElement
     fireEvent.change(input, { target: { files: [createCsvFile()] } })

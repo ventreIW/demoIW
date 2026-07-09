@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { metadata } from '../layout'
+import { metadata } from '../[locale]/layout'
 import type { Metadata } from 'next'
 
 describe('layout metadata', () => {
@@ -21,7 +21,6 @@ describe('layout metadata', () => {
   })
 
   it('metadata type is assignable to Next.js Metadata', () => {
-    // TypeScript structural check — if this compiles, types are correct
     const _check: Metadata = metadata
     expect(_check).toBe(metadata)
   })
