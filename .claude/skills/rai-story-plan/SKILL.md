@@ -115,6 +115,7 @@ Divide story into atomic, individually verifiable tasks. One commit per task.
 - AC reference: link to `story.md` Gherkin scenario (if exists)
 - Verification: specify the `rai gate check` commands with explicit `--scope` (see Gate Policy below)
 - Size (XS/S/M/L) and dependencies
+- **Important:** When specifying dependencies, carefully check for circular dependencies (e.g., Task A depending on Task B while Task B also depends on Task A). Circular dependencies will block progress and must be resolved before proceeding.
 
 **Always include as final task:** Manual integration test — validate end-to-end with running software.
 
@@ -149,10 +150,11 @@ Each task is atomic and verifiable. Final integration test included.
 - Map dependencies (sequential vs parallel)
 - Apply risk-first ordering (riskiest tasks early)
 - Maximize parallelism where no mutual dependencies exist
+- **Verify no circular dependencies exist in the task graph** - this is a critical validation step
 - Verify no circular dependencies
 
 <verification>
-Execution order defined. Dependency graph is acyclic.
+Execution order defined. Dependency graph is acyclic (contains no circular dependencies).
 </verification>
 
 ### Step 4: Document Plan
@@ -216,3 +218,4 @@ rai signal emit-work story "{story_id}" --event complete --phase plan 2>/dev/nul
 - Gate: `gates/gate-plan.md`
 - Previous: `/rai-story-design`
 - Next: `/rai-story-implement`
+- `references/adr-005-llm-batching.md` – summary of ADR-005 on LLM enrichment batching strategy

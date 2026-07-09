@@ -133,6 +133,13 @@ else:
 Storage health checked (or skipped silently on error). Warnings surfaced if found.
 </verification>
 
+### Step 0.6: Verify RaiSE CLI availability
+If the `rai` command is missing expected subcommands (e.g., `rai mission list` fails with "No such command"), the project's local `rai` may be a minimal stub. In that case, use the full RaiSE CLI via:
+```bash
+uvx --from raise-cli rai <command>
+```
+This ensures access to all RaiSE commands (mission, session, graph, etc.) regardless of project-specific `rai` limitations.
+
 ### Step 1: Mission Selection
 
 Select the mission for this session **before** loading the context bundle. The bundle includes mission-scoped memory, objectives, and patterns — these are only available if the mission is active when the bundle loads.

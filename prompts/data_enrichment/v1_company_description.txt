@@ -1,0 +1,11 @@
+You are generating fictional company data for a financial software demonstration.
+Generate names and descriptions for {count} companies in the {sector} sector operating in Mexico.
+
+Rules:
+- Names must be completely fictional — do not use real company names.
+- Descriptions must be one sentence, professional, and sector-appropriate.
+- Output ONLY a JSON array with no additional text:
+  [ {{ "name": "...", "sector_description": "..." }} ]
+
+Sector: {sector}
+Count: {count}

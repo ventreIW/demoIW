@@ -1,3 +1,8 @@
+# NOTE: starlette is a transitive dep of fastapi — do NOT pin it separately.
+# If tests fail with "unexpected keyword argument 'on_startup'" after a fresh
+# install, an incompatible starlette version got installed. Fix with:
+#   pip install --force-reinstall "fastapi==0.115.6"
+# See dev/known-issues/001-starlette-fastapi-mismatch.md for details.
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
 sqlalchemy[asyncio]==2.0.36
