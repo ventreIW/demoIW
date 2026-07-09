@@ -260,6 +260,7 @@ rai signal emit-work story "{story_id}" --event complete --phase init 2>/dev/nul
 - **Pre-existing story files with checkbox ACs**: When a story file already exists in the work directory but uses `- [ ]` checkbox format for acceptance criteria, rewrite it to Gherkin format following `templates/story.md`. Checkbox ACs are ambiguous and lack concrete scenarios — the template's Gherkin + SbE format is mandatory. Always read existing files before committing; do not assume they're template-compliant.
 - **`git stash` with path spec may not clear staged changes**: When working tree hygiene requires discarding a modified tracked file, a plain `git stash push -- <file>` may not include staged changes. If the file reappears after stash, use `git checkout -- <file>` for unstaged or `git reset HEAD <file>` for staged modifications.
 - **`rai docs write` requires a configured docs adapter**: If the manifest has no docs target and the command fails with "unknown artifact type", fall back to `write_file` with the template structure. The commit is the deliverable; the dual-write to a remote target is best-effort.
+- **Branch field in story.md must match actual branch**: The `Branch:` field in the story file should include the `story/` prefix and use a slash between the story ID and the slug (e.g., `story/s3.2/openrouter-adapter`). Failure to keep this in sync can cause confusion. Always update the story file when creating the branch.
 
 ## References
 

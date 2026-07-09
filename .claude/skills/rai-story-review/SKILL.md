@@ -62,6 +62,8 @@ See `raise.mastery` in frontmatter.
 
 ### PRIME (mandatory — do not skip)
 
+> **Note**: If the `rai` command is not found in your PATH, you can try using `python -m raise_cli` (assuming the RaiSE CLI is installed via `pip install raise-cli`) or install it globally.
+
 Before starting Step 1, you MUST execute the PRIME protocol:
 
 1. **Graph query**: Execute tier1 queries from this skill's metadata using the `raise_graph_query` MCP tool. If MCP unavailable, fall back to `rai graph query`. 0 results is valid.

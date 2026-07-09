@@ -60,6 +60,8 @@ See `raise.mastery` in frontmatter.
 
 ### Step 0: Instrument
 
+> **Note**: If the `rai` command is not found in your PATH, you can try using `python -m raise_cli` (assuming the RaiSE CLI is installed via `pip install raise-cli`) or install it globally.
+
 ```bash
 rai signal emit-work story "{story_id}" --event start --phase close 2>/dev/null || true
 ```

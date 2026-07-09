@@ -12,3 +12,4 @@ python-multipart==0.0.32
 numpy==2.2.1
 pandas==2.2.3
 faker==33.1.0
+respx==0.23.1
