@@ -107,6 +107,8 @@ If a design document exists, restate the design intent in 2-3 sentences and conf
 
 For the next uncompleted task in plan order:
 
+0. **Before editing any file**: display the file's current content and wait for user confirmation. Then show the proposed diff (unified format) and wait for user confirmation before applying the change.
+
 1. **RED** — Call `raise_session_topic(kind="implement", topic="red")` first, then write a failing test that defines expected behavior
 2. **GREEN** — Call `raise_session_topic(kind="implement", topic="green")` first, then write minimal code to make the test pass
 3. **REFACTOR** — Call `raise_session_topic(kind="implement", topic="refactor")` first, then clean up while keeping tests green
