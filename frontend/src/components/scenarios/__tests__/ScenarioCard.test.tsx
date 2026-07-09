@@ -1,5 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
+import { renderWithIntl } from '@/test-utils/i18n'
 import ScenarioCard from '../ScenarioCard'
 import type { ScenarioSummary } from '@/types/scenario'
 
@@ -23,7 +24,7 @@ const activeScenario: ScenarioSummary = {
 
 describe('ScenarioCard', () => {
   it('renders name, sector badge, and Seleccionar button for inactive scenario', () => {
-    render(
+    renderWithIntl(
       <ScenarioCard
         scenario={mockScenario}
         isActive={false}
@@ -39,7 +40,7 @@ describe('ScenarioCard', () => {
   })
 
   it('renders Activo badge and no Seleccionar button for active scenario', () => {
-    render(
+    renderWithIntl(
       <ScenarioCard
         scenario={activeScenario}
         isActive={true}
@@ -55,7 +56,7 @@ describe('ScenarioCard', () => {
 
   it('calls onActivate when Seleccionar button is clicked', () => {
     const onActivate = vi.fn()
-    render(
+    renderWithIntl(
       <ScenarioCard
         scenario={mockScenario}
         isActive={false}
@@ -69,7 +70,7 @@ describe('ScenarioCard', () => {
   })
 
   it('shows loading state when isActivating is true', () => {
-    render(
+    renderWithIntl(
       <ScenarioCard
         scenario={mockScenario}
         isActive={false}

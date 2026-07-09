@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { uploadCsv } from '@/lib/api/scenarios'
 
 interface CsvUploadProps {
@@ -8,6 +9,7 @@ interface CsvUploadProps {
 }
 
 export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
+  const t = useTranslations()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -32,11 +34,11 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
     setSuccess(null)
     try {
       const scenario = await uploadCsv(file)
-      setSuccess(`Escenario "${scenario.name}" creado correctamente.`)
+      setSuccess(t('csv.successCreated', { name: scenario.name }))
       setFile(null)
       onUploadComplete()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al subir el archivo.')
+      setError(e instanceof Error ? e.message : t('csv.errorUpload'))
     } finally {
       setUploading(false)
     }
@@ -48,7 +50,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
         ref={fileInputRef}
         type="file"
         accept=".csv"
-        aria-label="Seleccionar archivo CSV"
+        aria-label={t('csv.selectFile')}
         className="hidden"
         onChange={handleFileChange}
       />
@@ -61,7 +63,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
             disabled={uploading}
             className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
-            Subir CSV
+            {t('csv.uploadButton')}
           </button>
         ) : (
           <>
@@ -72,7 +74,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
               disabled={uploading}
               className="inline-flex h-8 items-center justify-center rounded-lg border border-transparent bg-slate-800 px-3 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
             >
-              {uploading ? 'Subiendo...' : 'Subir'}
+              {uploading ? t('csv.uploading') : t('csv.upload')}
             </button>
             <button
               type="button"
@@ -83,7 +85,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
               }}
               disabled={uploading}
               className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-500 hover:text-slate-700 disabled:opacity-50"
-              aria-label="Cancelar seleccion"
+              aria-label={t('csv.cancelSelection')}
             >
               ✕
             </button>

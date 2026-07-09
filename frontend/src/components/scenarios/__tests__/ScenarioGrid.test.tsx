@@ -1,5 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
+import { renderWithIntl } from '@/test-utils/i18n'
 import type { ScenarioSummary } from '@/types/scenario'
 
 // Vitest hoists vi.mock to the top of the file automatically
@@ -30,14 +31,14 @@ const mockScenarios: ScenarioSummary[] = [
 
 describe('ScenarioGrid', () => {
   it('renders all scenarios as cards', () => {
-    render(<ScenarioGrid scenarios={mockScenarios} activeId={null} />)
+    renderWithIntl(<ScenarioGrid scenarios={mockScenarios} activeId={null} />)
 
     expect(screen.getByText('Caso 1')).toBeDefined()
     expect(screen.getByText('Caso 2')).toBeDefined()
   })
 
   it('calls activateScenario when a card button is clicked', () => {
-    render(<ScenarioGrid scenarios={mockScenarios} activeId={null} />)
+    renderWithIntl(<ScenarioGrid scenarios={mockScenarios} activeId={null} />)
 
     const buttons = screen.getAllByText('Seleccionar')
     fireEvent.click(buttons[0])
@@ -49,7 +50,7 @@ describe('ScenarioGrid', () => {
   it('marks activating card as disabled', () => {
     // We can't easily test the internal activatingId state without mocking fetch
     // This test verifies the Grid renders correctly with activeId prop
-    render(<ScenarioGrid scenarios={mockScenarios} activeId="id-2" />)
+    renderWithIntl(<ScenarioGrid scenarios={mockScenarios} activeId="id-2" />)
 
     const buttons = screen.getAllByRole('button')
     // Only 1 button: the inactive card (id-1), active card (id-2) shows text instead

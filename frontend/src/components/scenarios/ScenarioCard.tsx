@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import {
   Card,
   CardHeader,
@@ -18,20 +19,17 @@ interface ScenarioCardProps {
   isActivating: boolean
 }
 
-const SECTOR_LABELS: Record<string, string> = {
-  manufacturing: 'manufacturing',
-  retail: 'retail',
-  professional_services: 'professional_services',
-}
-
-function statusBadge(scenario: ScenarioSummary): { text: string; color: string } {
+function statusBadge(
+  scenario: ScenarioSummary,
+  t: ReturnType<typeof useTranslations>,
+): { text: string; color: string } {
   if (scenario.status === 'active') {
-    return { text: 'Activo', color: 'bg-green-100 text-green-800' }
+    return { text: t('scenario.status.active'), color: 'bg-green-100 text-green-800' }
   }
   if (scenario.client_count === 0) {
-    return { text: 'Sin datos', color: 'bg-gray-100 text-gray-600' }
+    return { text: t('scenario.status.noData'), color: 'bg-gray-100 text-gray-600' }
   }
-  return { text: 'Con datos', color: 'bg-blue-100 text-blue-800' }
+  return { text: t('scenario.status.withData'), color: 'bg-blue-100 text-blue-800' }
 }
 
 export default function ScenarioCard({
@@ -40,8 +38,9 @@ export default function ScenarioCard({
   onActivate,
   isActivating,
 }: ScenarioCardProps) {
-  const badge = statusBadge(scenario)
-  const sectorLabel = SECTOR_LABELS[scenario.sector] ?? scenario.sector
+  const t = useTranslations()
+  const badge = statusBadge(scenario, t)
+  const sectorLabel = t(`sectors.${scenario.sector}` as never)
 
   return (
     <Card className={isActive ? 'ring-primary ring-2' : ''}>
@@ -60,15 +59,19 @@ export default function ScenarioCard({
           >
             {badge.text}
           </span>
-          <span className="text-sm text-slate-500">{scenario.client_count} clientes</span>
+          <span className="text-sm text-slate-500">
+            {t('scenario.clientCount', { count: scenario.client_count })}
+          </span>
         </div>
       </CardContent>
       <CardFooter>
         {isActive ? (
-          <span className="text-primary text-sm font-medium">Activo</span>
+          <span className="text-primary text-sm font-medium">
+            {t('scenario.status.active')}
+          </span>
         ) : (
           <Button onClick={() => onActivate(scenario.id)} disabled={isActivating} variant="default">
-            {isActivating ? 'Activando...' : 'Seleccionar'}
+            {isActivating ? t('scenario.actions.activating') : t('scenario.actions.select')}
           </Button>
         )}
       </CardFooter>

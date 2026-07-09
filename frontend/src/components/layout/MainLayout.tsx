@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -10,16 +13,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 }
 
 function Sidebar() {
+  const t = useTranslations()
+
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r bg-slate-50 md:block">
       <div className="flex h-full flex-col">
         <div className="border-b px-6 py-4">
-          <span className="text-lg font-semibold text-slate-800">demoIW</span>
+          <span className="text-lg font-semibold text-slate-800">{t('app.title')}</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          <SidebarLink href="#">Operaciones</SidebarLink>
-          <SidebarLink href="#">Ejecutivo</SidebarLink>
-          <SidebarLink href="/scenarios">Escenarios</SidebarLink>
+          <SidebarLink href="#">{t('sidebar.operations')}</SidebarLink>
+          <SidebarLink href="#">{t('sidebar.executive')}</SidebarLink>
+          <SidebarLink href="/scenarios">{t('sidebar.scenarios')}</SidebarLink>
         </nav>
       </div>
     </aside>
