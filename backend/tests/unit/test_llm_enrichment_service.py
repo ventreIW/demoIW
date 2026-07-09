@@ -84,3 +84,62 @@ async def test_enrich_with_mock_llm_returns_correct_enrichment():
         # The sector should remain unchanged
         assert enriched_dataset.clients.iloc[0]["sector"] == "Software"
         assert enriched_dataset.clients.iloc[1]["sector"] == "Software"
+
+
+@pytest.mark.asyncio
+async def test_enrich_with_mock_llm_malformed_json_fallback_to_original():
+    # Arrange
+    mock_llm = AsyncMock(spec=ILLMPort)
+    # Return malformed JSON (missing closing bracket)
+    mock_llm.generate.return_value = "{ \"name\": \"Test\""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        prompt_dir = Path(tmpdir)
+        (prompt_dir / "data_enrichment").mkdir()
+        template_file = prompt_dir / "data_enrichment" / "v1_company_description.txt"
+        template_file.write_text(
+            "You are generating fictional company data for a financial software demonstration.\n"
+            "Generate names and descriptions for {count} companies in the {sector} sector operating in Mexico.\n\n"
+            "Rules:\n"
+            "- Names must be completely fictional — do not use real company names.\n"
+            "- Descriptions must be one sentence, professional, and sector-appropriate.\n"
+            "- Output ONLY a JSON array with no additional text:\n"
+            "  [{\"name\": \"...\", \"sector_description\": \"...\"}, ...]\n\n"
+            "Sector: {sector}\n"
+            "Count: {count}"
+        )
+
+        from app.application.services.llm_enrichment_service import LLMEnrichmentService
+
+        service = LLMEnrichmentService(llm_port=mock_llm, prompt_dir=prompt_dir)
+
+        # Original data
+        clients_data = [
+            {"name": "Original Corp", "sector": "Software"},
+            {"name": "Another LLC", "sector": "Software"}
+        ]
+        import pandas as pd
+        clients_df = pd.DataFrame(clients_data)
+        raw_dataset = RawDataset(
+            clients=clients_df,
+            invoices=pd.DataFrame(),
+            payments=pd.DataFrame()
+        )
+        # Keep a copy to compare later
+        original_clients = raw_dataset.clients.copy()
+
+        # Act
+        enriched_dataset = await service.enrich(raw_dataset, model="test-model")
+
+        # Assert
+        # LLM generate called once (batch size 20, 2 clients)
+        assert mock_llm.generate.call_count == 1
+        # sector_description column should exist (added for all rows)
+        assert "sector_description" in enriched_dataset.clients.columns
+        # Names should remain unchanged (fallback)
+        pd.testing.assert_frame_equal(enriched_dataset.clients[["name", "sector"]], original_clients[["name", "sector"]])
+        # sector_description should be NaN/None for all rows (since enrichment failed)
+        assert enriched_dataset.clients["sector_description"].isna().all()
+        # Ensure other tables unchanged (they were empty)
+        assert enriched_dataset.invoices.equals(raw_dataset.invoices)
+        assert enriched_dataset.payments.equals(raw_dataset.payments)
