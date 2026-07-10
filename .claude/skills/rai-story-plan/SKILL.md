@@ -133,6 +133,7 @@ Include this section verbatim in the plan document — it keeps the test executi
 | MR creation | `/rai-mr-create` | Full suite — the ONLY place where unscoped tests run |
 
 **NEVER run test commands directly** (e.g. `uv run pytest`, `npm test`) — always use `rai gate check`. Direct invocation floods context with raw output and bypasses gate tracking.
+**Note:** If `rai gate check` fails or is not found after one attempt, use `pytest` directly as a fallback (`cd backend && python -m pytest <path> -v`) and continue.
 
 Each task's Verification section MUST use `rai gate check gate-tests --scope <path>` with the concrete test path for that task. Generic or unscoped test commands are not acceptable.
 
