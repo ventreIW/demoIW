@@ -97,10 +97,10 @@ Working tree is clean (or user explicitly chose to keep changes). No orphan stag
 Quick sanity check on SQLite storage. **Never blocks session start** — warn and continue. If the `rai` command is not found, ensure the RaiSE CLI is installed and the virtual environment is activated (e.g., `source .venv/bin/activate`).
 
 ```bash
-rai db check 2>&1 || true
+rai db status 2>&1 || true
 ```
 
-If `rai db check` is not available, run manually:
+If `rai db status` is not available, run manually:
 
 ```bash
 python3 -c "
@@ -223,6 +223,8 @@ The bundle now includes mission-scoped context (memories, objectives, last-sessi
 
 **IMPORTANT:** This is the ONLY `rai session start` CLI command in this skill. The context bundle output is complete — do NOT invent additional flags (e.g. `--section`), sub-commands (e.g. `rai context load`), or follow-up CLI calls to "fetch more". If the bundle mentions available context sections, that information is for display only. All interpretation happens in Step 3 using inference, not additional tool calls.
 
+**Note:** If the session start output warns about stale sessions (started >24h ago), consider closing them with `rai session close --session <ID>` to keep the session database tidy. Also, the `rai session journal` command is deprecated; use `/rai-session-close` for session continuity.
+
 ### Step 3: Interpret & Present
 
 1. **Check signals** (priority order):
@@ -288,6 +290,17 @@ Omit the **MCP:** line entirely if no servers are registered.
 - [ ] Session focus proposed from pending work
 - [ ] Verbosity adapted to developer ShuHaRi level
 - [ ] MCP health checked when servers registered (silent skip if none)
+
+## Notes on Working with Story Artifacts
+
+When preparing to work on a story, prefer editing existing `scope.md` and `story.md` files rather than creating new "-backend" or duplicate files. This keeps a single source of truth and avoids confusion.
+
+Before creating a feature branch, verify with the team:
+- The branch naming convention (e.g., `story/s{epic}.{story}/{slug}`) and that it includes the `story/` prefix.
+- The ownership of the story (backend vs frontend) and which parts you are responsible for.
+- That the scope and story files reflect the agreed-upon split of work.
+
+Do not execute RaiSE commands such as `rai story start`, `rai story design`, or `rai story plan` without explicit user confirmation after reviewing the updated scope/story files.
 
 ## References
 
