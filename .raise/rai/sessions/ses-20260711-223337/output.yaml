@@ -1,0 +1,75 @@
+session_id: "ses-20260711-223337"
+summary: "SES-001: E3 s3.4 — Generate Scenario Endpoint completo + T5 bug fix (paid_date mapping)"
+type: feature
+outcomes:
+  - "POST /api/v1/scenarios/generate endpoint implemented in backend/app/routers/scenarios.py (T7)"
+  - "Integration tests for generate endpoint: 4 tests covering valid request, missing seed, invalid sector, LLM failure with graceful degradation (T8)"
+  - "Manual validation via TestClient - all 4 integration tests pass (T9)"
+  - "Bug fix in T5 code: generate_dataset.py line 110 changed record['payment_date'] -> record['paid_date'] to match procedural_generator.py output"
+  - "Updated mock data in test_generate_dataset.py to use 'paid_date' key"
+  - "All 103 tests passing (99 original + 4 new)"
+patterns:
+  - description: "Integration test pattern: use respx to mock OpenRouter LLM calls, verify DB persistence via API re-fetch"
+    context: "integration-testing,llm-mocking,respx,fastapi"
+    type: process
+  - description: "Bug fix scope adherence: only modify code you own (T5), don't touch s3.1 code (procedural_generator.py) owned by another developer"
+    context: "scope-management,bug-fix-ownership,team-boundaries"
+    type: process
+  - description: "Graceful LLM degradation: enrichment service catches errors and falls back to original procedural names; endpoint still returns 201"
+    context: "llm-enrichment,error-handling,graceful-degradation"
+    type: technical
+corrections:
+  - what: "Initially tried to fix paid_date bug by changing procedural_generator.py (s3.1 code) instead of generate_dataset.py (T5 code)"
+    lesson: "Respect team code ownership boundaries - fix bugs in your own code, not upstream dependencies you don't own"
+  - what: "Integration test exposed pre-existing bug in T5 that unit test mock data didn't catch (mock used 'payment_date' instead of 'paid_date')"
+    lesson: "Unit test mock data must match real producer output; integration tests catch contract mismatches"
+coaching:
+  trust_level: "established"
+  strengths: ["structured thinking", "scope discipline", "test-first verification"]
+  growth_edge: "async patterns"
+  autonomy: "high within defined scope"
+  relationship:
+    quality: "productive"
+    trajectory: "stable"
+current_work:
+  release: "V3.0"
+  epic: "E3-synthetic-dataset-generator"
+  story: "S3.4"
+  phase: "review"
+  branch: "story/s3.4/generate-scenario-endpoint"
+pending:
+  decisions: []
+  blockers: []
+  next_actions:
+    - "Merge story branch to main (rai-epic-close will handle)"
+    - "Update epic scope.md to mark s3.4 complete"
+    - "Run rai-story-close to merge locally"
+narrative: |
+  ## Decisions
+  - Implemented T7 endpoint exactly as designed in previous session (router pattern with Depends injection)
+  - Wrote T8 integration tests following existing test_scenarios_api.py and test_openrouter_adapter.py patterns
+  - Discovered T5 bug via integration test: generate_dataset.py expected 'payment_date' but procedural_generator produces 'paid_date'
+  - Correctly fixed bug in T5 code (generate_dataset.py + test) instead of modifying s3.1 procedural_generator.py
+  - T9 validation confirmed: endpoint returns 201 with ScenarioSummary, 3 clients persisted, graceful LLM degradation works
+
+  ## Research
+  - Confirmed procedural_generator.py uses 'paid_date' column (lines 143, 172, 197) - this is s3.1 code, correct
+  - Confirmed Payment domain entity uses 'payment_date' field - the mapping in generate_dataset.py must translate
+  - Unit test mock data in test_generate_dataset.py was wrong (used 'payment_date' key) - fixed to 'paid_date'
+
+  ## Artifacts
+  - Created: backend/tests/integration/test_generate_scenario.py (4 tests)
+  - Modified: backend/app/routers/scenarios.py (new endpoint + imports)
+  - Modified: backend/app/application/use_cases/generate_dataset.py (line 110: payment_date -> paid_date)
+  - Modified: backend/tests/unit/test_generate_dataset.py (mock data: payment_date -> paid_date)
+  - Commits: c611bd1 (T7), f82ede5 (T5 fix), fcec897 (T8)
+
+  ## Branch State
+  - Branch: story/s3.4/generate-scenario-endpoint
+  - 3 commits ahead of main
+  - Ready for merge via rai-epic-close
+
+next_session_prompt: |
+  Priority: Merge s3.4 to main via rai-epic-close (E3).
+  Verify epic scope.md updated with s3.4 completion.
+  No outstanding work on this story - all T7, T8, T9 complete.
