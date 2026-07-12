@@ -202,6 +202,18 @@ Stories define a clear scope (e.g., only `app/adapters/llm/` and its tests). Edi
 
 Tests may fail mysteriously due to version mismatches in transitive dependencies (e.g., `starlette` version incompatible with the pinned `FastAPI` version). If you encounter import errors in `conftest.py` or sudden test failures after a clean install, check the installed versions of key packages (`pip list`) and compare them with the versions declared in `requirements.txt` or `pyproject.toml`. Re‑install the problematic package with the correct version (e.g., `pip install fastapi==0.115.6 --force-reinstall`) or use `pytest --noconftest` to isolate unit tests from problematic project‑wide fixtures.
 
+#### Strict adherence to modification scope and patterns
+
+When a story explicitly restricts modifications to a specific set of files (e.g., "You may ONLY modify: X, Y, Z"), do not edit any other files, even if they seem related or needed. Inventing dependencies or importing modules that are not already present in the file is prohibited. If a required dependency (e.g., a service or repository) is not yet wired in the container, you must first ask the user how it is currently provided elsewhere, rather than assuming or creating new adapters, configuration modules, or imports.
+
+When modifying a file, follow the exact existing pattern for similar constructs. For example, if the file already contains a dependency provider function (`get_scenario_repo`), replicate its signature, decorators, and docstring style exactly when adding new providers (`get_client_repo`, etc.). Do not introduce new patterns, import styles, or dependency injection variations.
+
+Additionally, when working with immutable or frozen data structures (e.g., Pydantic models, dataclasses with `frozen=True`), perform any necessary data transformations (such as converting `NaN` to `None`) **before** constructing the object, never after. Attempting to mutate an instance after creation will violate type checkers and may cause runtime errors.
+
+#### Verifying scope claims and following project conventions
+
+Always verify scope claims against the actual codebase; do not rely solely on documentation (e.g., scope.md) as it may be outdated. In WSL, use `uv venv` (not `python3 -m venv`) for creating virtual environments due to lack of sudo access. Branch names must use the `story/` prefix (e.g., `story/s3.4/generate-scenario-endpoint`). When editing files, prefer modifying existing files over creating new ones, and maintain a single source of truth for scope and story documentation (avoid duplicating information in separate backend/frontend files).
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.
