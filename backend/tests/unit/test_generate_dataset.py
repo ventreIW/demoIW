@@ -27,12 +27,12 @@ async def test_generate_dataset_execute_persists_via_repositories():
     raw_dataset = RawDataset(
         clients=pd.DataFrame({"id": ["11111111-1111-1111-1111-111111111111"], "name": ["Client A"], "sector": [Sector.MANUFACTURING.value], "payment_history_pattern": [PaymentPattern.ON_TIME.value]}),
         invoices=pd.DataFrame({"id": ["33333333-3333-3333-3333-333333333333"], "client_id": ["11111111-1111-1111-1111-111111111111"], "folio": ["INV-001"], "amount": [100.0], "issue_date": [datetime(2024, 1, 1, tzinfo=timezone.utc)], "due_date": [datetime(2024, 2, 1, tzinfo=timezone.utc)], "days_overdue": [0], "status": ["PENDING"]}),
-        payments=pd.DataFrame({"id": ["55555555-5555-5555-5555-555555555555"], "invoice_id": ["33333333-3333-3333-3333-333333333333"], "amount": [50.0], "payment_date": [datetime(2024, 1, 15, tzinfo=timezone.utc)], "method": ["UNKNOWN"]}),
+        payments=pd.DataFrame({"id": ["55555555-5555-5555-5555-555555555555"], "invoice_id": ["33333333-3333-3333-3333-333333333333"], "amount": [50.0], "paid_date": [datetime(2024, 1, 15, tzinfo=timezone.utc)], "method": ["UNKNOWN"]}),
     )
     enriched_dataset = RawDataset(
         clients=pd.DataFrame({"id": ["11111111-1111-1111-1111-111111111111"], "name": ["Client A"], "sector": [Sector.MANUFACTURING.value], "payment_history_pattern": [PaymentPattern.ON_TIME.value], "sector_description": ["Desc A"]}),
         invoices=pd.DataFrame({"id": ["33333333-3333-3333-3333-333333333333"], "client_id": ["11111111-1111-1111-1111-111111111111"], "folio": ["INV-001"], "amount": [100.0], "issue_date": [datetime(2024, 1, 1, tzinfo=timezone.utc)], "due_date": [datetime(2024, 2, 1, tzinfo=timezone.utc)], "days_overdue": [0], "status": ["PENDING"]}),
-        payments=pd.DataFrame({"id": ["55555555-5555-5555-5555-555555555555"], "invoice_id": ["33333333-3333-3333-3333-333333333333"], "amount": [50.0], "payment_date": [datetime(2024, 1, 15, tzinfo=timezone.utc)], "method": ["UNKNOWN"]}),
+        payments=pd.DataFrame({"id": ["55555555-5555-5555-5555-555555555555"], "invoice_id": ["33333333-3333-3333-3333-333333333333"], "amount": [50.0], "paid_date": [datetime(2024, 1, 15, tzinfo=timezone.utc)], "method": ["UNKNOWN"]}),
     )
 
     mock_enrichment_service = AsyncMock(spec=LLMEnrichmentService)

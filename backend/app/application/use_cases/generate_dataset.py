@@ -107,7 +107,7 @@ class GenerateDataset:
                 id=UUID(record["id"]),  # use original payment id as id in Payment object
                 invoice_id=invoice_id_map[UUID(record["invoice_id"])],
                 amount=record["amount"],
-                payment_date=record["payment_date"],
+                payment_date=record["paid_date"],
                 method=record.get("method", "UNKNOWN"),
             )
             payment_entities.append(payment)
