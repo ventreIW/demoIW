@@ -60,6 +60,10 @@ See `raise.mastery` in frontmatter.
 
 **Inputs:** Implementation plan, project guardrails (from graph context).
 
+## Reference Files
+
+- `references/integration-test-patterns.md` — Patterns for integration tests with mocked external services (LLM, payment APIs). Includes bug detection lesson about producer/consumer field mismatches.
+
 ## Steps
 
 ### PRIME (mandatory — do not skip)
@@ -201,6 +205,43 @@ Stories define a clear scope (e.g., only `app/adapters/llm/` and its tests). Edi
 #### Dependency version mismatches causing test failures
 
 Tests may fail mysteriously due to version mismatches in transitive dependencies (e.g., `starlette` version incompatible with the pinned `FastAPI` version). If you encounter import errors in `conftest.py` or sudden test failures after a clean install, check the installed versions of key packages (`pip list`) and compare them with the versions declared in `requirements.txt` or `pyproject.toml`. Re‑install the problematic package with the correct version (e.g., `pip install fastapi==0.115.6 --force-reinstall`) or use `pytest --noconftest` to isolate unit tests from problematic project‑wide fixtures.
+
+#### Integration test patterns with mocked external services
+
+When writing integration tests that call external APIs (LLMs, payment providers, etc.), mock the HTTP layer using `respx` (or similar) rather than mocking the service adapter. This exercises the real code path including serialization, retries, and error handling. Follow the existing pattern in the codebase (e.g., `tests/unit/test_openrouter_adapter.py` for OpenRouter LLM mocking):
+
+```python
+@respx.mock
+async def test_my_integration(client: AsyncClient) -> None:
+    respx.post("https://api.example.com/endpoint").mock(
+        return_value=httpx.Response(200, json={"key": "value"})
+    )
+    response = await client.post("/my/endpoint", json=payload)
+    assert response.status_code == 200
+```
+
+Key principles:
+- Mock at the HTTP layer (`respx.post("https://api.example.com/...")`), not the adapter method
+- Use realistic response shapes matching the provider's actual API
+- Verify the mock was called (`assert mock_route.called`)
+- Test both success and failure paths (500, 400, timeout)
+
+#### Bug detection through integration tests
+
+Integration tests that exercise real persistence (not mocked repositories) can catch bugs that unit tests miss. In this story, the T8 integration test caught a pre-existing bug in T5's `generate_dataset.py` where the code expected `record["payment_date"]` but the procedural generator produces `paid_date`. The unit test's mock DataFrame used the wrong key name, so it passed while the real code failed.
+
+Lesson: Ensure integration test mock data matches the **actual producer's output** (procedural generator, external API, etc.), not what the consumer expects. When producer and consumer are owned by different developers/stories, this mismatch is a common source of bugs.
+
+#### Following existing router patterns exactly
+
+When adding new endpoints to an existing router, replicate the exact pattern of existing endpoints:
+- Same import style and organization
+- Same dependency injection pattern (`Depends(get_xxx)`)
+- Same response model usage (`response_model=XxxSummary`)
+- Same error handling (`HTTPException` with consistent detail format)
+- Same docstring style (if any)
+
+This ensures consistency and reduces review friction. In this story, the T7 endpoint matched the patterns in `scenarios.py` exactly.
 
 #### Strict adherence to modification scope and patterns
 
