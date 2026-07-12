@@ -261,6 +261,13 @@ rai signal emit-work story "{story_id}" --event complete --phase init 2>/dev/nul
 - **`git stash` with path spec may not clear staged changes**: When working tree hygiene requires discarding a modified tracked file, a plain `git stash push -- <file>` may not include staged changes. If the file reappears after stash, use `git checkout -- <file>` for unstaged or `git reset HEAD <file>` for staged modifications.
 - **`rai docs write` requires a configured docs adapter**: If the manifest has no docs target and the command fails with "unknown artifact type", fall back to `write_file` with the template structure. The commit is the deliverable; the dual-write to a remote target is best-effort.
 - **Branch field in story.md must match actual branch**: The `Branch:` field in the story file should include the `story/` prefix and use a slash between the story ID and the slug (e.g., `story/s3.2/openrouter-adapter`). Failure to keep this in sync can cause confusion. Always update the story file when creating the branch.
+- **Duplicate file creation for backend/frontend split**: When a story's work is split between backend and frontend (different owners), do **not** create separate files like `s3.4-backend-scope.md` or `s3.4-frontend-story.md`. Instead, edit the existing `s3.4-scope.md` and `s3.4-story.md` to reflect the actual work allocation (e.g., remove frontend items from scope when doing backend-only work) and keep a single source of truth. If needed, use clear section headings or comments to indicate ownership, but maintain one pair of files per story.
+
+## Pitfalls
+
+- When updating scope and story for a story that already has files (e.g., from a previous attempt), edit the existing files in place rather than creating new backend-only duplicates. Keep a single source of truth for scope and story; if work is split (e.g., backend vs frontend), reflect the allocation within the same files (e.g., by removing out-of-scope items or adding ownership comments).
+- Ensure the `Owner:` field in the story file is filled with the appropriate owner if known (e.g., set to `Nano` for backend work).
+- Double-check that the story branch follows the convention `story/s{N}.{M}/{slug}` (with the `story/` prefix) before committing.
 
 ## References
 

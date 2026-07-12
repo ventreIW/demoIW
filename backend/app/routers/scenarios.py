@@ -6,10 +6,13 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from app.container import get_scenario_repo
+from app.application.use_cases.generate_dataset import GenerateDataset
+from app.config import settings
+from app.container import get_generate_dataset_use_case, get_scenario_repo
 from app.domain.entities.scenario import Scenario
 from app.domain.enums import ScenarioStatus, Sector
 from app.domain.exceptions import EntityNotFoundError
+from app.domain.value_objects.generation_params import GenerationParams
 from app.ports.repositories import IScenarioRepository
 
 router = APIRouter(prefix="/api/v1/scenarios", tags=["scenarios"])
@@ -245,4 +248,26 @@ async def upload_csv(
         status=saved.status.value,
         client_count=count,
         created_at=saved.created_at,
+    )
+
+
+@router.post("/generate", response_model=ScenarioSummary, status_code=201)
+async def generate_scenario(
+    body: GenerationParams,
+    use_case: GenerateDataset = Depends(get_generate_dataset_use_case),
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> ScenarioSummary:
+    model = settings.MODEL_DATA_ENRICHMENT
+    await use_case.execute(body, model)
+    scenario = await repo.get_active()
+    if scenario is None:
+        raise HTTPException(status_code=500, detail="Failed to retrieve generated scenario")
+    client_count = await repo.get_client_count(scenario.id)
+    return ScenarioSummary(
+        id=scenario.id,
+        name=scenario.name,
+        sector=scenario.sector,
+        status=scenario.status.value,
+        client_count=client_count,
+        created_at=scenario.created_at,
     )
