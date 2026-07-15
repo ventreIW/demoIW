@@ -1,4 +1,4 @@
-import type { ScenarioSummary } from '@/types/scenario'
+import type { GenerationParams, ScenarioSummary } from '@/types/scenario'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -6,6 +6,20 @@ export async function listScenarios(): Promise<ScenarioSummary[]> {
   const res = await fetch(`${API_BASE}/api/v1/scenarios`, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error(`Failed to list scenarios: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function generateScenario(params: GenerationParams): Promise<ScenarioSummary> {
+  const res = await fetch(`${API_BASE}/api/v1/scenarios/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const body = await res.json()
+    const messages = body.detail?.map((d: { msg: string }) => d.msg).join(', ')
+    throw new Error(messages || `Error al generar: ${res.status}`)
   }
   return res.json()
 }
