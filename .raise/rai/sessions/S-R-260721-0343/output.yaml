@@ -1,0 +1,106 @@
+session_id: "S-R-260721-0343"
+summary: "SES-S-R-260721-0343: s4.4 y s4.5-formula entregadas — E4 con 5 stories cerradas, 308 tests, docs de decisiones estadísticas completas"
+type: feature
+outcomes:
+  - "s4.4 Score explanation entregada e integrada — PR #10 (43 tests)"
+  - "Close-out de s4.2/s4.3: board actualizado y 2 APIs muertas eliminadas — PR #11"
+  - "s4.5-formula entregada: valor esperado + filtro Pareto — PR #12 (48 tests)"
+  - "docs/03-scoring-and-prioritization-decisions.md creado; 01 y 02 corregidos — PR #13"
+  - "Contrato de s4.5-API empujado en 5d8980f antes de la lógica riesgosa, para desbloquear a Nano"
+  - "Backend 260 -> 308 tests; main verde en todo momento"
+patterns:
+  - description: "Cuando un segundo desarrollador está bloqueado por un CONTRATO y no por lógica, secuenciar el contrato primero y empujarlo, aunque contradiga el orden risk-first."
+    context: "planning,parallel-work,contracts,handoff"
+    type: process
+  - description: "Un subconjunto que cumple un umbral debe probarse por MINIMALIDAD, no sólo por cumplir el umbral. 'Contiene >=80% del valor' es cierto para la cartera entera."
+    context: "testing,pareto,off-by-one,thresholds"
+    type: technical
+  - description: "Verificar que una propiedad estadística nombrada realmente existe en los datos antes de construir una feature sobre ella. 'Pareto' implicaba 20/80; medido, el 20% superior concentra 40%."
+    context: "statistics,assumptions,measurement,synthetic-data"
+    type: process
+  - description: "El texto generado para usuarios debe enmarcar un hecho según el SIGNO de su contribución, no sólo renderizar su valor. Reglas individualmente correctas produjeron 'Buen perfil de pago: facturas con hasta 40 días de atraso'."
+    context: "explainability,ui-text,ml,phrasing"
+    type: technical
+  - description: "Revisar APIs públicas sin uso ANTES del close, no en el architecture-review gate. Tres stories seguidas enviaron una cada una; hacerlo criterio de aceptación atrapó la cuarta a tiempo."
+    context: "beck-r2,yagni,dead-code,acceptance-criteria"
+    type: process
+corrections:
+  - what: "Repetí una lección escrita una story antes: el test de frontera de sklearn se escribió como grep de substring y falló contra un docstring que describía la regla."
+    lesson: "Registrar una lección no es aplicarla. Los criterios estructurales deben ser assertions ejecutables desde el diseño."
+  - what: "Actualicé el board de s4.4 al hacer el merge, no después — rompiendo el patrón de las dos close-outs anteriores en este mismo épico."
+    lesson: "La corrección funcionó cuando la hice parte del mismo commit que el trabajo, no un paso posterior."
+  - what: "Leí la cola priorizada y me detuve en 'se ve bien'. Dos observaciones que ningún test captura salieron de ahí y debieron estar en las open questions del diseño."
+    lesson: "Leer la salida es un paso de diseño, no una verificación final."
+coaching:
+  trust_level: "established"
+  strengths: ["decide con medición", "acepta hallazgos incómodos sin suavizarlos"]
+  autonomy: "alta; consulta decisiones estadísticas y de política de negocio"
+  relationship:
+    quality: "productiva"
+    trajectory: "estable"
+current_work:
+  epic: E4
+  story: "s4.5-formula"
+  phase: closed
+  branch: main
+pending:
+  decisions:
+    - "Maximizar recuperación vs. prevenir castigos: la cola persigue dinero cobrable, no las cuentas más riesgosas. Decisión de política para Gustavo, no cambio de fórmula."
+    - "Sector del demo: retail es el más débil (AUC 0.605-0.710) vs manufacturing (0.681-0.819)."
+  blockers:
+    - "OPENROUTER_API_KEY ausente: bloquea s4.8, E5 s5.4 y E6 s6.3 — 3 de 6 módulos, demo 2026-08-14 (24 días)"
+  next_actions:
+    - "Nano: s4.5-API (contrato en 5d8980f), s4.6, s4.9 — los tres listos"
+    - "Renata: s4.7, incluye subir el mínimo del formulario de 10 a 200"
+    - "Rodrigo: story del generador log-normal (desbloquea la narrativa Pareto del demo) o cierre de E4"
+narrative: |
+  ## Decisions
+  - s4.4: agrupar features correlacionadas ANTES del ranking, no al renderizar. Agruparlas tarde
+    haría que "antigüedad" pierda un lugar que ganó — el mismo problema de peso dividido que
+    desestabilizó los coeficientes en s4.3, en forma de presentación.
+  - s4.4: el enmarcado sigue el signo de la contribución. Una contribución positiva de antigüedad
+    significa menos atraso que el promedio, así que "40 días" es favorable ahí y grave en otro lado.
+  - s4.5: prioridad = saldo x score/100, en pesos. Tiene unidades reales SÓLO porque s4.3 rechazó
+    class_weight para mantener predict_proba calibrado.
+  - s4.5: el subconjunto Pareto es el prefijo MÁS PEQUEÑO que alcanza el umbral. La cartera entera
+    también supera el 80%, así que la minimalidad es el requisito.
+  - s4.5: se implementó el filtro honestamente y se parkeó el hallazgo del generador. La cartera no
+    está concentrada (20% superior = 40% del valor) porque los montos son Normal, no de cola pesada.
+  ## Research
+  - Prototipos durante diseño en s4.4 y s4.5. En s4.4 midió la correlación de contribuciones (0.885)
+    y el 26.2% de clientes con antigüedad duplicada. En s4.5 midió la curva de concentración
+    completa, que desmintió la premisa 20/80.
+  ## Artifacts
+  - backend/app/{application/services/{score_explainer,prioritizer}.py,
+    application/use_cases/prioritize_scenario.py, domain/value_objects/{explanation_factor,prioritized_case}.py}
+  - docs/03-scoring-and-prioritization-decisions.md (nuevo), 01 y 02 corregidos
+  - PRs #10, #11, #12, #13 — todos mergeados
+  ## Branch State
+  - main @ 00364f8, verde, sin ramas pendientes ni PRs abiertos
+next_session_prompt: |
+  E4 tiene cinco stories cerradas (s4.1-s4.5-formula). Backend en 308 tests, main verde, nada
+  pendiente en git.
+
+  ANTES DE ELEGIR TRABAJO: la OPENROUTER_API_KEY sigue sin existir y bloquea 3 de 6 módulos
+  (s4.8, E5 s5.4, E6 s6.3) contra un demo el 2026-08-14 — quedan 24 días. Es procurement, no
+  código, y sigue siendo lo de mayor apalancamiento.
+
+  Dos opciones para Rodrigo, y la primera vale más para el demo que otra endpoint:
+
+  1. Story del generador log-normal. La cartera no tiene concentración: el 20% superior de clientes
+     concentra 40% del valor esperado, no 80%, porque los montos son Normal(10000, 3000). El demo
+     dice hoy "158 de 271 cuentas concentran 80%" — cierto y poco impactante. El arreglo es ~1 línea
+     pero invalida los fixtures de seed 42 que fijan tests de s4.2, s4.3 y s4.4, así que necesita su
+     propia story. Está en dev/parking-lot.md con la medición.
+  2. Cierre de E4 cuando aterricen s4.5-API, s4.6, s4.7 y s4.9.
+
+  Nano tiene tres stories listas: s4.5-API (contrato en 5d8980f — decirle que value_share llega a
+  0.80 con ~58% de las cuentas, no 20%), s4.6 y s4.9. Renata tiene s4.7, que ahora incluye subir el
+  mínimo del formulario de 10 a 200.
+
+  Decisión de política pendiente con Gustavo: la cola persigue dinero cobrable, no las cuentas más
+  riesgosas. Un cliente con score 30 necesita un saldo enorme para superar a uno con 70. Es la
+  diferencia entre maximizar recuperación y prevenir castigos, y se dejó sin codificar a propósito.
+
+  Nadie que haga cobranza ha leído el español de las explicaciones todavía. Todos los checks
+  automáticos pasan; que a un gestor le suene natural es un juicio humano que sigue pendiente.
