@@ -7,6 +7,9 @@
 > Canonical decisions live in [ADR-003](../dev/decisions/adr-003-procedural-llm-hybrid.md) and
 > [ADR-004](../dev/decisions/adr-004-pattern-driven-behavioral-model.md). This doc explains the
 > *why* in one place.
+>
+> **Companion:** [03 — Scoring & Prioritization Decisions](03-scoring-and-prioritization-decisions.md)
+> covers how this data is *modelled* — what the collectability score predicts, and why.
 
 ---
 
@@ -51,7 +54,7 @@ receivable behave.
 |----------|--------------|--------------|----------------|
 | Client's payment behaviour | **Categorical / Multinomial** | sector-specific weights | Clients fall into behaviour classes (on-time, slow, defaulter); proportions differ by sector |
 | Invoices per client | **Poisson**(λ = `invoice_volume`) | mean invoices/client | Poisson is the standard model for "count of events in a period" — most clients near the mean, a few with many |
-| Invoice amount | **Normal**(mean, std), floored at 100 | `amount_mean`, `amount_std` | Invoice sizes cluster around a typical value with symmetric spread; floor prevents nonsensical tiny/negative amounts |
+| Invoice amount | **Normal**(mean, std), floored at 100 | `amount_mean`, `amount_std` | Invoice sizes cluster around a typical value with symmetric spread; floor prevents nonsensical tiny/negative amounts. **See the note below — this choice has a downstream consequence discovered in E4.** |
 | Days overdue / days late | **Exponential**(scale = `late_days_mean`) | per behaviour class | Lateness is "time until an event" — many slightly late, a long tail of very late. Exponential is the natural memoryless model |
 | Is an invoice overdue? | **Bernoulli**(p = `overdue_prob`) | per behaviour class | A yes/no draw; the probability depends on the client's class (see §4) |
 | Partial-payment fraction | **Uniform**(0.20, 0.60) | — | A partial payer covers "some but not most" of the balance; uniform keeps it simple and bounded |
@@ -60,6 +63,20 @@ receivable behave.
 > a *rate* λ. But NumPy's `exponential(x)` treats `x` as the **scale = mean**, not the rate. We
 > renamed it `late_days_mean` so the name matches the math. (Rate and mean are reciprocals:
 > mean = 1/λ.)
+
+> ⚠️ **The Normal amount distribution has no heavy tail — and that costs us the Pareto story.**
+> Measured in E4 (s4.5): the top 20% of clients hold only **40%** of expected recoverable value,
+> not 80%. Reaching 80% takes ~58% of the portfolio, consistently across all three sectors.
+>
+> Real receivables books are **heavy-tailed** — a handful of large clients dominate — which is
+> exactly what makes Pareto-style prioritization compelling. With `Normal(10,000, 3,000)` every
+> client holds a similar balance, so concentration can only come from score variation.
+>
+> **The fix is a log-normal amount distribution**, which is a small code change with a large blast
+> radius: it invalidates the seed-42 fixtures that several E4 test suites pin. Parked as its own
+> story rather than applied quietly. See
+> [03 §8](03-scoring-and-prioritization-decisions.md#8-prioritization-ranking-by-money-not-by-score)
+> and `dev/parking-lot.md`.
 
 ---
 
@@ -150,6 +167,8 @@ These are honest simplifications appropriate for a **demo asset** — not a cali
 - **One payment per invoice** (a single full or partial payment) — no instalment plans.
 - **Invoice amounts are independent of behaviour class** — only overdue behaviour depends on the
   class. (A defaulter's invoices are the same size as an on-time client's.)
+- **Invoice amounts are not heavy-tailed**, so the portfolio has almost no value concentration.
+  This was invisible until E4 measured it — see the note in §3.
 - **Net-30 terms are fixed** for all sectors.
 - The Normal amount distribution is **floored at 100**, which slightly biases the sample mean
   upward (observed ~0.7% above target) — negligible for a demo.

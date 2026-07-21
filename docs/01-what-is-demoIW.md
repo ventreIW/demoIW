@@ -115,8 +115,13 @@ runs against fakes/in-memory stores in tests).
 
 The interesting part is that the fake data is **not random noise**: it is engineered so that a
 client's behaviour genuinely predicts their outcomes, which is what lets the scoring engine look
-smart. The exact probability and statistics choices behind that are documented separately in
-[`02-probability-and-statistics-decisions.md`](./02-probability-and-statistics-decisions.md).
+smart. The exact probability and statistics choices behind that are documented separately:
+
+- [`02-probability-and-statistics-decisions.md`](./02-probability-and-statistics-decisions.md) —
+  how the data is **made**
+- [`03-scoring-and-prioritization-decisions.md`](./03-scoring-and-prioritization-decisions.md) —
+  how it is **modelled**: what the score predicts, why it is a real probability, and how the
+  queue is ranked
 
 ---
 
@@ -126,8 +131,13 @@ smart. The exact probability and statistics choices behind that are documented s
 |------|--------|
 | **E1 — Project scaffolding & CI** | ✅ Done |
 | **E2 — Data foundation** (domain schema, scenario API, CSV upload, selector UI) | ✅ Done |
-| **E3 — Synthetic dataset generator** | 🔄 In progress — the **procedural generation layer** (s3.1) is built |
-| E4 — Collectability scoring · E5 — Communications · E6 — Executive panel | ⬜ Upcoming |
+| **E3 — Synthetic dataset generator** | ✅ Done — closed 2026-07-20 (tag `epic/e3-complete`). One acceptance item descoped: LLM enrichment has not yet run against a real model |
+| **E4 — Intelligence engine** | 🔄 In progress — scoring, explanation and prioritization built (s4.2–s4.5-formula); API, i18n completion and score persistence in flight |
+| E5 — Communications · E6 — Executive panel · E7 — Demo readiness | ⬜ Upcoming |
+
+> ⚠️ **Open blocker:** there is still no `OPENROUTER_API_KEY`. It blocks LLM enrichment
+> verification (E3's descoped item), the communications generator (E5) and natural-language query
+> (E6) — **three of the six modules**. Nothing in the code can resolve it.
 
 **Timeline:** May 4 – August 14, 2026 (14 weeks). Built under the **RaiSE** methodology
 (disciplined story lifecycle: design → plan → TDD implementation → review → close).
