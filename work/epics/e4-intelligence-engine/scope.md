@@ -214,7 +214,7 @@ with mocks cannot catch contract mismatches between stories; only real E2E does.
 | s4.9 | Nano | ready | — | — | Can start immediately |
 | s4.7 | Renata | ready | — | — | Can start immediately |
 | s4.3 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#8) | **M1 GO.** ROC-AUC mean 0.732–0.739; ADR-007 amended (C=0.01). Built without persistence — s4.9 still owns it |
-| s4.4 | Rodrigo | ready | — | — | s4.3 merged. days_overdue_max/mean are 0.872 correlated — avoid listing both as top factors |
+| s4.4 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#10) | RF-02.3 delivered. Direction-aware phrasing after a contradiction found by reading real output |
 | s4.5-formula | Rodrigo | ready | — | — | s4.3 merged |
 | s4.5-API | Nano | blocked | — | — | Needs s4.5-formula |
 | s4.6 | Nano | ready | — | — | s4.3 merged |
