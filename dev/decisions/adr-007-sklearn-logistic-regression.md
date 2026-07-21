@@ -1,7 +1,7 @@
 # ADR-007: scikit-learn with Logistic Regression, Trained On Demand
 
 **Date:** 2026-07-21
-**Status:** Accepted
+**Status:** Accepted — **amended 2026-07-21** (see *Amendment 1: regularization strength*)
 **Epic:** e4-intelligence-engine
 
 ## Context
@@ -80,3 +80,67 @@ demonstrative asset. Revisit if scenario sizes grow by orders of magnitude.
 
 - Model access sits behind `IScoringPort`, so the implementation can be replaced without touching
   use cases — the same guardrail that keeps the backend provider-agnostic for LLMs.
+
+---
+
+## Amendment 1: regularization strength (2026-07-21, s4.3 T5)
+
+**`LogisticRegression(C=0.01)`, not the default `C=1.0`.**
+
+### What forced the amendment
+
+s4.3's integration test asserted the epic design's canary — `days_overdue_max` must carry a
+negative coefficient. On real generated data at n=1000 it came out **positive (+0.526)**: a model
+stating that being further overdue makes a client *more* collectable.
+
+The original ADR assumed coefficient attribution would be straightforward because the model is
+linear. It is linear; the *features* are not independent.
+
+| Feature pair | Correlation |
+|---|---:|
+| `days_overdue_max` ↔ `days_overdue_mean` | **0.872** |
+| `days_overdue_max` ↔ `pct_invoices_settled` | −0.413 |
+
+With collinear predictors the fit splits their weight arbitrarily, and the split moves with the
+seed. Measured at `C=1.0`: **19 of 27 configurations** produced a wrong-signed coefficient on
+`days_overdue_max`. Univariate correlations with the label were correct throughout (−0.283), so
+the data and the labeller were sound — the *fit* was unstable, not the signal.
+
+### Why it is not cosmetic
+
+This ADR chose logistic regression **specifically** so s4.4 could explain each score by ranking
+`coef × centred value`. Unstable signs make that explanation actively wrong: a collections manager
+would be told that 78 days overdue *raised* the client's score. The model would rank acceptably
+and explain nonsense — the failure mode hardest to catch by looking at accuracy.
+
+### Decision
+
+Set `C=0.01`. Stronger ridge shrinks correlated coefficients toward each other rather than letting
+them trade off against one another.
+
+Measured across 45 configurations (3 sectors × 3 sizes × 5 seeds):
+
+| Setting | Wrong-signed coefficients | Mean ROC-AUC |
+|---|---:|---:|
+| `C=1.0` (default) | 19/27 | 0.716 |
+| `C=0.1` | 4/27 | 0.725 |
+| **`C=0.01`** | **0/45** | **~0.735** |
+| Drop `days_overdue_mean`, `C=1.0` | 7/27 | 0.708 |
+
+Regularization bought stability **and** improved mean AUC. Dropping the collinear feature was
+considered and rejected: it discarded information and measured worse on both axes.
+
+### Consequence for the quality gate
+
+A single scenario's AUC carries real sampling noise — the measured per-run minimum is 0.577. The
+gate is therefore two-part:
+
+- **per-run floor 0.55** — catches a genuinely broken model
+- **mean across seeds ≥ 0.65** — the actual quality signal (measured 0.732–0.739)
+
+Evaluated on retail, the weakest sector, rather than a flattering one.
+
+### Guard
+
+`test_coefficient_signs_stable_across_seeds` fails if `C` returns to a value that reintroduces
+sign instability. The constant carries its rationale inline in `sklearn_scorer.py`.
