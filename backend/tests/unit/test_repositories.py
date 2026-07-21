@@ -1,9 +1,5 @@
 import abc
-from uuid import UUID
 
-from app.domain.entities.client import Client
-from app.domain.entities.invoice import Invoice
-from app.domain.entities.payment import Payment
 from app.ports.repositories import (
     IClientRepository,
     IInvoiceRepository,

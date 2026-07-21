@@ -7,9 +7,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from app.domain.exceptions import ExternalServiceError
 from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.llm_port import ILLMPort
-from app.domain.exceptions import ExternalServiceError
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +21,9 @@ class LLMEnrichmentService:
 
     DEFAULT_BATCH_SIZE = 20
 
-    def __init__(self, llm_port: ILLMPort, prompt_dir: Path | str, batch_size: int = DEFAULT_BATCH_SIZE):
+    def __init__(
+        self, llm_port: ILLMPort, prompt_dir: Path | str, batch_size: int = DEFAULT_BATCH_SIZE
+    ):
         self._llm = llm_port
         self._prompt_dir = Path(prompt_dir)
         self._batch_size = batch_size
@@ -52,8 +54,7 @@ class LLMEnrichmentService:
 
         # Split into batches
         batches = [
-            clients.iloc[i : i + self._batch_size]
-            for i in range(0, len(clients), self._batch_size)
+            clients.iloc[i : i + self._batch_size] for i in range(0, len(clients), self._batch_size)
         ]
 
         enriched_dfs = []
@@ -117,7 +118,7 @@ class LLMEnrichmentService:
         # Parse the JSON response
         try:
             enriched_list = json.loads(llm_response)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             # If the response is not valid JSON, raise to trigger fallback
             log.debug(f"LLM returned malformed JSON: {llm_response}")
             raise
@@ -133,9 +134,9 @@ class LLMEnrichmentService:
                 len(enriched_list),
                 len(batch),
             )
-            # We'll still proceed; the DataFrame creation will handle mismatch by padding/truncating?
-            # Better to fallback? For simplicity, we'll slice or pad with original data.
-            # We'll decide to fallback if lengths don't match.
+            # Fail loudly rather than pad or truncate: a length mismatch means the
+            # LLM response cannot be aligned to the batch, so enriching would
+            # silently attach the wrong description to the wrong client.
             raise ValueError("LLM response length mismatch")
 
         # Convert list of dicts to DataFrame

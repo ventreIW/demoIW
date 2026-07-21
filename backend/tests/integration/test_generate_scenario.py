@@ -12,14 +12,20 @@ async def test_generate_scenario_valid_returns_201_and_persists(client: AsyncCli
     # Enrichment service expects JSON array with name and sector_description
     mock_llm_response = [
         {"name": "Enriched Client 1", "sector_description": "A retail company in Mexico."},
-        {"name": "Enriched Client 2", "sector_description": "A retail business operating in Mexico."},
+        {
+            "name": "Enriched Client 2",
+            "sector_description": "A retail business operating in Mexico.",
+        },
         {"name": "Enriched Client 3", "sector_description": "Mexican retail enterprise."},
     ]
     respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
-        return_value=httpx.Response(200, json={
-            "choices": [{"message": {"content": str(mock_llm_response).replace("'", '"')}}],
-            "usage": {"prompt_tokens": 100, "completion_tokens": 50},
-        })
+        return_value=httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": str(mock_llm_response).replace("'", '"')}}],
+                "usage": {"prompt_tokens": 100, "completion_tokens": 50},
+            },
+        )
     )
 
     # Act

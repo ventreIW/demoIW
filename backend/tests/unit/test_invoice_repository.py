@@ -1,11 +1,12 @@
-import pytest
-from uuid import UUID, uuid4
 from datetime import datetime
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from uuid import UUID, uuid4
+
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.adapters.persistence.models import Base, ClientORM, InvoiceORM
 from app.adapters.persistence.sqlalchemy_invoice_repo import SQLAlchemyInvoiceRepository
-from app.adapters.persistence.models import Base, InvoiceORM, ClientORM
 from app.domain.entities.invoice import Invoice
 from app.ports.repositories import IInvoiceRepository
 
@@ -17,9 +18,7 @@ async def async_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Create a session
-    async_session = sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession
-    )()
+    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)()
     yield async_session
     await async_session.close()
     await engine.dispose()
@@ -68,6 +67,7 @@ async def test_add_returns_invoice(async_session):
     assert isinstance(returned_invoice.id, UUID)
     # Verify it's in the database
     from sqlalchemy import select
+
     result = await async_session.execute(
         select(InvoiceORM).where(InvoiceORM.id == str(returned_invoice.id))
     )
@@ -99,6 +99,7 @@ async def test_add_many_returns_list_of_invoices(async_session):
         assert isinstance(inv.id, UUID)
     # Verify both are in the database
     from sqlalchemy import select
+
     result = await async_session.execute(select(InvoiceORM))
     orms = result.scalars().all()
     assert len(orms) == 2
@@ -113,6 +114,7 @@ async def test_get_by_scenario_id_returns_list_of_invoices(async_session):
     client_id = uuid4()
     # Create a client linked to the scenario
     from sqlalchemy import insert
+
     await async_session.execute(
         insert(ClientORM).values(
             {
@@ -171,6 +173,7 @@ async def test_get_by_id_returns_invoice_or_none(async_session):
     # Create a client
     client_id = uuid4()
     from sqlalchemy import insert
+
     await async_session.execute(
         insert(ClientORM).values(
             {

@@ -1,23 +1,24 @@
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
+
 import pandas as pd
 import pytest
-from uuid import UUID, uuid4
-from datetime import datetime, timezone
 
+from app.application.services.llm_enrichment_service import LLMEnrichmentService
+from app.application.use_cases.generate_dataset import GenerateDataset
 from app.domain.entities.client import Client
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.scenario import Scenario
+from app.domain.enums import PaymentPattern, ScenarioStatus, Sector
 from app.domain.value_objects.generation_params import GenerationParams
-from app.domain.enums import Sector, ScenarioStatus, PaymentPattern
 from app.domain.value_objects.raw_dataset import RawDataset
-from app.application.use_cases.generate_dataset import GenerateDataset
-from app.application.services.llm_enrichment_service import LLMEnrichmentService
 from app.ports.repositories import (
-    IScenarioRepository,
     IClientRepository,
     IInvoiceRepository,
     IPaymentRepository,
+    IScenarioRepository,
 )
 
 
@@ -25,14 +26,67 @@ from app.ports.repositories import (
 async def test_generate_dataset_execute_persists_via_repositories():
     # Arrange
     raw_dataset = RawDataset(
-        clients=pd.DataFrame({"id": ["11111111-1111-1111-1111-111111111111"], "name": ["Client A"], "sector": [Sector.MANUFACTURING.value], "payment_history_pattern": [PaymentPattern.ON_TIME.value]}),
-        invoices=pd.DataFrame({"id": ["33333333-3333-3333-3333-333333333333"], "client_id": ["11111111-1111-1111-1111-111111111111"], "folio": ["INV-001"], "amount": [100.0], "issue_date": [datetime(2024, 1, 1, tzinfo=timezone.utc)], "due_date": [datetime(2024, 2, 1, tzinfo=timezone.utc)], "days_overdue": [0], "status": ["PENDING"]}),
-        payments=pd.DataFrame({"id": ["55555555-5555-5555-5555-555555555555"], "invoice_id": ["33333333-3333-3333-3333-333333333333"], "amount": [50.0], "paid_date": [datetime(2024, 1, 15, tzinfo=timezone.utc)], "method": ["UNKNOWN"]}),
+        clients=pd.DataFrame(
+            {
+                "id": ["11111111-1111-1111-1111-111111111111"],
+                "name": ["Client A"],
+                "sector": [Sector.MANUFACTURING.value],
+                "payment_history_pattern": [PaymentPattern.ON_TIME.value],
+            }
+        ),
+        invoices=pd.DataFrame(
+            {
+                "id": ["33333333-3333-3333-3333-333333333333"],
+                "client_id": ["11111111-1111-1111-1111-111111111111"],
+                "folio": ["INV-001"],
+                "amount": [100.0],
+                "issue_date": [datetime(2024, 1, 1, tzinfo=UTC)],
+                "due_date": [datetime(2024, 2, 1, tzinfo=UTC)],
+                "days_overdue": [0],
+                "status": ["PENDING"],
+            }
+        ),
+        payments=pd.DataFrame(
+            {
+                "id": ["55555555-5555-5555-5555-555555555555"],
+                "invoice_id": ["33333333-3333-3333-3333-333333333333"],
+                "amount": [50.0],
+                "paid_date": [datetime(2024, 1, 15, tzinfo=UTC)],
+                "method": ["UNKNOWN"],
+            }
+        ),
     )
     enriched_dataset = RawDataset(
-        clients=pd.DataFrame({"id": ["11111111-1111-1111-1111-111111111111"], "name": ["Client A"], "sector": [Sector.MANUFACTURING.value], "payment_history_pattern": [PaymentPattern.ON_TIME.value], "sector_description": ["Desc A"]}),
-        invoices=pd.DataFrame({"id": ["33333333-3333-3333-3333-333333333333"], "client_id": ["11111111-1111-1111-1111-111111111111"], "folio": ["INV-001"], "amount": [100.0], "issue_date": [datetime(2024, 1, 1, tzinfo=timezone.utc)], "due_date": [datetime(2024, 2, 1, tzinfo=timezone.utc)], "days_overdue": [0], "status": ["PENDING"]}),
-        payments=pd.DataFrame({"id": ["55555555-5555-5555-5555-555555555555"], "invoice_id": ["33333333-3333-3333-3333-333333333333"], "amount": [50.0], "paid_date": [datetime(2024, 1, 15, tzinfo=timezone.utc)], "method": ["UNKNOWN"]}),
+        clients=pd.DataFrame(
+            {
+                "id": ["11111111-1111-1111-1111-111111111111"],
+                "name": ["Client A"],
+                "sector": [Sector.MANUFACTURING.value],
+                "payment_history_pattern": [PaymentPattern.ON_TIME.value],
+                "sector_description": ["Desc A"],
+            }
+        ),
+        invoices=pd.DataFrame(
+            {
+                "id": ["33333333-3333-3333-3333-333333333333"],
+                "client_id": ["11111111-1111-1111-1111-111111111111"],
+                "folio": ["INV-001"],
+                "amount": [100.0],
+                "issue_date": [datetime(2024, 1, 1, tzinfo=UTC)],
+                "due_date": [datetime(2024, 2, 1, tzinfo=UTC)],
+                "days_overdue": [0],
+                "status": ["PENDING"],
+            }
+        ),
+        payments=pd.DataFrame(
+            {
+                "id": ["55555555-5555-5555-5555-555555555555"],
+                "invoice_id": ["33333333-3333-3333-3333-333333333333"],
+                "amount": [50.0],
+                "paid_date": [datetime(2024, 1, 15, tzinfo=UTC)],
+                "method": ["UNKNOWN"],
+            }
+        ),
     )
 
     mock_enrichment_service = AsyncMock(spec=LLMEnrichmentService)
@@ -47,7 +101,7 @@ async def test_generate_dataset_execute_persists_via_repositories():
         parameters={},
         source="procedural+enrichment",
         status=ScenarioStatus.INACTIVE,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     mock_scenario_repo.set_active = AsyncMock()
 
@@ -69,8 +123,8 @@ async def test_generate_dataset_execute_persists_via_repositories():
             client_id=uuid4(),
             folio="INV-001",
             amount=100.0,
-            issue_date=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            due_date=datetime(2024, 2, 1, tzinfo=timezone.utc),
+            issue_date=datetime(2024, 1, 1, tzinfo=UTC),
+            due_date=datetime(2024, 2, 1, tzinfo=UTC),
             days_overdue=0,
             status="PENDING",
         )
@@ -82,7 +136,7 @@ async def test_generate_dataset_execute_persists_via_repositories():
             id=uuid4(),
             invoice_id=uuid4(),
             amount=50.0,
-            payment_date=datetime(2024, 1, 15, tzinfo=timezone.utc),
+            payment_date=datetime(2024, 1, 15, tzinfo=UTC),
             method="UNKNOWN",
         )
     ]

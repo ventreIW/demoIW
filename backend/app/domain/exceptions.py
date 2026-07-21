@@ -11,4 +11,5 @@ class InvalidOperationError(Exception):
 
 class ExternalServiceError(Exception):
     """Raised when an external service (e.g., LLM API) returns an error."""
+
     pass
