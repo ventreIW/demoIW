@@ -54,7 +54,3 @@ class ExplanationFactor:
 
     key: FactorKey
     contribution: float
-
-    @property
-    def is_positive(self) -> bool:
-        return self.contribution > 0

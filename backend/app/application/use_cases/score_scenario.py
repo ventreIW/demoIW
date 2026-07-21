@@ -42,8 +42,8 @@ class ScoringRun:
 class ScoreScenario:
     """Fits a model on a scenario's own data and scores every collectable client."""
 
-    def __init__(self, scorer: IScoringPort | None = None) -> None:
-        self._scorer = scorer or SklearnScorer()
+    def __init__(self) -> None:
+        self._scorer: IScoringPort = SklearnScorer()
         self._builder = BuildTrainingSet()
 
     def execute(self, dataset: RawDataset, scenario_id: UUID, seed: int) -> ScoringRun:
