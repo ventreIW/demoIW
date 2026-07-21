@@ -1,5 +1,4 @@
 import uuid
-from dataclasses import dataclass
 from datetime import date, timedelta
 
 import numpy as np
@@ -8,48 +7,16 @@ from faker import Faker
 
 from app.domain.enums import PaymentPattern, Sector
 from app.domain.value_objects.generation_params import GenerationParams
+from app.domain.value_objects.payment_behaviour import (
+    PATTERN_PROFILES,
+    PaymentBehaviourProfile,
+)
 from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.dataset_port import IDatasetPort
 
-
-@dataclass(frozen=True)
-class _PatternProfile:
-    """Behavioural profile a payment pattern imposes on a client's invoices.
-
-    ``overdue_prob``  P(an invoice is currently past-due and unsettled).
-    ``late_days_mean`` Exponential scale (days) for both how overdue an open invoice
-                       is and how late a settled invoice was paid.
-    ``partial_payer``  When overdue, this client makes a partial payment (balance
-                       still outstanding) rather than none.
-    """
-
-    overdue_prob: float
-    late_days_mean: float
-    partial_payer: bool
-
-
-# Pattern → behaviour. Ordered from healthiest to worst so overdue propensity is
-# monotonic — this is the signal the collectability engine (E4) is meant to learn.
-_PATTERN_PROFILES: dict[PaymentPattern, _PatternProfile] = {
-    PaymentPattern.ON_TIME: _PatternProfile(
-        overdue_prob=0.05, late_days_mean=3.0, partial_payer=False
-    ),
-    PaymentPattern.DELAYED_30: _PatternProfile(
-        overdue_prob=0.25, late_days_mean=30.0, partial_payer=False
-    ),
-    PaymentPattern.DELAYED_60: _PatternProfile(
-        overdue_prob=0.45, late_days_mean=60.0, partial_payer=False
-    ),
-    PaymentPattern.DELAYED_90_PLUS: _PatternProfile(
-        overdue_prob=0.65, late_days_mean=100.0, partial_payer=False
-    ),
-    PaymentPattern.PARTIAL: _PatternProfile(
-        overdue_prob=0.60, late_days_mean=50.0, partial_payer=True
-    ),
-    PaymentPattern.DEFAULT: _PatternProfile(
-        overdue_prob=0.90, late_days_mean=160.0, partial_payer=False
-    ),
-}
+# Behaviour profiles live in the domain layer (s4.2 T1, ADR-006 D1): E4's outcome
+# labeller simulates collection from the same profiles that generate the data here,
+# and two copies would drift apart silently.
 
 # Probabilities over PaymentPattern (enum order), per sector. Each row sums to 1.0.
 _SECTOR_PATTERN_WEIGHTS: dict[Sector, list[float]] = {
@@ -120,7 +87,7 @@ class ProceduralGenerator(IDatasetPort):
         for client_id, pattern_value in zip(
             clients["id"], clients["payment_history_pattern"], strict=True
         ):
-            profile = _PATTERN_PROFILES[PaymentPattern(pattern_value)]
+            profile = PATTERN_PROFILES[PaymentPattern(pattern_value)]
             n_invoices = max(1, int(self._rng.poisson(params.invoice_volume)))
             for _ in range(n_invoices):
                 amount = round(
@@ -147,7 +114,7 @@ class ProceduralGenerator(IDatasetPort):
         return invoices, payments
 
     def _build_overdue(
-        self, invoice_id: str, client_id: object, amount: float, profile: _PatternProfile
+        self, invoice_id: str, client_id: object, amount: float, profile: PaymentBehaviourProfile
     ) -> tuple[dict[str, object], dict[str, object] | None]:
         days_overdue = int(self._rng.exponential(profile.late_days_mean)) + 1
         due_date = self._today - timedelta(days=days_overdue)
@@ -174,7 +141,7 @@ class ProceduralGenerator(IDatasetPort):
         return row, payment
 
     def _build_settled(
-        self, invoice_id: str, client_id: object, amount: float, profile: _PatternProfile
+        self, invoice_id: str, client_id: object, amount: float, profile: PaymentBehaviourProfile
     ) -> tuple[dict[str, object], dict[str, object]]:
         days_late = int(self._rng.exponential(profile.late_days_mean))
         settled_days_ago = int(self._rng.integers(1, 60))
