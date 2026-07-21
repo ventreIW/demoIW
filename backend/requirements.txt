@@ -18,3 +18,4 @@ numpy==2.2.1
 pandas==2.2.3
 faker==33.1.0
 respx==0.23.1
+scikit-learn==1.9.0
