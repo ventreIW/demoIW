@@ -15,7 +15,7 @@ def test_illmport_cannot_be_instantiated():
 
 
 def test_illmport_has_abstract_methods():
-    assert hasattr(ILLMPort, 'generate')
-    assert hasattr(ILLMPort, 'query')
+    assert hasattr(ILLMPort, "generate")
+    assert hasattr(ILLMPort, "query")
     assert ILLMPort.generate.__isabstractmethod__ is True
     assert ILLMPort.query.__isabstractmethod__ is True

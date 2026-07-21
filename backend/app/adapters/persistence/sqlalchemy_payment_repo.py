@@ -1,5 +1,4 @@
 from uuid import UUID, uuid4
-from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +7,7 @@ from app.adapters.persistence.mappers import (
     payment_domain_to_orm,
     payment_orm_to_domain,
 )
-from app.adapters.persistence.models import PaymentORM, InvoiceORM, ClientORM
+from app.adapters.persistence.models import ClientORM, InvoiceORM, PaymentORM
 from app.domain.entities.payment import Payment
 from app.ports.repositories import IPaymentRepository
 
@@ -28,7 +27,7 @@ class SQLAlchemyPaymentRepository(IPaymentRepository):
         await self._session.commit()
         return payment_orm_to_domain(orm)
 
-    async def add_many(self, payments: List[Payment]) -> List[Payment]:
+    async def add_many(self, payments: list[Payment]) -> list[Payment]:
         """Persist multiple new payments and return them with assigned IDs."""
         orms = []
         for payment in payments:
@@ -39,7 +38,7 @@ class SQLAlchemyPaymentRepository(IPaymentRepository):
         await self._session.commit()
         return [payment_orm_to_domain(orm) for orm in orms]
 
-    async def get_by_scenario_id(self, scenario_id: UUID) -> List[Payment]:
+    async def get_by_scenario_id(self, scenario_id: UUID) -> list[Payment]:
         """Return all payments associated with a scenario via invoice and client."""
         result = await self._session.execute(
             select(PaymentORM)

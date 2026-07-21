@@ -1,10 +1,9 @@
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
 
-from app.adapters.persistence.sqlalchemy_scenario_repo import (
-    SQLAlchemyScenarioRepository,
-)
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.adapters.llm.openrouter_adapter import OpenRouterAdapter
 from app.adapters.persistence.sqlalchemy_client_repo import (
     SQLAlchemyClientRepository,
 )
@@ -14,7 +13,11 @@ from app.adapters.persistence.sqlalchemy_invoice_repo import (
 from app.adapters.persistence.sqlalchemy_payment_repo import (
     SQLAlchemyPaymentRepository,
 )
-from app.adapters.llm.openrouter_adapter import OpenRouterAdapter
+from app.adapters.persistence.sqlalchemy_scenario_repo import (
+    SQLAlchemyScenarioRepository,
+)
+from app.application.services.llm_enrichment_service import LLMEnrichmentService
+from app.application.use_cases.generate_dataset import GenerateDataset
 from app.config import settings
 from app.infrastructure.database import get_session
 from app.ports.llm_port import ILLMPort
@@ -24,8 +27,6 @@ from app.ports.repositories import (
     IPaymentRepository,
     IScenarioRepository,
 )
-from app.application.services.llm_enrichment_service import LLMEnrichmentService
-from app.application.use_cases.generate_dataset import GenerateDataset
 
 
 async def get_scenario_repo(

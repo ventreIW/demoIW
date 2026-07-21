@@ -13,7 +13,8 @@ class GenerationParams(BaseModel):
 
     Overdue behaviour is NOT a global knob — it emerges from each client's
     ``payment_history_pattern`` (sector-weighted). A portfolio's overall overdue
-    rate is therefore a consequence of its sector's behavioural mix, which is what makes the data learnable by the collectability engine (E4).
+    rate is therefore a consequence of its sector's behavioural mix, which is
+    what makes the data learnable by the collectability engine (E4).
     """
 
     seed: int

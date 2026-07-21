@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from faker import Faker
 
-from app.domain.value_objects.generation_params import GenerationParams
 from app.domain.enums import PaymentPattern, Sector
+from app.domain.value_objects.generation_params import GenerationParams
 from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.dataset_port import IDatasetPort
 

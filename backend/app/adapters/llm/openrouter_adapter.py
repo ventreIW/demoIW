@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import httpx
 import asyncio
-import time
 import logging
-from typing import Any, Optional
+import time
+from typing import Any
 
-from app.ports.llm_port import ILLMPort
+import httpx
+
 from app.domain.exceptions import ExternalServiceError
+from app.ports.llm_port import ILLMPort
 
 log = logging.getLogger(__name__)
 
@@ -19,10 +20,13 @@ class OpenRouterAdapter(ILLMPort):
     _RETRY_STATUSES = {500, 502, 503, 504}
 
     def __init__(self, api_key: str, base_url: str = "https://openrouter.ai/api/v1") -> None:
-        self._client = httpx.AsyncClient(base_url=base_url, headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        })
+        self._client = httpx.AsyncClient(
+            base_url=base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        )
 
     async def generate(self, prompt: str, model: str, max_tokens: int = 512) -> str:
         return await self._call(
@@ -43,7 +47,7 @@ class OpenRouterAdapter(ILLMPort):
 
     async def _call(self, *, messages: list[dict[str, Any]], model: str, max_tokens: int) -> str:
         start = time.monotonic()
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for attempt in range(self._MAX_RETRIES):
             try:
                 response = await self._client.post(
@@ -51,7 +55,7 @@ class OpenRouterAdapter(ILLMPort):
                     json={"model": model, "messages": messages, "max_tokens": max_tokens},
                 )
                 if response.status_code in self._RETRY_STATUSES and attempt < self._MAX_RETRIES - 1:
-                    await asyncio.sleep(2 ** attempt)  # exponential backoff
+                    await asyncio.sleep(2**attempt)  # exponential backoff
                     continue
                 response.raise_for_status()
                 data = response.json()
@@ -63,7 +67,7 @@ class OpenRouterAdapter(ILLMPort):
                 if e.response.status_code not in self._RETRY_STATUSES:
                     break
                 # retry on 5xx
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
         raise ExternalServiceError(f"OpenRouter call failed: {last_error}")
 
     def _log(self, model: str, data: dict[str, Any], latency: float) -> None:
