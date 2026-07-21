@@ -190,3 +190,17 @@ def test_explanations_are_real_not_placeholder() -> None:
     for score in result.scores:
         assert score.explanation
         assert "Probabilidad estimada de cobro en 90 días:" not in score.explanation
+
+
+def test_scoring_run_exposes_outstanding_for_every_scored_client() -> None:
+    """s4.5 contract (D4): prioritisation needs exposure, and Score has no amount.
+
+    Carried on the run object so the system keeps one definition of 'outstanding'
+    rather than recomputing it downstream.
+    """
+    result = ScoreScenario().execute(_dataset(200), scenario_id=uuid4(), seed=42)
+
+    assert len(result.outstanding_by_client) == len(result.scores)
+    for score in result.scores:
+        assert str(score.client_id) in result.outstanding_by_client
+        assert result.outstanding_by_client[str(score.client_id)] > 0.0
