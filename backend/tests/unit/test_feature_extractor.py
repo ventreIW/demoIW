@@ -306,11 +306,17 @@ def test_extractor_outstanding_agrees_with_shared_helper() -> None:
     assert features.loc["c3", "outstanding_amount"] == pytest.approx(0.0)
 
 
-def test_sector_is_preserved_for_downstream_encoding() -> None:
+def test_sector_is_not_emitted_as_a_feature() -> None:
+    """s4.3 D5: sector is constant within a scenario, so it is not a feature.
+
+    CATEGORICAL_COLUMNS is deliberately empty, which drops sector from the frame
+    entirely. Nothing downstream needs it — LLMEnrichmentService reads sector from
+    the raw clients DataFrame, not from extracted features.
+    """
     ds = _dataset(
         [_client("c1")],
         [_invoice("i1", "c1", 100.0, "overdue", "2026-05-01", 5)],
         [],
     )
 
-    assert FeatureExtractor().extract(ds).iloc[0]["sector"] == "retail"
+    assert "sector" not in FeatureExtractor().extract(ds).columns

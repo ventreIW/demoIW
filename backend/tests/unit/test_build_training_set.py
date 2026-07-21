@@ -127,14 +127,18 @@ def test_feature_matrix_contains_expected_features() -> None:
         assert column in ts.X_train.columns
 
 
-def test_sector_is_one_hot_encoded() -> None:
+def test_sector_is_absent_from_design_matrix() -> None:
+    """s4.3 D5: sector is constant within a scenario, so it carries no signal.
+
+    GenerationParams takes one sector for the whole scenario and the generator
+    writes it to every client, so a one-hot column would have zero variance —
+    a dead feature a reader of the model would wrongly assume matters.
+    """
     dataset = _mixed_dataset(60)
-    dataset.clients.loc[:29, "sector"] = "manufacturing"
 
     ts = BuildTrainingSet().execute(dataset, seed=42)
 
-    sector_columns = [c for c in ts.X_train.columns if c.startswith("sector_")]
-    assert len(sector_columns) >= 2
+    assert not [c for c in ts.X_train.columns if c.startswith("sector")]
     assert "sector" not in ts.X_train.columns
 
 
