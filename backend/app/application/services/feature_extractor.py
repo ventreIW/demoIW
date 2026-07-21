@@ -32,6 +32,30 @@ _SETTLED_STATUS = "paid"
 ID_COLUMN_SOURCE = "id"
 
 
+def outstanding_by_client(invoices: pd.DataFrame, payments: pd.DataFrame) -> pd.Series:
+    """Unsettled balance per client, net of partial payments.
+
+    Shared with :mod:`app.application.services.outcome_labeller`, which needs the
+    same notion of "has something to collect" to decide who can be labelled at all
+    (ADR-006 D4). Two implementations would drift apart silently.
+    """
+    open_invoices = invoices[invoices["status"] == _OPEN_STATUS]
+    if open_invoices.empty:
+        return pd.Series(dtype=float)
+
+    paid = _paid_amount_per_invoice(open_invoices, payments)
+    balance = (open_invoices["amount"] - paid).clip(lower=0.0)
+    return balance.groupby(open_invoices["client_id"]).sum()
+
+
+def _paid_amount_per_invoice(invoices: pd.DataFrame, payments: pd.DataFrame) -> pd.Series:
+    """Total paid against each invoice, aligned to ``invoices``' index."""
+    if payments.empty:
+        return pd.Series(0.0, index=invoices.index)
+    totals = payments.groupby("invoice_id")["amount"].sum()
+    return invoices["id"].map(totals).fillna(0.0)
+
+
 class FeatureExtractor:
     """Turns a ``RawDataset`` snapshot into a client-level feature frame."""
 
@@ -110,14 +134,14 @@ class FeatureExtractor:
                 ]
             )
         grouped = open_invoices.groupby("client_id")
-        outstanding = (open_invoices["amount"] - open_invoices["paid_amount"]).clip(lower=0.0)
-        outstanding_by_client = outstanding.groupby(open_invoices["client_id"]).sum()
+        balance = (open_invoices["amount"] - open_invoices["paid_amount"]).clip(lower=0.0)
+        outstanding = balance.groupby(open_invoices["client_id"]).sum()
         return pd.DataFrame(
             {
                 "client_id_agg": grouped.size().index,
                 "days_overdue_max": grouped["days_overdue"].max().to_numpy(),
                 "days_overdue_mean": grouped["days_overdue"].mean().to_numpy(),
-                "outstanding_amount": outstanding_by_client.to_numpy(),
+                "outstanding_amount": outstanding.to_numpy(),
             }
         )
 

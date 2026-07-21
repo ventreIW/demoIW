@@ -272,6 +272,40 @@ def test_extraction_is_deterministic() -> None:
     pd.testing.assert_frame_equal(first, second)
 
 
+def test_extractor_outstanding_agrees_with_shared_helper() -> None:
+    """The labeller decides who is labellable via ``outstanding_by_client``.
+
+    If that helper and the extractor's own aggregation ever disagree, a client
+    could be labelled while showing zero outstanding in features — or excluded
+    while showing a balance. Lock them together.
+    """
+    from app.application.services.feature_extractor import outstanding_by_client
+
+    ds = _dataset(
+        [_client("c1", pattern="partial"), _client("c2"), _client("c3")],
+        [
+            _invoice("i1", "c1", 1000.0, "overdue", "2026-05-01", 45),
+            _invoice("i2", "c2", 700.0, "overdue", "2026-05-01", 10),
+            _invoice("i3", "c2", 300.0, "paid", "2026-03-01"),
+            _invoice("i4", "c3", 500.0, "paid", "2026-03-01"),
+        ],
+        [
+            _payment("p1", "i1", 400.0, "2026-05-10"),
+            _payment("p2", "i3", 300.0, "2026-03-05"),
+            _payment("p3", "i4", 500.0, "2026-03-05"),
+        ],
+    )
+
+    features = FeatureExtractor().extract(ds).set_index("client_id")
+    helper = outstanding_by_client(ds.invoices, ds.payments)
+
+    for client_id in ["c1", "c2"]:
+        assert features.loc[client_id, "outstanding_amount"] == pytest.approx(helper[client_id])
+    # c3 is fully settled: absent from the helper, zero in the features
+    assert "c3" not in helper.index
+    assert features.loc["c3", "outstanding_amount"] == pytest.approx(0.0)
+
+
 def test_sector_is_preserved_for_downstream_encoding() -> None:
     ds = _dataset(
         [_client("c1")],
