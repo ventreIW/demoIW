@@ -4,6 +4,12 @@ on:
   pull_request:
     branches:
       - main
+  # Also gate direct pushes to main. Without this, commits that bypass a pull
+  # request are never checked — which is how 112 lint violations and a leaking
+  # test accumulated on main unnoticed (see PRs #1 and #2).
+  push:
+    branches:
+      - main
 
 jobs:
   frontend:
