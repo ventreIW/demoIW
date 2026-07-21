@@ -81,6 +81,11 @@ def test_subset_count() -> None:
     assert _portfolio().subset_count == 2
 
 
+def test_subset_expected_recoverable_is_the_pesos_in_the_subset() -> None:
+    """Part of the s4.5-API contract: an endpoint shows "$57,000 of $69,190"."""
+    assert _portfolio().subset_expected_recoverable == pytest.approx(57_000.0)
+
+
 def test_value_share_is_the_subset_over_the_whole() -> None:
     """D3: the real figure, not an inherited 20/80 claim."""
     assert _portfolio().value_share == pytest.approx(57_000.0 / 69_190.0)
