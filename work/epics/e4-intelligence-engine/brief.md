@@ -1,9 +1,9 @@
 # E4 Brief — Intelligence Engine (Scoring + Prioritization + i18n)
 
 **Backlog source:** B-05, B-06, B-15
-**Status:** Proposed — not yet authorized
+**Status:** **Active** — authorized 2026-07-21 (Gustavo)
 **Estimated size:** L (~7–10 days)
-**Branch model:** logical container; stories branch from `main` after E3 merges
+**Branch model:** logical container; stories branch from `main` (E3 closed 2026-07-20, tag `epic/e3-complete`)
 
 ---
 
