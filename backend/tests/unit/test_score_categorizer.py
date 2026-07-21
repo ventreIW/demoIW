@@ -5,14 +5,12 @@ band does not depend on who else is in the portfolio, and so s4.6's rescore afte
 contact moves a band only when that client actually changes.
 """
 
-import pandas as pd
 import pytest
 
 from app.application.services.score_categorizer import (
     HIGH_THRESHOLD,
     LOW_THRESHOLD,
     categorize,
-    categorize_series,
 )
 from app.domain.enums import ScoreCategory
 
@@ -50,20 +48,6 @@ def test_boundary_is_exclusive_at_the_top_of_medium() -> None:
     """A score of exactly 70 is Medium, not High."""
     assert categorize(70.0) is ScoreCategory.MEDIUM
     assert categorize(70.001) is ScoreCategory.HIGH
-
-
-def test_categorize_series_matches_scalar() -> None:
-    scores = pd.Series([12.0, 40.0, 55.5, 70.0, 88.0])
-
-    result = categorize_series(scores)
-
-    assert list(result) == [categorize(value) for value in scores]
-
-
-def test_categorize_series_preserves_index() -> None:
-    scores = pd.Series([12.0, 88.0], index=["a", "b"])
-
-    assert list(categorize_series(scores).index) == ["a", "b"]
 
 
 def test_out_of_range_scores_rejected() -> None:
