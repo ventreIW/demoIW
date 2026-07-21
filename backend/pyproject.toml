@@ -22,6 +22,14 @@ exclude = ["tests/"]
 module = ["pandas", "pandas.*"]
 ignore_missing_imports = true
 
+# scikit-learn ships no py.typed marker. Same treatment as pandas, and the blast
+# radius is smaller: sklearn is imported only in app/adapters/scoring/, behind
+# IScoringPort, whose signatures use pandas and plain floats. The Any therefore
+# stops at the adapter boundary and never reaches the application layer.
+[[tool.mypy.overrides]]
+module = ["sklearn", "sklearn.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

@@ -77,9 +77,18 @@ class BuildTrainingSet:
     # -- shaping ----------------------------------------------------------
 
     def _design_matrix(self, joined: pd.DataFrame) -> pd.DataFrame:
-        """Numeric matrix the model consumes. No ids, no forbidden columns."""
+        """Numeric matrix the model consumes. No ids, no forbidden columns.
+
+        ``CATEGORICAL_COLUMNS`` is empty by design (s4.3 D5): ``sector`` is a
+        per-scenario parameter written to every client, so encoding it would add a
+        zero-variance column that carries no signal. Encoding is kept here, driven
+        by the constant, so cross-scenario training can re-enable it by populating
+        the list rather than by editing this method.
+        """
         numeric = joined[FEATURE_COLUMNS].copy()
         numeric["has_partial_payments"] = numeric["has_partial_payments"].astype(int)
+        if not CATEGORICAL_COLUMNS:
+            return numeric.reset_index(drop=True)
         encoded = pd.get_dummies(joined[CATEGORICAL_COLUMNS], prefix=CATEGORICAL_COLUMNS)
         return pd.concat([numeric, encoded], axis=1).reset_index(drop=True)
 

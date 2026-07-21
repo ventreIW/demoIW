@@ -25,8 +25,16 @@ FEATURE_COLUMNS: Final[list[str]] = [
     "has_partial_payments",
 ]
 
-#: Categorical features requiring encoding before training (one-hot in s4.2 T4).
-CATEGORICAL_COLUMNS: Final[list[str]] = ["sector"]
+#: Categorical features requiring encoding before training.
+#:
+#: **Deliberately empty (s4.3 D5).** ``sector`` was removed after measurement: it is a
+#: per-scenario parameter written identically to every client, so its one-hot column has
+#: zero variance and carries no signal. A model reader would wrongly assume it mattered.
+#:
+#: Kept as a named constant rather than deleted — cross-scenario training (a portfolio
+#: spanning sectors) would make it meaningful again, and re-enabling is then a one-line
+#: change here rather than an edit to the design-matrix builder.
+CATEGORICAL_COLUMNS: Final[list[str]] = []
 
 #: Identity column — carried through extraction so the split can be done by
 #: client, but never fed to the model.
