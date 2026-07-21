@@ -32,11 +32,18 @@ from app.ports.scoring_port import IScoringPort
 
 @dataclass(frozen=True)
 class ScoringRun:
-    """Outcome of scoring one scenario."""
+    """Outcome of scoring one scenario.
+
+    ``outstanding_by_client`` is carried here so prioritisation (s4.5) has one
+    input object and the system keeps **one** definition of exposure. The balance
+    is already net of partial payments (s4.2). Keyed by client id as a string, and
+    populated for every client in ``scores``.
+    """
 
     scores: list[Score]
     evaluation: EvaluationMetrics
     unscored_client_count: int
+    outstanding_by_client: dict[str, float]
 
 
 class ScoreScenario:
@@ -82,4 +89,11 @@ class ScoreScenario:
             scores=entities,
             evaluation=evaluation,
             unscored_client_count=training_set.excluded_client_count,
+            outstanding_by_client=dict(
+                zip(
+                    training_set.client_ids,
+                    (float(value) for value in training_set.X["outstanding_amount"]),
+                    strict=True,
+                )
+            ),
         )
