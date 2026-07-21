@@ -210,7 +210,7 @@ with mocks cannot catch contract mismatches between stories; only real E2E does.
 
 | Story | Owner | Status | Started | Merged | Notes |
 |---|---|---|---|---|---|
-| s4.2 | Rodrigo | in progress | 2026-07-21 | — | ADR-006 lands here |
+| s4.2 | Rodrigo | ✅ implemented | 2026-07-21 | (PR open) | ADR-006 validated: rates within 0.002 of prediction. 58 tests |
 | s4.9 | Nano | ready | — | — | Can start immediately |
 | s4.7 | Renata | ready | — | — | Can start immediately |
 | s4.3 | Rodrigo | blocked | — | — | Needs s4.2 + s4.9 |

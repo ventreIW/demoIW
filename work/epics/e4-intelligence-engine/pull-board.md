@@ -9,7 +9,7 @@ Status: **Active** — authorized 2026-07-21 (Gustavo)
 | Story | Title | Owner | State | Notes |
 |---|---|---|---|---|
 | s4.1 | i18n foundation | — | done | Delivered out-of-band by `b15-i18n-setup`, merged 2026-07-08 |
-| s4.2 | Feature engineering & training set | Rodrigo | in progress | Started 2026-07-21. ADR-006 (prediction target) lands here |
+| s4.2 | Feature engineering & training set | Rodrigo | implemented | T1-T5 done 2026-07-21; awaiting review. ADR-006 validated: observed rates within 0.002 of prediction |
 | s4.3 | Collectability scoring model | Rodrigo | backlog | Depends on s4.2 |
 | s4.4 | Score explanation | Rodrigo | backlog | Depends on s4.3 |
 | s4.5 — formula | Priority value + Pareto threshold | Rodrigo | backlog | Depends on s4.3 |
