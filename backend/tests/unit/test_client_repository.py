@@ -1,10 +1,11 @@
-import pytest
 from uuid import UUID, uuid4
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.adapters.persistence.sqlalchemy_client_repo import SQLAlchemyClientRepository
 from app.adapters.persistence.models import Base, ClientORM
+from app.adapters.persistence.sqlalchemy_client_repo import SQLAlchemyClientRepository
 from app.domain.entities.client import Client
 from app.domain.enums import PaymentPattern
 from app.ports.repositories import IClientRepository
@@ -17,9 +18,7 @@ async def async_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Create a session
-    async_session = sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession
-    )()
+    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)()
     yield async_session
     await async_session.close()
     await engine.dispose()
@@ -65,6 +64,7 @@ async def test_add_returns_client(async_session):
     assert isinstance(returned_client.id, UUID)
     # Verify it's in the database
     from sqlalchemy import select
+
     result = await async_session.execute(
         select(ClientORM).where(ClientORM.id == str(returned_client.id))
     )
@@ -93,6 +93,7 @@ async def test_add_many_returns_list_of_clients(async_session):
         assert isinstance(client.id, UUID)
     # Verify both are in the database
     from sqlalchemy import select
+
     result = await async_session.execute(select(ClientORM))
     orms = result.scalars().all()
     assert len(orms) == 2
@@ -106,6 +107,7 @@ async def test_get_by_scenario_id_returns_list_of_clients(async_session):
     scenario_id = uuid4()
     # Create two clients directly in the DB
     from sqlalchemy import insert
+
     await async_session.execute(
         insert(ClientORM).values(
             [
@@ -141,6 +143,7 @@ async def test_get_by_id_returns_client_or_none(async_session):
     # Create a client
     client_id = uuid4()
     from sqlalchemy import insert
+
     await async_session.execute(
         insert(ClientORM).values(
             {

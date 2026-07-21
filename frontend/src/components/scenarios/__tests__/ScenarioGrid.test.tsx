@@ -8,6 +8,13 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }))
 
+// Without this the click below issues a real fetch, which rejects, and
+// ScenarioGrid's catch branch then calls setState after the test has torn the
+// environment down ("ReferenceError: window is not defined").
+vi.mock('@/lib/api/scenarios', () => ({
+  activateScenario: vi.fn().mockResolvedValue(undefined),
+}))
+
 import ScenarioGrid from '../ScenarioGrid'
 
 const mockScenarios: ScenarioSummary[] = [

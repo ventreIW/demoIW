@@ -1,8 +1,10 @@
 import json
+from unittest.mock import patch
+
+import httpx
 import pytest
 import respx
-import httpx
-from unittest.mock import patch
+
 from app.adapters.llm.openrouter_adapter import OpenRouterAdapter
 from app.domain.exceptions import ExternalServiceError
 

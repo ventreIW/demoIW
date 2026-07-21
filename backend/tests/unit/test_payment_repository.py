@@ -1,11 +1,12 @@
-import pytest
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.adapters.persistence.models import Base, ClientORM, InvoiceORM, PaymentORM, ScenarioORM
 from app.adapters.persistence.sqlalchemy_payment_repo import SQLAlchemyPaymentRepository
-from app.adapters.persistence.models import Base, PaymentORM, InvoiceORM, ClientORM, ScenarioORM
 from app.domain.entities.payment import Payment
 from app.ports.repositories import IPaymentRepository
 
@@ -17,9 +18,7 @@ async def async_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Create a session
-    async_session = sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession
-    )()
+    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)()
     yield async_session
     await async_session.close()
     await engine.dispose()
@@ -55,6 +54,7 @@ async def test_add_returns_payment(async_session):
     client_id = uuid4()
     invoice_id = uuid4()
     from sqlalchemy import insert
+
     # Insert scenario
     await async_session.execute(
         insert(ScenarioORM).values(
@@ -66,7 +66,7 @@ async def test_add_returns_payment(async_session):
                 "parameters": {},
                 "source": "manual",
                 "status": "active",
-                "created_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC),
             }
         )
     )
@@ -90,8 +90,8 @@ async def test_add_returns_payment(async_session):
                 "client_id": str(client_id),
                 "folio": "INV-001",
                 "amount": 100.0,
-                "issue_date": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                "due_date": datetime(2024, 2, 1, tzinfo=timezone.utc),
+                "issue_date": datetime(2024, 1, 1, tzinfo=UTC),
+                "due_date": datetime(2024, 2, 1, tzinfo=UTC),
                 "days_overdue": 0,
                 "status": "PENDING",
             }
@@ -104,7 +104,7 @@ async def test_add_returns_payment(async_session):
         id=payment_id,
         invoice_id=invoice_id,
         amount=50.0,
-        payment_date=datetime(2024, 1, 15, tzinfo=timezone.utc),
+        payment_date=datetime(2024, 1, 15, tzinfo=UTC),
         method="BANK_TRANSFER",
     )
     returned_payment = await repo.add(payment)
@@ -114,6 +114,7 @@ async def test_add_returns_payment(async_session):
     assert isinstance(returned_payment.id, UUID)
     # Verify it's in the database
     from sqlalchemy import select
+
     result = await async_session.execute(
         select(PaymentORM).where(PaymentORM.id == str(returned_payment.id))
     )
@@ -132,6 +133,7 @@ async def test_add_many_returns_list_of_payments(async_session):
     invoice_id_1 = uuid4()
     invoice_id_2 = uuid4()
     from sqlalchemy import insert
+
     await async_session.execute(
         insert(ScenarioORM).values(
             {
@@ -142,7 +144,7 @@ async def test_add_many_returns_list_of_payments(async_session):
                 "parameters": {},
                 "source": "manual",
                 "status": "active",
-                "created_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC),
             }
         )
     )
@@ -165,8 +167,8 @@ async def test_add_many_returns_list_of_payments(async_session):
                     "client_id": str(client_id),
                     "folio": "INV-001",
                     "amount": 100.0,
-                    "issue_date": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "due_date": datetime(2024, 2, 1, tzinfo=timezone.utc),
+                    "issue_date": datetime(2024, 1, 1, tzinfo=UTC),
+                    "due_date": datetime(2024, 2, 1, tzinfo=UTC),
                     "days_overdue": 0,
                     "status": "PENDING",
                 },
@@ -175,8 +177,8 @@ async def test_add_many_returns_list_of_payments(async_session):
                     "client_id": str(client_id),
                     "folio": "INV-002",
                     "amount": 200.0,
-                    "issue_date": datetime(2024, 1, 2, tzinfo=timezone.utc),
-                    "due_date": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                    "issue_date": datetime(2024, 1, 2, tzinfo=UTC),
+                    "due_date": datetime(2024, 2, 2, tzinfo=UTC),
                     "days_overdue": 0,
                     "status": "PENDING",
                 },
@@ -190,14 +192,14 @@ async def test_add_many_returns_list_of_payments(async_session):
             id=uuid4(),
             invoice_id=invoice_id_1,
             amount=30.0,
-            payment_date=datetime(2024, 1, 10, tzinfo=timezone.utc),
+            payment_date=datetime(2024, 1, 10, tzinfo=UTC),
             method="CASH",
         ),
         Payment(
             id=uuid4(),
             invoice_id=invoice_id_2,
             amount=70.0,
-            payment_date=datetime(2024, 1, 12, tzinfo=timezone.utc),
+            payment_date=datetime(2024, 1, 12, tzinfo=UTC),
             method="CARD",
         ),
     ]
@@ -208,6 +210,7 @@ async def test_add_many_returns_list_of_payments(async_session):
         assert isinstance(p.id, UUID)
     # Verify both are in the database
     from sqlalchemy import select
+
     result = await async_session.execute(select(PaymentORM))
     orms = result.scalars().all()
     assert len(orms) == 2
@@ -224,6 +227,7 @@ async def test_get_by_scenario_id_returns_list_of_payments(async_session):
     client_id = uuid4()
     invoice_id = uuid4()
     from sqlalchemy import insert
+
     # scenario
     await async_session.execute(
         insert(ScenarioORM).values(
@@ -235,7 +239,7 @@ async def test_get_by_scenario_id_returns_list_of_payments(async_session):
                 "parameters": {},
                 "source": "manual",
                 "status": "active",
-                "created_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC),
             }
         )
     )
@@ -259,8 +263,8 @@ async def test_get_by_scenario_id_returns_list_of_payments(async_session):
                 "client_id": str(client_id),
                 "folio": "INV-PAY",
                 "amount": 250.0,
-                "issue_date": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                "due_date": datetime(2024, 2, 1, tzinfo=timezone.utc),
+                "issue_date": datetime(2024, 1, 1, tzinfo=UTC),
+                "due_date": datetime(2024, 2, 1, tzinfo=UTC),
                 "days_overdue": 0,
                 "status": "PENDING",
             }
@@ -276,14 +280,14 @@ async def test_get_by_scenario_id_returns_list_of_payments(async_session):
                     "id": str(payment_id_1),
                     "invoice_id": str(invoice_id),
                     "amount": 100.0,
-                    "payment_date": datetime(2024, 1, 15, tzinfo=timezone.utc),
+                    "payment_date": datetime(2024, 1, 15, tzinfo=UTC),
                     "method": "BANK",
                 },
                 {
                     "id": str(payment_id_2),
                     "invoice_id": str(invoice_id),
                     "amount": 150.0,
-                    "payment_date": datetime(2024, 1, 20, tzinfo=timezone.utc),
+                    "payment_date": datetime(2024, 1, 20, tzinfo=UTC),
                     "method": "CARD",
                 },
             ]
@@ -310,6 +314,7 @@ async def test_get_by_id_returns_payment_or_none(async_session):
     client_id = uuid4()
     invoice_id = uuid4()
     from sqlalchemy import insert
+
     await async_session.execute(
         insert(ScenarioORM).values(
             {
@@ -320,7 +325,7 @@ async def test_get_by_id_returns_payment_or_none(async_session):
                 "parameters": {},
                 "source": "manual",
                 "status": "active",
-                "created_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC),
             }
         )
     )
@@ -342,8 +347,8 @@ async def test_get_by_id_returns_payment_or_none(async_session):
                 "client_id": str(client_id),
                 "folio": "INV-GETBYID",
                 "amount": 300.0,
-                "issue_date": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                "due_date": datetime(2024, 2, 1, tzinfo=timezone.utc),
+                "issue_date": datetime(2024, 1, 1, tzinfo=UTC),
+                "due_date": datetime(2024, 2, 1, tzinfo=UTC),
                 "days_overdue": 0,
                 "status": "PENDING",
             }
@@ -356,7 +361,7 @@ async def test_get_by_id_returns_payment_or_none(async_session):
                 "id": str(payment_id),
                 "invoice_id": str(invoice_id),
                 "amount": 75.5,
-                "payment_date": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                "payment_date": datetime(2024, 1, 10, tzinfo=UTC),
                 "method": "PAYPAL",
             }
         )

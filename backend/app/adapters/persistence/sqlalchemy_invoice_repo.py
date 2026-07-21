@@ -1,5 +1,4 @@
 from uuid import UUID, uuid4
-from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +27,7 @@ class SQLAlchemyInvoiceRepository(IInvoiceRepository):
         await self._session.commit()
         return invoice_orm_to_domain(orm)
 
-    async def add_many(self, invoices: List[Invoice]) -> List[Invoice]:
+    async def add_many(self, invoices: list[Invoice]) -> list[Invoice]:
         """Persist multiple new invoices and return them with assigned IDs."""
         orms = []
         for invoice in invoices:
@@ -39,7 +38,7 @@ class SQLAlchemyInvoiceRepository(IInvoiceRepository):
         await self._session.commit()
         return [invoice_orm_to_domain(orm) for orm in orms]
 
-    async def get_by_scenario_id(self, scenario_id: UUID) -> List[Invoice]:
+    async def get_by_scenario_id(self, scenario_id: UUID) -> list[Invoice]:
         """Return all invoices associated with a scenario via their client."""
         result = await self._session.execute(
             select(InvoiceORM)

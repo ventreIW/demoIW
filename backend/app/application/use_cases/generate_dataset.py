@@ -1,23 +1,22 @@
-from datetime import date, datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
+
 import pandas as pd
 
-from pydantic import BaseModel, Field
-
-from app.domain.enums import Sector, ScenarioStatus, PaymentPattern
-from app.domain.value_objects.generation_params import GenerationParams
 from app.adapters.dataset.procedural_generator import ProceduralGenerator
 from app.application.services.llm_enrichment_service import LLMEnrichmentService
-from app.domain.value_objects.raw_dataset import RawDataset
-from app.domain.entities.scenario import Scenario
 from app.domain.entities.client import Client
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
+from app.domain.entities.scenario import Scenario
+from app.domain.enums import PaymentPattern, ScenarioStatus
+from app.domain.value_objects.generation_params import GenerationParams
+from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.repositories import (
-    IScenarioRepository,
     IClientRepository,
     IInvoiceRepository,
     IPaymentRepository,
+    IScenarioRepository,
 )
 
 
@@ -42,9 +41,7 @@ class GenerateDataset:
         raw_dataset = generator.generate()
 
         # Step 2: Enrich the dataset using the LLM service.
-        enriched_dataset = await self._enrichment_service.enrich(
-            raw_dataset, model
-        )
+        enriched_dataset = await self._enrichment_service.enrich(raw_dataset, model)
 
         # Step 3: Create Scenario, persist and activate.
         scenario = Scenario(
@@ -55,14 +52,14 @@ class GenerateDataset:
             parameters=params.model_dump(),
             source="procedural+enrichment",
             status=ScenarioStatus.INACTIVE,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         saved_scenario = await self._scenario_repo.add(scenario)
         await self._scenario_repo.set_active(saved_scenario.id)
 
         # Step 4: Map and persist clients.
         client_entities = []
-        for record in enriched_dataset.clients.to_dict('records'):
+        for record in enriched_dataset.clients.to_dict("records"):
             sector_description = record.get("sector_description")
             if pd.isna(sector_description):
                 sector_description = None
@@ -82,7 +79,7 @@ class GenerateDataset:
 
         # Step 5: Map and persist invoices.
         invoice_entities = []
-        for record in enriched_dataset.invoices.to_dict('records'):
+        for record in enriched_dataset.invoices.to_dict("records"):
             invoice = Invoice(
                 id=UUID(record["id"]),  # use original invoice id as id in Invoice object
                 client_id=client_id_map[UUID(record["client_id"])],
@@ -102,7 +99,7 @@ class GenerateDataset:
 
         # Step 6: Map and persist payments.
         payment_entities = []
-        for record in enriched_dataset.payments.to_dict('records'):
+        for record in enriched_dataset.payments.to_dict("records"):
             payment = Payment(
                 id=UUID(record["id"]),  # use original payment id as id in Payment object
                 invoice_id=invoice_id_map[UUID(record["invoice_id"])],

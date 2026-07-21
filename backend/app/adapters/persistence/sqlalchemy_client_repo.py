@@ -1,5 +1,4 @@
 from uuid import UUID, uuid4
-from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +27,7 @@ class SQLAlchemyClientRepository(IClientRepository):
         await self._session.commit()
         return client_orm_to_domain(orm)
 
-    async def add_many(self, clients: List[Client]) -> List[Client]:
+    async def add_many(self, clients: list[Client]) -> list[Client]:
         """Persist multiple new clients and return them with assigned IDs."""
         orms = []
         for client in clients:
@@ -39,7 +38,7 @@ class SQLAlchemyClientRepository(IClientRepository):
         await self._session.commit()
         return [client_orm_to_domain(orm) for orm in orms]
 
-    async def get_by_scenario_id(self, scenario_id: UUID) -> List[Client]:
+    async def get_by_scenario_id(self, scenario_id: UUID) -> list[Client]:
         """Return all clients associated with a scenario."""
         result = await self._session.execute(
             select(ClientORM).where(ClientORM.scenario_id == str(scenario_id))
