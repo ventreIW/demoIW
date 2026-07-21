@@ -1,5 +1,11 @@
 # Epic Scope: i18n with next-intl
 
+> ⛔ **SUPERSEDED 2026-07-20 — do not plan from this file.** The work below was already
+> delivered by `work/backlog/b15-i18n-setup` (merged 2026-07-08). The only unbuilt item is the
+> language switcher (B-18), now tracked as **E4 s4.7** together with the untranslated
+> `GenerateScenarioForm.tsx`. Stories B-16/B-17/B-19 target pages and components that either
+> do not exist or were translated by `b15`. See `brief.md` for the full account.
+
 ## Objective
 Implement internationalization (i18n) in the demoIW application using the next-intl library to support English and Spanish languages, with a language switcher and proper routing.
 
