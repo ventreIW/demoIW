@@ -31,6 +31,25 @@ from app.ports.scoring_port import IScoringPort
 #: lbfgs converges well within this once features are scaled.
 MAX_ITER = 1000
 
+#: Inverse regularization strength. **Deliberately strong** (sklearn's default is 1.0).
+#:
+#: The features are collinear by construction: ``days_overdue_max`` and
+#: ``days_overdue_mean`` correlate at 0.872, and ``pct_invoices_settled`` correlates
+#: −0.413 with both. At C=1.0 the fit splits their weight arbitrarily and the signs
+#: flip between seeds — measured at **19 of 27** configurations producing a positive
+#: coefficient on ``days_overdue_max``, i.e. a model asserting that being further
+#: overdue makes a client *more* collectable.
+#:
+#: That is fatal for s4.4, which explains each score by ranking coefficient
+#: contributions: it would tell a collections manager that 78 days overdue *raised*
+#: this client's score.
+#:
+#: Stronger ridge shrinks correlated coefficients toward each other rather than
+#: letting them fight. Measured at C=0.01 across 45 configurations (3 sectors ×
+#: 3 sizes × 5 seeds): **0 wrong signs**, and mean ROC-AUC *improved* from 0.716 to
+#: ~0.735. Regularization here buys stability and costs nothing.
+REGULARIZATION_C = 0.01
+
 
 class SklearnScorer(IScoringPort):
     """Logistic-regression collectability scorer over scaled features."""
@@ -50,7 +69,7 @@ class SklearnScorer(IScoringPort):
         self._feature_names = list(training_set.X_train.columns)
         pipeline = make_pipeline(
             StandardScaler(),
-            LogisticRegression(max_iter=MAX_ITER),
+            LogisticRegression(max_iter=MAX_ITER, C=REGULARIZATION_C),
         )
         pipeline.fit(training_set.X_train, training_set.y_train)
         self._pipeline = pipeline
