@@ -10,6 +10,9 @@ keeps the story shippable without taking another developer's work.
 **Clients with no outstanding balance are absent, not zero.** A score of 0 would
 read as "certain not to collect", which is a claim about a client that has nothing
 to collect. They are counted in ``unscored_client_count`` instead.
+
+Explanations come from ``ScoreExplainer`` over the model's own contributions
+(s4.4), so the prose and the number cannot drift apart.
 """
 
 from dataclasses import dataclass
@@ -19,6 +22,7 @@ from uuid import UUID, uuid4
 from app.adapters.scoring.evaluator import evaluate
 from app.adapters.scoring.sklearn_scorer import SklearnScorer
 from app.application.services.score_categorizer import categorize
+from app.application.services.score_explainer import explain
 from app.application.use_cases.build_training_set import BuildTrainingSet
 from app.domain.entities.score import Score
 from app.domain.value_objects.raw_dataset import RawDataset
@@ -51,6 +55,9 @@ class ScoreScenario:
         held_out_scores = scores.iloc[training_set.test_index]
         evaluation = evaluate(training_set.y_test, held_out_scores.reset_index(drop=True))
 
+        contributions = self._scorer.feature_contributions(training_set.X)
+        facts = training_set.X.to_dict(orient="records")
+
         scored_at = datetime.now(UTC)
         entities = [
             Score(
@@ -59,10 +66,16 @@ class ScoreScenario:
                 scenario_id=scenario_id,
                 score_value=round(float(score_value), 2),
                 category=categorize(float(score_value)),
-                explanation=_placeholder_explanation(float(score_value)),
+                explanation=explain(
+                    score=float(score_value),
+                    contributions=row_contributions,
+                    facts=row_facts,
+                ),
                 scored_at=scored_at,
             )
-            for client_id, score_value in zip(training_set.client_ids, scores, strict=True)
+            for client_id, score_value, row_contributions, row_facts in zip(
+                training_set.client_ids, scores, contributions, facts, strict=True
+            )
         ]
 
         return ScoringRun(
@@ -70,13 +83,3 @@ class ScoreScenario:
             evaluation=evaluation,
             unscored_client_count=training_set.excluded_client_count,
         )
-
-
-def _placeholder_explanation(score_value: float) -> str:
-    """Minimal explanation text.
-
-    s4.4 replaces this with ranked top-factor attribution from
-    ``IScoringPort.feature_contributions``. Kept non-empty so the ``Score``
-    contract holds and the field is never silently blank.
-    """
-    return f"Probabilidad estimada de cobro en 90 días: {score_value:.0f}%."

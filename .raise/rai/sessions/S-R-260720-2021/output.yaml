@@ -1,0 +1,101 @@
+session_id: "S-R-260720-2021"
+summary: "SES-S-R-260720-2021: main reparado + CI activado por primera vez, E3 cerrado, E4 activado con s4.2/s4.3 entregados y s4.4 planeado"
+type: feature
+outcomes:
+  - "main reparado: build roto por s3.4 (sonner/input/select nunca commiteados) — PR #1"
+  - "112 violaciones de lint eliminadas (110 ruff + 2 eslint) acumuladas en s3.2-s3.4 y b15 — PR #2"
+  - "CI ejecutado por primera vez en la historia del repo; ahora gatea push a main además de PRs — PR #3"
+  - "i18n reconciliado: planeado 3 veces (E4 s4.1, epic E9, backlog b15), entregado 1 vez. E9 retirado — PR #4"
+  - "E3 cerrado con tag epic/e3-complete; 2 items del acceptance gate verificados, 1 descopado a s4.8 — PR #5"
+  - "E4 activado: brief/scope/design/pull-board + ADR-006 y ADR-007 — PR #6"
+  - "s4.2 entregado: feature extraction, outcome labeller, training set. ADR-006 validado a ±0.002 — PR #7"
+  - "s4.3 entregado: modelo de collectability. M1 GO (ROC-AUC media 0.732-0.739) — PR #8"
+  - "s4.9 extraída durante planning para desbloquear a Nano desde el día uno"
+  - "s4.4 iniciada, diseñada y planeada (scope + design + plan); implementación pendiente"
+patterns:
+  - description: "Un canary debe afirmar la DIRECCIÓN de una relación aprendida, no que el entrenamiento tuvo éxito. Un test de 'entrena y AUC aceptable' habría pasado 19 de 27 configuraciones rotas."
+    context: "ml,canary,testing,explainability"
+    type: technical
+  - description: "Features colineales destruyen las explicaciones basadas en coeficientes aunque el ranking siga bien. Si se eligió un modelo lineal POR su explicabilidad, medir correlación antes de confiar en la atribución."
+    context: "ml,collinearity,regularization"
+    type: technical
+  - description: "Gatear una métrica ruidosa en dos partes: un piso por corrida que detecta un sistema roto, más una media entre semillas que es la señal real."
+    context: "testing,metrics,quality-gates"
+    type: process
+  - description: "Prototipar durante el DISEÑO cuando el diseño depende de números desconocidos. En s4.3 esto encontró tres cosas que habrían sido sorpresas de implementación."
+    context: "design,prototype,measurement"
+    type: process
+  - description: "Los criterios de aceptación estructurales (límites de import, dependencias entre capas) deben ser tests ejecutables, no líneas de checklist. El AC #15 de s4.3 estaba escrito y fue violado dentro de la misma historia."
+    context: "acceptance-criteria,architecture,testing"
+    type: process
+corrections:
+  - what: "Escribí en el pull-board de E4 la regla 'actualizar en cada transición de estado' tras criticar a E3 por lo mismo, y luego dejé el board mostrando s4.3 como 'backlog' con su PR abierto y verde."
+    lesson: "Escribir una regla no la hace cumplirse. El arreglo estructural es un check que corre, no una línea que se escribe."
+  - what: "Violé el AC #15 de s4.3 (sin sklearn fuera de adapters/scoring/) importando sklearn.metrics en la capa de dominio. Lo detectó la suite completa, no el AC."
+    lesson: "Un criterio de aceptación sobre estructura debe expresarse como test en tiempo de diseño."
+  - what: "Un script de limpieza con regex borró ambas copias de una constante en vez de la duplicada, rompiendo el módulo hasta la siguiente corrida de tests."
+    lesson: "Preferir edición dirigida sobre regex de archivo completo."
+coaching:
+  trust_level: "established"
+  strengths: ["decisiones estadísticas informadas por medición", "prioriza evidencia sobre velocidad"]
+  autonomy: "alta dentro del alcance definido; consulta decisiones de stats/probabilidad y de proceso"
+  relationship:
+    quality: "productiva"
+    trajectory: "estable"
+current_work:
+  epic: E4
+  story: S4.4
+  phase: plan
+  branch: story/s4.4/score-explanation
+pending:
+  decisions:
+    - "Sector del demo: retail es el más débil (AUC 0.605-0.710) vs manufacturing (0.681-0.819). Elegirlo deliberadamente."
+  blockers:
+    - "OPENROUTER_API_KEY ausente: bloquea s4.8, E5 s5.4 (comunicaciones) y E6 s6.3 (NL query) — 3 de 6 módulos, demo 2026-08-14"
+  next_actions:
+    - "Implementar s4.4 T1-T3 (plan listo en s4.4-plan.md)"
+    - "Nano: s4.9 (IScoreRepository) y s4.6 — ambos listos"
+    - "Renata: s4.7, ahora incluye subir el mínimo del formulario de 10 a 200"
+narrative: |
+  ## Decisions
+  - ADR-006: el modelo predice un desenlace de cobro simulado a 90 días, no una etiqueta derivada
+    de payment_history_pattern. Esa columna genera todo el dataset y está en el registro del
+    cliente; usarla daría ~100% de accuracy leyendo la respuesta. Guard por test, no por comentario.
+  - ADR-007: scikit-learn + LogisticRegression, entrenado bajo demanda, sin artefacto persistido.
+    La restricción vinculante es RF-02.3 (explicación por predicción), no el accuracy.
+  - ADR-007 Amendment 1: C=0.01. El canary detectó colinealidad (days_overdue_max/mean r=0.872)
+    que hacía volar los signos en 19 de 27 configuraciones. Ridge fuerte los estabilizó (0/45) y
+    ADEMÁS subió la media de AUC de 0.716 a ~0.735.
+  - Umbrales de categoría fijos (40/70) en vez de terciles por escenario, para que la banda de un
+    cliente no dependa de quién más está en la cartera.
+  - Mínimo de escenario 200 (no 50): a n=100 el AUC medido va de 0.286 a 1.000.
+  ## Research
+  - Prototipos ejecutados durante diseño en s4.3 y s4.4 — encontraron escalado obligatorio, ruido
+    a n=100, distribución de scores, y que 26.2% de clientes tendrían "antigüedad" repetida dos veces.
+  ## Artifacts
+  - backend/app/{ports/scoring_port.py, adapters/scoring/*, application/services/*, domain/value_objects/*}
+  - dev/decisions/adr-006-*, adr-007-* (con Amendment 1)
+  - work/epics/e4-intelligence-engine/{brief,scope,design,pull-board}.md + stories s4.2/s4.3/s4.4
+  - 9 PRs abiertos y mergeados (#1-#9)
+  ## Branch State
+  - main @ 77043f6, verde, CI corriendo en push y PR
+  - story/s4.4/score-explanation empujada con 4 commits (scope, design, plan, gitignore)
+next_session_prompt: |
+  Retomar en s4.4 T1: ScoreExplainer (agrupación, ranking, materialidad). El plan está completo en
+  work/epics/e4-intelligence-engine/stories/s4.4-plan.md y la rama story/s4.4/score-explanation ya
+  está empujada con scope, design y plan.
+
+  El test que importa en T1 es test_grouping_happens_before_ranking: si la agrupación de antigüedad
+  se aplica al renderizar en vez de antes del ranking, "antigüedad" pierde un lugar que debía ganar.
+  Es el mismo problema de peso dividido que desestabilizó los coeficientes en s4.3.
+
+  T3 es donde se juzga la historia: imprimir ~10 explicaciones reales y LEERLAS. Los tests unitarios
+  prueban que las reglas se cumplen; solo leer la salida dice si es español que un gestor de cobranza
+  aceptaría. Registrar la muestra en el retrospective.
+
+  ANTES DE PROPONER TRABAJO NUEVO: la OPENROUTER_API_KEY sigue sin existir y bloquea 3 de 6 módulos
+  (s4.8, E5 s5.4, E6 s6.3) contra un demo el 2026-08-14 — 24 días. Es procurement, no código, y es
+  lo de mayor apalancamiento en el proyecto.
+
+  Nano y Renata tienen trabajo desbloqueado (s4.9/s4.6 y s4.7). El board está al día a 2026-07-21;
+  mantenerlo así en cada transición, no al final.
