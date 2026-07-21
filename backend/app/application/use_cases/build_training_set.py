@@ -32,11 +32,8 @@ MIN_CLIENTS = 20
 class BuildTrainingSet:
     """Produces a :class:`TrainingSet` from a generated scenario."""
 
-    def __init__(
-        self,
-        feature_extractor: FeatureExtractor | None = None,
-    ) -> None:
-        self._features = feature_extractor or FeatureExtractor()
+    def __init__(self) -> None:
+        self._features = FeatureExtractor()
 
     def execute(
         self,

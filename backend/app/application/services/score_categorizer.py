@@ -12,8 +12,6 @@ The values were chosen against a measured distribution rather than by feel. On a
 
 from typing import Final
 
-import pandas as pd
-
 from app.domain.enums import ScoreCategory
 
 #: Below this the account is Low — roughly the observed 25th percentile.
@@ -36,8 +34,3 @@ def categorize(score: float) -> ScoreCategory:
     if score > HIGH_THRESHOLD:
         return ScoreCategory.HIGH
     return ScoreCategory.MEDIUM
-
-
-def categorize_series(scores: pd.Series) -> pd.Series:
-    """Band a series of scores, preserving the index."""
-    return scores.map(categorize)

@@ -1,6 +1,6 @@
 # Pull Board — E4: Intelligence Engine
 
-Last updated: 2026-07-21  
+Last updated: 2026-07-21 (post-merge of s4.2 and s4.3)  
 Epic: logical container (no branch)  
 Status: **Active** — authorized 2026-07-21 (Gustavo)
 
@@ -9,13 +9,13 @@ Status: **Active** — authorized 2026-07-21 (Gustavo)
 | Story | Title | Owner | State | Notes |
 |---|---|---|---|---|
 | s4.1 | i18n foundation | — | done | Delivered out-of-band by `b15-i18n-setup`, merged 2026-07-08 |
-| s4.2 | Feature engineering & training set | Rodrigo | implemented | T1-T5 done 2026-07-21; awaiting review. ADR-006 validated: observed rates within 0.002 of prediction |
-| s4.3 | Collectability scoring model | Rodrigo | backlog | Depends on s4.2 |
-| s4.4 | Score explanation | Rodrigo | backlog | Depends on s4.3 |
-| s4.5 — formula | Priority value + Pareto threshold | Rodrigo | backlog | Depends on s4.3 |
+| s4.2 | Feature engineering & training set | Rodrigo | **done** | Merged 2026-07-21 (PR #7). ADR-006 validated: observed rates within 0.002 of prediction. 58 tests |
+| s4.3 | Collectability scoring model | Rodrigo | **done** | Merged 2026-07-21 (PR #8). **M1 GO** — ROC-AUC mean 0.732–0.739. ADR-007 amended: C=0.01 after the canary caught collinearity |
+| s4.4 | Score explanation | Rodrigo | **ready** | s4.3 merged. Note: days_overdue_max/mean are 0.872 correlated — do not list both as separate top factors |
+| s4.5 — formula | Priority value + Pareto threshold | Rodrigo | **ready** | s4.3 merged |
 | s4.5 — API | Prioritized-list endpoint | Nano | backlog | Depends on s4.5 formula agreed |
-| s4.6 | Rescore-on-contact endpoint | Nano | backlog | Depends on s4.3 |
-| s4.7 | i18n completion (switcher + retrofit) | Renata | ready | No deps — can start immediately |
+| s4.6 | Rescore-on-contact endpoint | Nano | **ready** | s4.3 merged |
+| s4.7 | i18n completion (switcher + retrofit) | Renata | ready | No deps. **Now also carries the form minimum 10 → 200** (s4.3 measurement: n=100 gives AUC 0.286–1.000) |
 | s4.8 | LLM enrichment verification | Rodrigo | **blocked** | ⛔ Needs `OPENROUTER_API_KEY` |
 | s4.9 | Score persistence — `IScoreRepository` + adapter | Nano | ready | No deps — entity/ORM/mappers exist from E2. Extracted from s4.3 so Nano isn't idle |
 
