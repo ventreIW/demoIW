@@ -33,5 +33,6 @@ __pycache__/
 htmlcov/
 .coverage
 .raise/rai/sessions.db
-.raise/rai/sessions.db
-.raise/rai/sessions.db
+
+# Next.js generated type declarations — regenerated on every build
+frontend/next-env.d.ts
