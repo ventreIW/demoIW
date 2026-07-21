@@ -12,8 +12,8 @@ Status: **Active** — authorized 2026-07-21 (Gustavo)
 | s4.2 | Feature engineering & training set | Rodrigo | **done** | Merged 2026-07-21 (PR #7). ADR-006 validated: observed rates within 0.002 of prediction. 58 tests |
 | s4.3 | Collectability scoring model | Rodrigo | **done** | Merged 2026-07-21 (PR #8). **M1 GO** — ROC-AUC mean 0.732–0.739. ADR-007 amended: C=0.01 after the canary caught collinearity |
 | s4.4 | Score explanation | Rodrigo | **done** | Merged 2026-07-21 (PR #10). Ageing grouped as one factor; phrasing direction-aware after reading real output. 43 tests |
-| s4.5 — formula | Priority value + Pareto threshold | Rodrigo | **ready** | s4.3 merged |
-| s4.5 — API | Prioritized-list endpoint | Nano | backlog | Depends on s4.5 formula agreed |
+| s4.5 — formula | Priority value + Pareto threshold | Rodrigo | **implemented** | T1-T3 done 2026-07-21; PR open. Contract pushed at 5d8980f so s4.5-API is unblocked |
+| s4.5 — API | Prioritized-list endpoint | Nano | **ready** | Contract available at `5d8980f`: `PrioritizedPortfolio` + `ScoringRun.outstanding_by_client`. Note: `value_share` reaches 0.80 at ~58% of accounts, not 20% |
 | s4.6 | Rescore-on-contact endpoint | Nano | **ready** | s4.3 merged |
 | s4.7 | i18n completion (switcher + retrofit) | Renata | ready | No deps. **Now also carries the form minimum 10 → 200** (s4.3 measurement: n=100 gives AUC 0.286–1.000) |
 | s4.8 | LLM enrichment verification | Rodrigo | **blocked** | ⛔ Needs `OPENROUTER_API_KEY` |
