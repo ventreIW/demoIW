@@ -1,9 +1,34 @@
 ---
 epic_id: "E9"
 title: "i18n with next-intl"
-status: "draft"
+status: "superseded"
 created: "2026-07-13"
+superseded: "2026-07-20"
+superseded_by: "b15-i18n-setup (delivered), E4 s4.7 (remaining work)"
 ---
+
+> # ⛔ SUPERSEDED — do not activate
+>
+> **Retired 2026-07-20.** This epic was planned on 2026-07-13, five days *after* the work it
+> describes had already shipped.
+>
+> **What happened:** `work/backlog/b15-i18n-setup` delivered next-intl v4, `[locale]` routing,
+> middleware locale detection, `messages/{es,en}.json`, ICU pluralization and dynamic `html lang`
+> — merged **2026-07-08**. That is this epic's story B-15, and it also covers B-16, B-17 and B-19,
+> because the components they name were all converted at the same time.
+>
+> **This brief was written without reading the codebase.** Its stories plan to translate an
+> *About page*, a *Dashboard* and a *Settings page*. None of those exist. The application has
+> exactly two pages, `/` and `/scenarios`, and both were already translated when this was written.
+>
+> **The one legitimate story was B-18 (language switcher)**, which `b15` explicitly scoped out and
+> nobody built. That work, plus a regression in `GenerateScenarioForm.tsx`, now lives at
+> **E4 s4.7**.
+>
+> **Why this is kept rather than deleted:** the same work was planned three times — here, as
+> E4 s4.1, and as backlog item b15 — because `b15` was tracked in `work/backlog/`, *outside*
+> the epic system, so epic planning never saw it. This file is the evidence for fixing that
+> split. See `dev/parking-lot.md`.
 
 # Epic Brief: i18n with next-intl
 

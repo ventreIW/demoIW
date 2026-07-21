@@ -44,7 +44,8 @@ signal (ADR-004) is exactly what makes the portfolio learnable.
 
 | ID | Title | Size | Notes |
 |---|---|---|---|
-| s4.1 | i18n foundation (ES default, EN-ready) | S | next-intl (or equiv); strings structure + locale switcher. No full EN copy yet (E7). No deps — can start immediately. |
+| s4.1 | i18n foundation (ES default, EN-ready) | S | ✅ **DONE — delivered out-of-band by backlog item `b15-i18n-setup` (merged 2026-07-08).** next-intl v4, `[locale]` routing, middleware locale detection, `messages/{es,en}.json`, ICU pluralization, dynamic `html lang`, `renderWithIntl` test wrapper. Do not re-plan. |
+| s4.7 | i18n completion (switcher + s3.4 retrofit) | S | The part of s4.1 that `b15` explicitly left out, plus a regression. See below. No deps — can start immediately. |
 | s4.2 | Feature engineering & training set | S | Derive features from scenario data (days overdue, amount, payment-history pattern, sector); build labelled training set from synthetic data |
 | s4.3 | Collectability scoring model | M | Train supervised propensity model; output 0–100 score + High/Med/Low; persist `Score` entities |
 | s4.4 | Score explanation | S | Top-factor / feature-contribution explanation per score |
@@ -53,18 +54,31 @@ signal (ADR-004) is exactly what makes the portfolio learnable.
 
 ---
 
+### s4.7 — what actually remains for i18n
+
+`b15` delivered the foundation but scoped out the user-facing switcher, and one regression has
+landed since:
+
+1. **Locale switcher UI** — never built (`b15` listed it under "Out of Scope"). Locale is
+   currently chosen by `accept-language` detection or by typing the `/en` URL; a user cannot
+   change language from within the app.
+2. **`GenerateScenarioForm.tsx` retrofit** — shipped by s3.4 *after* `b15` landed, with **27
+   hardcoded Spanish strings** and a hardcoded `toLocaleDateString('es-MX')`. The newest
+   feature in the app is the only one that ignores the i18n foundation. Needs `useTranslations()`
+   plus new keys in both message files (currently 18 keys each, all from `b15`).
+
 ## Execution order
 
 ```
-s4.1 (i18n) ─── independent, parallelizable ───┐
+s4.7 (i18n) ─── independent, parallelizable ───┐
                                                │
 s4.2 → s4.3 ┬→ s4.4                             │
             ├→ s4.5                             │
             └→ s4.6                             │
 ```
 
-s4.1 is pure infra and can run in parallel with the ML track. s4.3 (the model) is the riskiest
-and gates s4.4/s4.5/s4.6.
+s4.1 is already delivered. s4.7 is pure infra and can run in parallel with the ML track.
+s4.3 (the model) is the riskiest and gates s4.4/s4.5/s4.6.
 
 ## Dependencies
 
