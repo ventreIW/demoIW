@@ -13,6 +13,7 @@ import pytest
 from app.application.services.score_explainer import (
     MATERIALITY_THRESHOLD,
     MAX_FACTORS,
+    explain,
     rank_factors,
 )
 from app.domain.value_objects.explanation_factor import FactorKey
@@ -271,3 +272,184 @@ def test_ties_broken_deterministically() -> None:
     keys = [[f.key for f in run] for run in runs]
 
     assert all(run == keys[0] for run in keys)
+
+
+# --- Phrasing (T2) --------------------------------------------------------
+
+_FACTS = {
+    "days_overdue_max": 78.0,
+    "days_overdue_mean": 41.0,
+    "pct_invoices_settled": 0.29,
+    "outstanding_amount": 18_500.0,
+    "avg_days_late_historical": 12.0,
+    "invoice_count": 7.0,
+    "has_partial_payments": True,
+    "avg_invoice_amount": 9_250.0,
+}
+
+
+def test_explanation_is_never_empty() -> None:
+    """Score.explanation must always hold text."""
+    assert explain(score=34.0, contributions=_contributions(), facts=_FACTS).strip()
+
+
+def test_no_feature_names_in_output() -> None:
+    """The officer reads business facts, never the model's vocabulary."""
+    text = explain(
+        score=34.0,
+        contributions=_contributions(days_overdue_max=-0.5, pct_invoices_settled=-0.4),
+        facts=_FACTS,
+    )
+
+    forbidden = [
+        "days_overdue",
+        "pct_invoices",
+        "outstanding_amount",
+        "avg_invoice",
+        "has_partial",
+        "coef",
+        "contribution",
+        "feature",
+        "auc",
+        "logistic",
+    ]
+    lowered = text.lower()
+    for token in forbidden:
+        assert token not in lowered, f"{token!r} leaked into: {text}"
+
+
+def test_business_facts_are_rendered() -> None:
+    text = explain(
+        score=34.0,
+        contributions=_contributions(days_overdue_max=-0.5, days_overdue_mean=-0.3),
+        facts=_FACTS,
+    )
+    assert "78" in text
+
+
+def test_monetary_values_are_formatted() -> None:
+    text = explain(
+        score=34.0,
+        contributions=_contributions(
+            outstanding_amount=-0.9, days_overdue_max=-0.05, days_overdue_mean=0.0
+        ),
+        facts=_FACTS,
+    )
+    assert "18,500" in text
+
+
+def test_settlement_rendered_as_a_ratio() -> None:
+    """'2 de 7 facturas' is checkable by an officer; '29%' is not."""
+    text = explain(
+        score=34.0,
+        contributions=_contributions(
+            pct_invoices_settled=-0.9, days_overdue_max=-0.05, days_overdue_mean=0.0
+        ),
+        facts=_FACTS,
+    )
+    assert "de 7" in text
+
+
+def test_low_score_uses_risk_framing() -> None:
+    text = explain(score=25.0, contributions=_contributions(days_overdue_max=-0.6), facts=_FACTS)
+    assert text.lower().startswith("riesgo alto")
+
+
+def test_high_score_uses_positive_framing() -> None:
+    good = {
+        **_FACTS,
+        "days_overdue_max": 0.0,
+        "pct_invoices_settled": 1.0,
+        "invoice_count": 6.0,
+        "has_partial_payments": False,
+    }
+    text = explain(
+        score=82.0,
+        contributions=_contributions(
+            pct_invoices_settled=0.6, days_overdue_max=0.3, days_overdue_mean=0.2
+        ),
+        facts=good,
+    )
+    assert "buen perfil" in text.lower()
+
+
+def test_dominant_factor_yields_one_clause() -> None:
+    """No padding survives into the prose."""
+    text = explain(
+        score=20.0,
+        contributions=_contributions(
+            days_overdue_max=-0.9,
+            days_overdue_mean=-0.1,
+            pct_invoices_settled=-0.01,
+            outstanding_amount=-0.01,
+            avg_days_late_historical=-0.005,
+            invoice_count=0.002,
+            has_partial_payments=-0.002,
+            avg_invoice_amount=0.001,
+        ),
+        facts={**_FACTS, "days_overdue_max": 145.0},
+    )
+    assert " y " not in text
+
+
+def test_explanation_is_deterministic() -> None:
+    contributions = _contributions(days_overdue_max=-0.4, pct_invoices_settled=-0.35)
+    assert explain(score=34.0, contributions=contributions, facts=_FACTS) == explain(
+        score=34.0, contributions=contributions, facts=_FACTS
+    )
+
+
+def test_sentence_ends_with_a_period() -> None:
+    assert explain(score=34.0, contributions=_contributions(), facts=_FACTS).endswith(".")
+
+
+def test_missing_fact_does_not_crash() -> None:
+    """Facts come from the feature frame; a gap must degrade, not explode."""
+    text = explain(
+        score=34.0,
+        contributions=_contributions(days_overdue_max=-0.6, days_overdue_mean=-0.2),
+        facts={"pct_invoices_settled": 0.5, "invoice_count": 4.0},
+    )
+    assert text.strip()
+
+
+def test_favourable_ageing_is_framed_as_favourable() -> None:
+    """Found by reading real output: a positive ageing contribution means the
+    client is LESS overdue than average, so the bare fact must not be rendered
+    as if it were a problem. 'Buen perfil de pago: facturas con hasta 40 días de
+    atraso' reads as a contradiction."""
+    text = explain(
+        score=85.0,
+        contributions=_contributions(days_overdue_max=0.5, days_overdue_mean=0.3),
+        facts={**_FACTS, "days_overdue_max": 40.0},
+    )
+
+    assert "atraso contenido" in text
+    assert "facturas con hasta 40 días de atraso" not in text
+
+
+def test_unfavourable_ageing_is_framed_as_a_problem() -> None:
+    text = explain(
+        score=25.0,
+        contributions=_contributions(days_overdue_max=-0.5, days_overdue_mean=-0.3),
+        facts={**_FACTS, "days_overdue_max": 480.0},
+    )
+
+    assert "facturas con hasta 480 días de atraso" in text
+
+
+def test_partial_payments_framing_follows_direction() -> None:
+    """Same fact, opposite sense: money received vs balance outstanding."""
+    good = explain(
+        score=82.0,
+        contributions=_contributions(has_partial_payments=0.6),
+        facts={**_FACTS, "has_partial_payments": True},
+    )
+    bad = explain(
+        score=25.0,
+        contributions=_contributions(has_partial_payments=-0.6),
+        facts={**_FACTS, "has_partial_payments": True},
+    )
+
+    assert "recibidos" in good
+    assert "pendientes" in bad

@@ -167,3 +167,26 @@ def test_no_repository_is_imported() -> None:
             imported.extend(alias.name for alias in node.names)
 
     assert not [name for name in imported if "repositor" in name.lower()]
+
+
+def test_placeholder_explanation_is_gone() -> None:
+    """Legacy sweep (s4.4 design): V1 must not survive beside V2.
+
+    E3's RCA was about exactly this — a refactor declared done while the old path
+    still existed. An intention in a design document does not delete code.
+    """
+    import inspect
+
+    from app.application.use_cases import score_scenario
+
+    assert not hasattr(score_scenario, "_placeholder_explanation")
+    assert "_placeholder_explanation" not in inspect.getsource(score_scenario)
+
+
+def test_explanations_are_real_not_placeholder() -> None:
+    """Every score carries factor-based prose, not a restated percentage."""
+    result = ScoreScenario().execute(_dataset(200), scenario_id=uuid4(), seed=42)
+
+    for score in result.scores:
+        assert score.explanation
+        assert "Probabilidad estimada de cobro en 90 días:" not in score.explanation

@@ -99,3 +99,133 @@ def _filter_material(factors: list[ExplanationFactor]) -> list[ExplanationFactor
     if largest == 0.0:
         return []
     return [f for f in factors if abs(f.contribution) / largest >= MATERIALITY_THRESHOLD]
+
+
+# --- Phrasing -------------------------------------------------------------
+#
+# Each factor owns a template rendering the *underlying business fact*, never the
+# feature name or its coefficient. An officer can verify "78 días de atraso"
+# against the ledger; "days_overdue_max=-0.31" tells them nothing they can act on.
+
+#: Opening clause, chosen from the score band.
+_HEADLINES: Final[dict[str, str]] = {
+    "low": "Riesgo alto",
+    "medium": "Perfil mixto",
+    "high": "Buen perfil de pago",
+}
+
+
+def _headline(score: float) -> str:
+    if score < LOW_BAND:
+        return _HEADLINES["low"]
+    if score > HIGH_BAND:
+        return _HEADLINES["high"]
+    return _HEADLINES["medium"]
+
+
+def _money(amount: float) -> str:
+    return f"${amount:,.0f}"
+
+
+def _phrase(factor: ExplanationFactor, facts: dict[str, float | bool]) -> str | None:
+    """Render one factor as a Spanish clause, or ``None`` if its fact is missing.
+
+    **Framing follows the contribution's sign, not the raw value.** A positive
+    ageing contribution means this client is *less* overdue than the portfolio
+    average, so "40 días" is favourable here and unfavourable elsewhere. Rendering
+    the bare fact produced sentences like "Buen perfil de pago: facturas con hasta
+    40 días de atraso", which reads as a contradiction to an officer.
+
+    Returning ``None`` rather than raising means a gap in the feature frame
+    degrades the sentence instead of failing the whole scoring run.
+    """
+    favourable = factor.contribution > 0
+
+    if factor.key is FactorKey.AGEING:
+        days = facts.get("days_overdue_max")
+        if days is None:
+            return None
+        value = float(days)
+        if value <= 0:
+            return "sin facturas vencidas"
+        if favourable:
+            return f"atraso contenido, de hasta {value:.0f} días"
+        return f"facturas con hasta {value:.0f} días de atraso"
+
+    if factor.key is FactorKey.SETTLEMENT:
+        pct, count = facts.get("pct_invoices_settled"), facts.get("invoice_count")
+        if pct is None or count is None:
+            return None
+        total = int(float(count))
+        settled = round(float(pct) * total)
+        if favourable:
+            return f"{settled} de {total} facturas liquidadas"
+        return f"sólo {settled} de {total} facturas liquidadas"
+
+    if factor.key is FactorKey.OUTSTANDING:
+        amount = facts.get("outstanding_amount")
+        if amount is None:
+            return None
+        if favourable:
+            return f"saldo bajo, de {_money(float(amount))}"
+        return f"{_money(float(amount))} pendientes de cobro"
+
+    if factor.key is FactorKey.PAYMENT_LATENESS:
+        days = facts.get("avg_days_late_historical")
+        if days is None:
+            return None
+        value = float(days)
+        if value <= 1:
+            return "historial de pagos puntuales"
+        if favourable:
+            return f"historial de pago razonable, {value:.0f} días de retraso promedio"
+        return f"pagos históricos con {value:.0f} días de retraso promedio"
+
+    if factor.key is FactorKey.PARTIAL_PAYMENTS:
+        has_partial = facts.get("has_partial_payments")
+        if has_partial is None:
+            return None
+        if not has_partial:
+            return "sin pagos parciales"
+        # A partial payer is mid-gradient: worse than a punctual client, better
+        # than one who has paid nothing. Frame by which comparison applies here.
+        return "pagos parciales recibidos" if favourable else "pagos parciales pendientes"
+
+    if factor.key is FactorKey.INVOICE_COUNT:
+        count = facts.get("invoice_count")
+        if count is None:
+            return None
+        return f"{int(float(count))} facturas en el periodo"
+
+    if factor.key is FactorKey.INVOICE_SIZE:
+        amount = facts.get("avg_invoice_amount")
+        if amount is None:
+            return None
+        return f"facturas de {_money(float(amount))} en promedio"
+
+    return None
+
+
+def _join(clauses: list[str]) -> str:
+    """Spanish list joining: 'a', 'a y b', 'a, b y c'."""
+    if len(clauses) == 1:
+        return clauses[0]
+    return f"{', '.join(clauses[:-1])} y {clauses[-1]}"
+
+
+def explain(score: float, contributions: dict[str, float], facts: dict[str, float | bool]) -> str:
+    """One Spanish sentence naming what drove this score.
+
+    Deterministic by construction — template text over ranked numeric
+    contributions, with no model call. This is required rather than preferred:
+    ``OPENROUTER_API_KEY`` is unavailable, and an LLM would give the same client
+    different reasoning on two runs of the same seeded scenario.
+    """
+    factors = rank_factors(contributions, score)
+    clauses = [clause for factor in factors if (clause := _phrase(factor, facts)) is not None]
+
+    headline = _headline(score)
+    if not clauses:
+        return f"{headline}: probabilidad estimada de cobro en 90 días de {score:.0f}%."
+
+    return f"{headline}: {_join(clauses)}."
