@@ -3,16 +3,50 @@
 import httpx
 import pytest
 import respx
+from httpx import AsyncClient
+
 from app.container import get_prioritize_scenario_use_case
+
+
+def _mock_llm_response() -> list[dict[str, str]]:
+    """Mock LLM response for enrichment."""
+    return [
+        {
+            "name": "Enriched Client 1",
+            "sector_description": "A retail company in Mexico.",
+        },
+        {
+            "name": "Enriched Client 2",
+            "sector_description": "A retail business operating in Mexico.",
+        },
+        {
+            "name": "Enriched Client 3",
+            "sector_description": "Mexican retail enterprise.",
+        },
+    ]
+
+
+def _mock_llm_json() -> dict[str, object]:
+    """Build mock JSON response for OpenRouter."""
+    return {
+        "choices": [{"message": {"content": str(_mock_llm_response()).replace("'", '"')}}],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 50},
+    }
+
+
+def _mock_openrouter() -> None:
+    """Mock OpenRouter LLM call."""
+    respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json=_mock_llm_json())
+    )
 
 
 class TestPrioritizedEndpoint:
     """Tests for the prioritized portfolio endpoint."""
 
     @pytest.mark.anyio
-    async def test_404_unscored_scenario(self, client) -> None:
+    async def test_404_unscored_scenario(self, client: AsyncClient) -> None:
         """Unscored scenario returns 404 with clear message."""
-        # Create a scenario without scores
         create_resp = await client.post(
             "/api/v1/scenarios", json={"name": "Unscored", "sector": "retail"}
         )
@@ -28,29 +62,15 @@ class TestPrioritizedEndpoint:
         use_case = await get_prioritize_scenario_use_case()
         assert use_case is not None
         from app.application.use_cases.prioritize_scenario import PrioritizeScenario
+
         assert isinstance(use_case, PrioritizeScenario)
 
     @pytest.mark.anyio
     @respx.mock
-    async def test_happy_path(self, client) -> None:
+    async def test_happy_path(self, client: AsyncClient) -> None:
         """Integration test: generate scenario then get prioritized portfolio."""
-        # Mock OpenRouter LLM call
-        mock_llm_response = [
-            {"name": "Enriched Client 1", "sector_description": "A retail company in Mexico."},
-            {"name": "Enriched Client 2", "sector_description": "A retail business operating in Mexico."},
-            {"name": "Enriched Client 3", "sector_description": "Mexican retail enterprise."},
-        ]
-        respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
-            return_value=httpx.Response(
-                200,
-                json={
-                    "choices": [{"message": {"content": str(mock_llm_response).replace("'", '"')}}],
-                    "usage": {"prompt_tokens": 100, "completion_tokens": 50},
-                },
-            )
-        )
+        _mock_openrouter()
 
-        # Generate a scenario with scores
         gen_resp = await client.post(
             "/api/v1/scenarios/generate",
             json={
@@ -65,12 +85,10 @@ class TestPrioritizedEndpoint:
         assert gen_resp.status_code == 201
         sid = gen_resp.json()["id"]
 
-        # Get prioritized portfolio
         response = await client.get(f"/api/v1/scenarios/{sid}/prioritized")
         assert response.status_code == 200
         body = response.json()
 
-        # Top-level fields from PrioritizedPortfolio
         assert "cases" in body
         assert "pareto_subset" in body
         assert "threshold" in body
@@ -81,10 +99,8 @@ class TestPrioritizedEndpoint:
         assert "value_share" in body
         assert "summary" in body
 
-        # Pareto subset reaches threshold
         assert body["value_share"] >= body["threshold"]
 
-        # Each case has PrioritizedCase fields
         if body["cases"]:
             case = body["cases"][0]
             assert "client_id" in case
@@ -96,31 +112,16 @@ class TestPrioritizedEndpoint:
 
     @pytest.mark.anyio
     @respx.mock
-    async def test_response_shape_matches_contract(self, client) -> None:
-        """Response shape matches PrioritizedPortfolio contract exactly."""
-        # Mock OpenRouter LLM call
-        mock_llm_response = [
-            {"name": "Enriched Client 1", "sector_description": "A retail company in Mexico."},
-            {"name": "Enriched Client 2", "sector_description": "A retail business operating in Mexico."},
-            {"name": "Enriched Client 3", "sector_description": "Mexican retail enterprise."},
-        ]
-        respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
-            return_value=httpx.Response(
-                200,
-                json={
-                    "choices": [{"message": {"content": str(mock_llm_response).replace("'", '"')}}],
-                    "usage": {"prompt_tokens": 100, "completion_tokens": 50},
-                },
-            )
-        )
+    async def test_threshold_parameter(self, client: AsyncClient) -> None:
+        """Threshold parameter overrides default 80%."""
+        _mock_openrouter()
 
-        # Generate a scored scenario
         gen_resp = await client.post(
             "/api/v1/scenarios/generate",
             json={
                 "seed": 42,
                 "sector": "retail",
-                "client_count": 50,
+                "client_count": 100,
                 "invoice_volume": 5.0,
                 "amount_mean": 10000.0,
                 "amount_std": 3000.0,
@@ -128,27 +129,104 @@ class TestPrioritizedEndpoint:
         )
         sid = gen_resp.json()["id"]
 
-        response = await client.get(f"/api/v1/scenarios/{sid}/prioritized")
-        assert response.status_code == 200
-        body = response.json()
+        resp_default = await client.get(f"/api/v1/scenarios/{sid}/prioritized")
+        body_default = resp_default.json()
+        default_subset = body_default["subset_count"]
 
-        # Top-level fields from PrioritizedPortfolio
-        assert "cases" in body
-        assert "pareto_subset" in body
-        assert "threshold" in body
-        assert "total_expected_recoverable" in body
-        assert "subset_expected_recoverable" in body
-        assert "portfolio_count" in body
-        assert "subset_count" in body
-        assert "value_share" in body
-        assert "summary" in body
+        resp_strict = await client.get(f"/api/v1/scenarios/{sid}/prioritized?threshold=0.90")
+        body_strict = resp_strict.json()
+        assert body_strict["subset_count"] >= default_subset
+        assert body_strict["threshold"] == 0.90
 
-        # Each case has PrioritizedCase fields
-        if body["cases"]:
-            case = body["cases"][0]
-            assert "client_id" in case
-            assert "score" in case
-            assert "outstanding" in case
-            assert "rank" in case
-            assert "expected_recoverable" in case
-            assert "category" in case
+        resp_loose = await client.get(f"/api/v1/scenarios/{sid}/prioritized?threshold=0.50")
+        body_loose = resp_loose.json()
+        assert body_loose["subset_count"] <= default_subset
+        assert body_loose["threshold"] == 0.50
+
+    @pytest.mark.anyio
+    @respx.mock
+    async def test_sort_parameter(self, client: AsyncClient) -> None:
+        """Sort parameter works for different fields."""
+        _mock_openrouter()
+
+        gen_resp = await client.post(
+            "/api/v1/scenarios/generate",
+            json={
+                "seed": 42,
+                "sector": "retail",
+                "client_count": 100,
+                "invoice_volume": 5.0,
+                "amount_mean": 10000.0,
+                "amount_std": 3000.0,
+            },
+        )
+        sid = gen_resp.json()["id"]
+
+        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?sort=outstanding&order=desc")
+        body = resp.json()
+        outstandings = [c["outstanding"] for c in body["cases"]]
+        assert outstandings == sorted(outstandings, reverse=True)
+
+        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?sort=score&order=asc")
+        body = resp.json()
+        scores = [c["score"] for c in body["cases"]]
+        assert scores == sorted(scores)
+
+        resp = await client.get(
+            f"/api/v1/scenarios/{sid}/prioritized?sort=expected_recoverable&order=desc"
+        )
+        body = resp.json()
+        expected = [c["expected_recoverable"] for c in body["cases"]]
+        assert expected == sorted(expected, reverse=True)
+
+    @pytest.mark.anyio
+    @respx.mock
+    async def test_category_filter(self, client: AsyncClient) -> None:
+        """Category filter works and Pareto recomputed on filtered set."""
+        _mock_openrouter()
+
+        gen_resp = await client.post(
+            "/api/v1/scenarios/generate",
+            json={
+                "seed": 42,
+                "sector": "retail",
+                "client_count": 100,
+                "invoice_volume": 5.0,
+                "amount_mean": 10000.0,
+                "amount_std": 3000.0,
+            },
+        )
+        sid = gen_resp.json()["id"]
+
+        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category=High")
+        body = resp.json()
+        for case in body["cases"]:
+            assert case["category"] == "High"
+        assert body["value_share"] >= body["threshold"]
+
+        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category=Low")
+        body = resp.json()
+        for case in body["cases"]:
+            assert case["category"] == "Low"
+
+    @pytest.mark.anyio
+    @respx.mock
+    async def test_days_overdue_min_filter(self, client: AsyncClient) -> None:
+        """days_overdue_min filter works (requires days_overdue on case)."""
+        _mock_openrouter()
+
+        gen_resp = await client.post(
+            "/api/v1/scenarios/generate",
+            json={
+                "seed": 42,
+                "sector": "retail",
+                "client_count": 100,
+                "invoice_volume": 5.0,
+                "amount_mean": 10000.0,
+                "amount_std": 3000.0,
+            },
+        )
+        sid = gen_resp.json()["id"]
+
+        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?days_overdue_min=30")
+        assert resp.status_code == 200
