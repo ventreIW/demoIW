@@ -9,7 +9,7 @@ from app.adapters.persistence.mappers import (
 )
 from app.adapters.persistence.models import ClientORM, InvoiceORM, PaymentORM, ScenarioORM
 from app.domain.entities.scenario import Scenario
-from app.domain.enums import PaymentPattern, ScenarioStatus
+from app.domain.enums import ScenarioStatus
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.repositories import IScenarioRepository
@@ -90,7 +90,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
 
     async def create_from_csv(self, scenario: Scenario, rows: list[dict[str, str]]) -> Scenario:
         """Create a scenario with clients and invoices from parsed CSV rows."""
-        from datetime import UTC, datetime
+        from datetime import datetime
 
         orm = scenario_domain_to_orm(scenario)
         orm.id = str(uuid4())
@@ -133,7 +133,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
 
         # Convert to DataFrames
         clients_df = pd.DataFrame([{
-            "client_id": str(c.id),
+            "id": str(c.id),
             "scenario_id": str(c.scenario_id),
             "name": c.name,
             "sector_description": c.sector_description,
@@ -141,7 +141,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
         } for c in clients])
 
         invoices_df = pd.DataFrame([{
-            "invoice_id": str(i.id),
+            "id": str(i.id),
             "client_id": str(i.client_id),
             "folio": i.folio,
             "amount": i.amount,
@@ -152,7 +152,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
         } for i in invoices])
 
         payments_df = pd.DataFrame([{
-            "payment_id": str(p.id),
+            "id": str(p.id),
             "invoice_id": str(p.invoice_id),
             "amount": p.amount,
             "paid_date": p.payment_date,

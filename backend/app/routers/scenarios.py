@@ -15,7 +15,7 @@ from app.domain.entities.scenario import Scenario
 from app.domain.enums import ScenarioStatus, Sector
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.generation_params import GenerationParams
-from app.domain.value_objects.prioritized_case import PrioritizedPortfolio
+from app.domain.value_objects.prioritized_case import PrioritizedCase
 from app.ports.repositories import IScenarioRepository
 
 router = APIRouter(prefix="/api/v1/scenarios", tags=["scenarios"])
@@ -39,6 +39,31 @@ class ScenarioDetail(ScenarioSummary):
     seed: int | None
     parameters: dict[str, object]
     source: str
+
+
+class PrioritizedCaseResponse(BaseModel):
+    """Response model matching PrioritizedCase domain object exactly."""
+
+    client_id: str
+    score: float
+    outstanding: float
+    rank: int
+    expected_recoverable: float
+    category: str
+
+
+class PrioritizedPortfolioResponse(BaseModel):
+    """Response model matching PrioritizedPortfolio domain object exactly."""
+
+    cases: list[PrioritizedCaseResponse]
+    pareto_subset: list[PrioritizedCaseResponse]
+    threshold: float
+    total_expected_recoverable: float
+    subset_expected_recoverable: float
+    portfolio_count: int
+    subset_count: int
+    value_share: float
+    summary: str
 
 
 @router.get("", response_model=list[ScenarioSummary])
@@ -276,7 +301,7 @@ async def generate_scenario(
     )
 
 
-@router.get("/{scenario_id}/prioritized")
+@router.get("/{scenario_id}/prioritized", response_model=PrioritizedPortfolioResponse)
 async def get_prioritized(
     scenario_id: UUID,
     threshold: float = 0.80,
@@ -285,7 +310,7 @@ async def get_prioritized(
     category: str | None = None,
     days_overdue_min: int | None = None,
     repo: IScenarioRepository = Depends(get_scenario_repo),
-) -> dict[str, object]:
+) -> PrioritizedPortfolioResponse:
     """Return prioritized portfolio for a scenario with Pareto subset.
 
     Query params:
@@ -315,23 +340,16 @@ async def get_prioritized(
     prioritizer = PrioritizeScenario()
     portfolio = prioritizer.execute(scoring_run, threshold=threshold)
 
-    # Convert to response dict
-    return _portfolio_to_dict(portfolio, sort, order, category, days_overdue_min)
-
-
-def _portfolio_to_dict(
-    portfolio: "PrioritizedPortfolio",
-    sort: str,
-    order: str,
-    category: str | None,
-    days_overdue_min: int | None,
-) -> dict[str, object]:
-    """Convert PrioritizedPortfolio to response dict with sorting/filtering."""
     cases = portfolio.cases
 
     # Filter by category if provided
     if category:
-        cases = [c for c in cases if c.category == category]
+
+        def _cat_matches(c: "PrioritizedCase") -> bool:
+            cat = c.category
+            return (cat.value if hasattr(cat, "value") else str(cat)) == category
+
+        cases = [c for c in cases if _cat_matches(c)]
 
     # Filter by days_overdue_min if provided (requires days_overdue on case)
     if days_overdue_min is not None:
@@ -354,32 +372,33 @@ def _portfolio_to_dict(
 
     pareto_subset = _pareto_prefix(cases, portfolio.threshold)
 
-    return {
-        "cases": [
-            {
-                "client_id": str(c.client_id),
-                "score": c.score,
-                "outstanding": c.outstanding,
-                "rank": c.rank,
-                "expected_recoverable": c.expected_recoverable,
-            }
-            for c in cases
-        ],
-        "pareto_subset": [
-            {
-                "client_id": str(c.client_id),
-                "score": c.score,
-                "outstanding": c.outstanding,
-                "rank": c.rank,
-                "expected_recoverable": c.expected_recoverable,
-            }
-            for c in pareto_subset
-        ],
-        "threshold": portfolio.threshold,
-        "total_expected_recoverable": portfolio.total_expected_recoverable,
-        "subset_expected_recoverable": portfolio.subset_expected_recoverable,
-        "portfolio_count": portfolio.portfolio_count,
-        "subset_count": len(pareto_subset),
-        "value_share": portfolio.value_share,
-        "summary": portfolio.summary(),
-    }
+    # Convert to response models
+    cases_resp = _cases_to_response(cases)
+    pareto_resp = _cases_to_response(pareto_subset)
+
+    return PrioritizedPortfolioResponse(
+        cases=cases_resp,
+        pareto_subset=pareto_resp,
+        threshold=portfolio.threshold,
+        total_expected_recoverable=portfolio.total_expected_recoverable,
+        subset_expected_recoverable=portfolio.subset_expected_recoverable,
+        portfolio_count=portfolio.portfolio_count,
+        subset_count=len(pareto_subset),
+        value_share=portfolio.value_share,
+        summary=portfolio.summary(),
+    )
+
+
+def _cases_to_response(cases: list["PrioritizedCase"]) -> list[PrioritizedCaseResponse]:
+    """Convert domain PrioritizedCase list to response models."""
+    return [
+        PrioritizedCaseResponse(
+            client_id=str(c.client_id),
+            score=c.score,
+            outstanding=c.outstanding,
+            rank=c.rank,
+            expected_recoverable=c.expected_recoverable,
+            category=c.category.value if hasattr(c.category, "value") else str(c.category),
+        )
+        for c in cases
+    ]
