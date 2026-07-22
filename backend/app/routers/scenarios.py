@@ -320,6 +320,40 @@ async def get_prioritized(
     - category: filter by High | Medium | Low
     - days_overdue_min: filter by minimum days overdue
     """
+    # Validate query parameters
+    valid_sort_fields = {"rank", "score", "outstanding", "expected_recoverable", "days_overdue"}
+    if sort not in valid_sort_fields:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Invalid sort field: '{sort}'. "
+                f"Must be one of: {', '.join(sorted(valid_sort_fields))}"
+            ),
+        )
+
+    if order.lower() not in ("asc", "desc"):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid order: '{order}'. Must be 'asc' or 'desc'",
+        )
+
+    if category is not None:
+        valid_categories = {"High", "Medium", "Low"}
+        if category not in valid_categories:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Invalid category: '{category}'. "
+                    f"Must be one of: {', '.join(sorted(valid_categories))}"
+                ),
+            )
+
+    if threshold < 0.0 or threshold > 1.0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid threshold: {threshold}. Must be between 0.0 and 1.0",
+        )
+
     # Fetch scenario
     scenario = await repo.get_by_id(scenario_id)
     if scenario is None:
