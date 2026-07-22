@@ -7,12 +7,15 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.application.use_cases.generate_dataset import GenerateDataset
+from app.application.use_cases.prioritize_scenario import PrioritizeScenario
+from app.application.use_cases.score_scenario import ScoreScenario
 from app.config import settings
 from app.container import get_generate_dataset_use_case, get_scenario_repo
 from app.domain.entities.scenario import Scenario
 from app.domain.enums import ScenarioStatus, Sector
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.generation_params import GenerationParams
+from app.domain.value_objects.prioritized_case import PrioritizedPortfolio
 from app.ports.repositories import IScenarioRepository
 
 router = APIRouter(prefix="/api/v1/scenarios", tags=["scenarios"])
@@ -271,3 +274,112 @@ async def generate_scenario(
         client_count=client_count,
         created_at=scenario.created_at,
     )
+
+
+@router.get("/{scenario_id}/prioritized")
+async def get_prioritized(
+    scenario_id: UUID,
+    threshold: float = 0.80,
+    sort: str = "rank",
+    order: str = "asc",
+    category: str | None = None,
+    days_overdue_min: int | None = None,
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> dict[str, object]:
+    """Return prioritized portfolio for a scenario with Pareto subset.
+
+    Query params:
+    - threshold: Pareto threshold (default 0.80)
+    - sort: one of rank, score, outstanding, expected_recoverable, days_overdue
+    - order: asc | desc
+    - category: filter by High | Medium | Low
+    - days_overdue_min: filter by minimum days overdue
+    """
+    # Fetch scenario
+    scenario = await repo.get_by_id(scenario_id)
+    if scenario is None:
+        raise HTTPException(status_code=404, detail=f"Scenario with id={scenario_id} not found")
+
+    # Score the scenario (re-score on each call since s4.9 not done yet)
+    scorer = ScoreScenario()
+    dataset = await repo.get_raw_dataset(scenario_id)
+    if dataset is None:
+        raise HTTPException(status_code=404, detail="Scenario has no data to score")
+
+    scoring_run = scorer.execute(dataset, scenario_id, seed=scenario.seed or 42)
+
+    if not scoring_run.scores:
+        raise HTTPException(status_code=404, detail="Scenario has no scored clients")
+
+    # Prioritize
+    prioritizer = PrioritizeScenario()
+    portfolio = prioritizer.execute(scoring_run, threshold=threshold)
+
+    # Convert to response dict
+    return _portfolio_to_dict(portfolio, sort, order, category, days_overdue_min)
+
+
+def _portfolio_to_dict(
+    portfolio: "PrioritizedPortfolio",
+    sort: str,
+    order: str,
+    category: str | None,
+    days_overdue_min: int | None,
+) -> dict[str, object]:
+    """Convert PrioritizedPortfolio to response dict with sorting/filtering."""
+    cases = portfolio.cases
+
+    # Filter by category if provided
+    if category:
+        cases = [c for c in cases if c.category == category]
+
+    # Filter by days_overdue_min if provided (requires days_overdue on case)
+    if days_overdue_min is not None:
+        cases = [c for c in cases if getattr(c, "days_overdue", 0) >= days_overdue_min]
+
+    # Sort
+    sort_key_map = {
+        "rank": lambda c: c.rank,
+        "score": lambda c: c.score,
+        "outstanding": lambda c: c.outstanding,
+        "expected_recoverable": lambda c: c.expected_recoverable,
+        "days_overdue": lambda c: getattr(c, "days_overdue", 0),
+    }
+    if sort in sort_key_map:
+        reverse = order.lower() == "desc"
+        cases.sort(key=sort_key_map[sort], reverse=reverse)
+
+    # Recompute Pareto on filtered/sorted set
+    from app.application.services.prioritizer import _pareto_prefix
+
+    pareto_subset = _pareto_prefix(cases, portfolio.threshold)
+
+    return {
+        "cases": [
+            {
+                "client_id": str(c.client_id),
+                "score": c.score,
+                "outstanding": c.outstanding,
+                "rank": c.rank,
+                "expected_recoverable": c.expected_recoverable,
+            }
+            for c in cases
+        ],
+        "pareto_subset": [
+            {
+                "client_id": str(c.client_id),
+                "score": c.score,
+                "outstanding": c.outstanding,
+                "rank": c.rank,
+                "expected_recoverable": c.expected_recoverable,
+            }
+            for c in pareto_subset
+        ],
+        "threshold": portfolio.threshold,
+        "total_expected_recoverable": portfolio.total_expected_recoverable,
+        "subset_expected_recoverable": portfolio.subset_expected_recoverable,
+        "portfolio_count": portfolio.portfolio_count,
+        "subset_count": len(pareto_subset),
+        "value_share": portfolio.value_share,
+        "summary": portfolio.summary(),
+    }

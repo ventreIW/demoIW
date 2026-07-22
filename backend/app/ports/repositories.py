@@ -5,6 +5,7 @@ from app.domain.entities.client import Client
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.scenario import Scenario
+from app.domain.value_objects.raw_dataset import RawDataset
 
 
 class IScenarioRepository(ABC):
@@ -43,6 +44,11 @@ class IScenarioRepository(ABC):
     @abstractmethod
     async def create_from_csv(self, scenario: Scenario, rows: list[dict[str, str]]) -> Scenario:
         """Create a scenario with clients and invoices from parsed CSV rows."""
+        ...
+
+    @abstractmethod
+    async def get_raw_dataset(self, scenario_id: UUID) -> RawDataset | None:
+        """Return raw clients, invoices, and payments as DataFrames for scoring."""
         ...
 
 
