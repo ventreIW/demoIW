@@ -33,5 +33,54 @@
   "app": {
     "title": "demoIW",
     "description": "Industrial wastewater treatment decision support"
+  },
+  "locale": {
+    "switchTo": "ES"
+  },
+  "scenarioForm": {
+    "sector": "Sector",
+    "clientCount": "Number of clients",
+    "clientCountHelp": "Minimum {min}, maximum {max}",
+    "invoiceVolume": "Invoices per client",
+    "invoiceVolumeHelp": "Minimum {min}, maximum {max}",
+    "seed": "Seed (optional)",
+    "seedPlaceholder": "Auto",
+    "seedHelp": "Same seed = same data. Leave empty for random.",
+    "generate": "Generate scenario",
+    "generating": "Generating data...",
+    "sectors": {
+      "manufacturing": "Manufacturing",
+      "retail": "Retail",
+      "professional_services": "Professional Services"
+    },
+    "results": {
+      "title": "Generated scenario",
+      "name": "Name:",
+      "sector": "Sector:",
+      "clients": "Clients:",
+      "status": "Status:",
+      "active": "Active",
+      "inactive": "Inactive",
+      "created": "Created:",
+      "id": "ID:",
+      "copyId": "Copy ID",
+      "download": "Download JSON",
+      "activate": "Activate & use",
+      "activating": "Activating..."
+    },
+    "errors": {
+      "generate": "Error generating scenario",
+      "activate": "Error activating scenario",
+      "copyId": "Could not copy ID"
+    },
+    "success": {
+      "idCopied": "ID copied to clipboard"
+    }
+  },
+  "scenariosPage": {
+    "title": "Scenarios",
+    "description": "Select a scenario to start the demo.",
+    "errorLoading": "Error loading scenarios",
+    "generateNew": "Generate new"
   }
 }
