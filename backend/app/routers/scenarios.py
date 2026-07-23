@@ -467,12 +467,15 @@ async def rescore_client(
         raise HTTPException(status_code=404, detail=f"Scenario with id={scenario_id} not found")
 
     # Execute rescore
-    portfolio = await rescore_use_case.execute(
-        scenario_id=scenario_id,
-        client_id=client_id,
-        contact_result=body.contact_result,
-        repo=repo,
-    )
+    try:
+        portfolio = await rescore_use_case.execute(
+            scenario_id=scenario_id,
+            client_id=client_id,
+            contact_result=body.contact_result,
+            repo=repo,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
     # Convert domain model to response model
     from app.routers.scenarios import _cases_to_response
