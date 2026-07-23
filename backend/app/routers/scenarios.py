@@ -8,11 +8,16 @@ from pydantic import BaseModel
 
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.application.use_cases.prioritize_scenario import PrioritizeScenario
+from app.application.use_cases.rescore_scenario import RescoreScenario
 from app.application.use_cases.score_scenario import ScoreScenario
 from app.config import settings
-from app.container import get_generate_dataset_use_case, get_scenario_repo
+from app.container import (
+    get_generate_dataset_use_case,
+    get_rescore_scenario_use_case,
+    get_scenario_repo,
+)
 from app.domain.entities.scenario import Scenario
-from app.domain.enums import ScenarioStatus, Sector
+from app.domain.enums import ContactResultType, ScenarioStatus, Sector
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.generation_params import GenerationParams
 from app.domain.value_objects.prioritized_case import PrioritizedCase
@@ -436,3 +441,37 @@ def _cases_to_response(cases: list["PrioritizedCase"]) -> list[PrioritizedCaseRe
         )
         for c in cases
     ]
+
+
+class RescoreRequest(BaseModel):
+    """Request model for rescore endpoint."""
+
+    contact_result: ContactResultType
+
+
+@router.post(
+    "/{scenario_id}/clients/{client_id}/rescore",
+    response_model=PrioritizedPortfolioResponse,
+)
+async def rescore_client(
+    scenario_id: UUID,
+    client_id: UUID,
+    body: RescoreRequest,
+    rescore_use_case: RescoreScenario = Depends(get_rescore_scenario_use_case),
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+) -> PrioritizedPortfolioResponse:
+    """Update a client's score based on contact result and return updated prioritization."""
+    # Fetch scenario
+    scenario = await repo.get_by_id(scenario_id)
+    if scenario is None:
+        raise HTTPException(status_code=404, detail=f"Scenario with id={scenario_id} not found")
+
+    # Execute rescore
+    portfolio = await rescore_use_case.execute(
+        scenario_id=scenario_id,
+        client_id=client_id,
+        contact_result=body.contact_result,
+        repo=repo,
+    )
+
+    return portfolio
