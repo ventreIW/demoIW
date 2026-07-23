@@ -98,13 +98,65 @@ async def get_prioritized(
     sort: str = "rank",
     order: str = "asc",
     category: Optional[str] = None,
+    days_overdue_min: Optional[int] = None,
     # Validate
     valid_sort = {"rank", "score", "outstanding", "expected_recoverable", "days_overdue"}
     if sort not in valid_sort:
         raise HTTPException(422, detail=f"Invalid sort: '{sort}'. Must be one of: {sorted(valid_sort)}")
     if order.lower() not in ("asc", "desc"):
         raise HTTPException(422, detail="order must be 'asc' or 'desc'")
+    # Category validation
+    if category is not None:
+        valid_categories = {"High", "Medium", "Low"}
+        if category not in valid_categories:
+            raise HTTPException(422, detail=f"Invalid category: '{category}'. Must be one of: {sorted(valid_categories)}")
+    # Threshold validation
+    if threshold < 0.0 or threshold > 1.0:
+        raise HTTPException(422, detail=f"Invalid threshold: {threshold}. Must be between 0.0 and 1.0")
     ...
+```
+
+## Category Filter & Pareto Re-computation
+
+When filtering by category, recompute Pareto on the filtered set:
+
+```python
+if category:
+    cases = [c for c in cases if c.category.value == category]
+pareto_subset = _pareto_prefix(cases, portfolio.threshold)
+```
+
+## Category Value Serialization
+
+Domain `ScoreCategory` is a StrEnum - serialize correctly:
+
+```python
+category = c.category.value if hasattr(c.category, "value") else str(c.category)
+```
+
+## Rescore Endpoint Pattern
+
+For rescore endpoints that adjust a single client's score and re-rank:
+
+```python
+@router.post("/{scenario_id}/clients/{client_id}/rescore")
+async def rescore_client(
+    scenario_id: UUID,
+    client_id: UUID,
+    contact_result: ContactResultType,
+    repo: IScenarioRepository = Depends(get_scenario_repo),
+):
+    # Fetch scenario and current scores
+    scenario = await repo.get_by_id(scenario_id)
+    scoring_run = ScoreScenario().execute(dataset, scenario_id, seed=scenario.seed or 42)
+    
+    # Adjust score for contacted client
+    scores = {str(s.client_id): s.score_value for s in scoring_run.scores}
+    scores[str(client_id)] = clamp(scores[str(client_id)] + DELTA[contact_result], 0, 100)
+    
+    # Re-rank via PrioritizeScenario
+    portfolio = PrioritizeScenario().execute(scoring_run, threshold=0.80)
+    # Return updated portfolio
 ```
 
 ## RawDataset Column Mapping (Critical)

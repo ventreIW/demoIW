@@ -19,6 +19,7 @@ from app.adapters.persistence.sqlalchemy_scenario_repo import (
 from app.application.services.llm_enrichment_service import LLMEnrichmentService
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.application.use_cases.prioritize_scenario import PrioritizeScenario
+from app.application.use_cases.rescore_scenario import RescoreScenario
 from app.config import settings
 from app.infrastructure.database import get_session
 from app.ports.llm_port import ILLMPort
@@ -98,3 +99,8 @@ async def get_generate_dataset_use_case(
 async def get_prioritize_scenario_use_case() -> PrioritizeScenario:
     """Dependency that provides a PrioritizeScenario use case instance."""
     return PrioritizeScenario()
+
+
+async def get_rescore_scenario_use_case() -> RescoreScenario:
+    """Dependency that provides a RescoreScenario use case instance."""
+    return RescoreScenario()
