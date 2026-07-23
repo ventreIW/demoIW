@@ -200,7 +200,16 @@ Using `method.isabstract` will raise an `AttributeError` because the attribute n
 
 #### Scope creep: modifying files outside the story's designated directories
 
-Stories define a clear scope (e.g., only `app/adapters/llm/` and its tests). Editing files outside this scope can introduce unintended side effects, violate ownership, and create merge conflicts. Before making changes, verify that the file path lies within the allowed directories listed in the story's scope. If you need to modify a shared file, first confirm with the team or create a separate story for that change.
+Stories define a clear scope (e.g., only `app/adapters/llm/` and its tests). Editing files outside this scope can introduce unintended side effects, violate ownership, and create merge conflicts.
+
+#### Pre-existing test failures
+
+Some test failures in the codebase may predate the current story and are unrelated to the changes being made. Before assuming a failure is caused by the current work:
+1. Stash local changes and run the failing test on base branch
+2. If it fails on base, it's a pre-existing issue — document and move on
+3. If it passes on base but fails with changes, it's a regression — fix it
+
+In this session, `test_csv_upload.py::test_upload_csv_valid_returns_201` failed both with and without the story's changes — a pre-existing issue unrelated to the prioritized endpoint work. Before making changes, verify that the file path lies within the allowed directories listed in the story's scope. If you need to modify a shared file, first confirm with the team or create a separate story for that change.
 
 #### Dependency version mismatches causing test failures
 
@@ -288,6 +297,17 @@ When adding new endpoints to an existing router, replicate the exact pattern of 
 - Same docstring style (if any)
 
 This ensures consistency and reduces review friction.
+
+#### Contract-first API development
+
+For stories that expose domain logic via HTTP:
+1. **Domain contract first** — Value objects and use cases define the contract (committed in prior story)
+2. **Router as thin adapter** — Router only validates query params, calls use case, serializes response
+3. **No business logic in router** — All arithmetic/decision logic lives in domain/use case layer
+4. **Validation at the edge** — Router validates query params (422 with clear messages) before any DB/scoring calls
+5. **Response models mirror domain exactly** — Pydantic models match domain value objects field-for-field; any domain change = contract change
+
+This separation makes both layers independently testable and keeps the API layer trivial to verify.
 
 ### Step 4: Commit & Checkpoint
 
