@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
+import LocaleSwitcher from '@/components/locale/LocaleSwitcher'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,7 +20,10 @@ function Sidebar() {
     <aside className="hidden w-64 flex-shrink-0 border-r bg-slate-50 md:block">
       <div className="flex h-full flex-col">
         <div className="border-b px-6 py-4">
-          <span className="text-lg font-semibold text-slate-800">{t('app.title')}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-semibold text-slate-800">{t('app.title')}</span>
+            <LocaleSwitcher />
+          </div>
         </div>
         <nav className="flex-1 space-y-1 p-4">
           <SidebarLink href="#">{t('sidebar.operations')}</SidebarLink>
