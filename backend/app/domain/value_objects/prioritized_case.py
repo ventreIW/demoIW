@@ -16,6 +16,9 @@ rather than the invoiced total.
 from dataclasses import dataclass
 from typing import Final
 
+from app.domain.enums import ScoreCategory
+
+
 #: Share of expected recoverable value the Pareto subset must reach.
 #:
 #: A **business choice, not a property of the data.** The measured concentration
@@ -24,6 +27,28 @@ from typing import Final
 #: amounts are drawn from a tight normal distribution rather than the heavy tail
 #: a real receivables book has. See `dev/parking-lot.md`.
 DEFAULT_PARETO_THRESHOLD: Final[float] = 0.80
+
+
+#: Below this the account is Low — roughly the observed 25th percentile.
+LOW_THRESHOLD: Final[float] = 40.0
+
+#: Above this the account is High — roughly the observed 75th percentile.
+HIGH_THRESHOLD: Final[float] = 70.0
+
+
+def categorize(score: float) -> ScoreCategory:
+    """Band a single score.
+
+    Boundaries: ``score < 40`` is Low, ``40 <= score <= 70`` is Medium, and
+    ``score > 70`` is High.
+    """
+    if not 0.0 <= score <= 100.0:
+        raise ValueError(f"score {score} is outside the valid range 0-100")
+    if score < LOW_THRESHOLD:
+        return ScoreCategory.LOW
+    if score > HIGH_THRESHOLD:
+        return ScoreCategory.HIGH
+    return ScoreCategory.MEDIUM
 
 
 @dataclass(frozen=True)
@@ -38,6 +63,7 @@ class PrioritizedCase:
     score: float
     outstanding: float
     rank: int
+    category: ScoreCategory
 
     @property
     def expected_recoverable(self) -> float:

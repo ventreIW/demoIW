@@ -20,16 +20,19 @@ is therefore a business choice, and the reported concentration is measured rathe
 than assumed. See `dev/parking-lot.md`.
 """
 
+from app.domain.enums import ScoreCategory
 from app.domain.value_objects.prioritized_case import (
     DEFAULT_PARETO_THRESHOLD,
     PrioritizedCase,
     PrioritizedPortfolio,
+    categorize,
 )
 
 
 def prioritize(
     scores: dict[str, float],
     outstanding_by_client: dict[str, float],
+    categories: dict[str, ScoreCategory] | None = None,
     threshold: float = DEFAULT_PARETO_THRESHOLD,
 ) -> PrioritizedPortfolio:
     """Rank scored clients and return the value-concentrating subset.
@@ -38,13 +41,15 @@ def prioritize(
     bug upstream in scoring, not a condition to absorb — defaulting to zero would
     silently rank a real account last instead of failing where the fault is.
     """
-    cases = _rank(scores, outstanding_by_client)
+    cases = _rank(scores, outstanding_by_client, categories)
     subset = _pareto_prefix(cases, threshold)
     return PrioritizedPortfolio(cases=cases, pareto_subset=subset, threshold=threshold)
 
 
 def _rank(
-    scores: dict[str, float], outstanding_by_client: dict[str, float]
+    scores: dict[str, float],
+    outstanding_by_client: dict[str, float],
+    categories: dict[str, ScoreCategory] | None = None,
 ) -> list[PrioritizedCase]:
     """Order by expected recoverable value, descending."""
     missing = sorted(set(scores) - set(outstanding_by_client))
@@ -60,6 +65,9 @@ def _rank(
             score=scores[client_id],
             outstanding=outstanding_by_client[client_id],
             rank=0,
+            category=categories.get(client_id, categorize(scores[client_id]))
+            if categories
+            else categorize(scores[client_id]),
         )
         for client_id in scores
     ]
@@ -73,6 +81,7 @@ def _rank(
             score=case.score,
             outstanding=case.outstanding,
             rank=position,
+            category=case.category,
         )
         for position, case in enumerate(ordered, start=1)
     ]
