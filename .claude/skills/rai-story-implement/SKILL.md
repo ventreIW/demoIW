@@ -274,6 +274,34 @@ uvx --from raise-cli rai <command>   # e.g., uvx --from raise-cli rai mission li
 
 This ensures access to all RaiSE commands regardless of the project's local `rai` limitations.
 
+#### Critical: Verify file integrity after edits and run full test suite before closing
+
+**Lesson learned from s4.5-API**: Four critical errors occurred when this skill was followed but these verification steps were skipped:
+
+1. **Patch destroyed adjacent code** — Adding `get_raw_dataset` to `sqlalchemy_scenario_repo.py` silently destroyed the entire `create_from_csv` method body (the loop creating ClientORM/InvoiceORM per CSV row). The diff shown only displayed the new function; the destruction of the previous function was not visible in the patch output.
+   - **Fix**: After ANY patch to an existing file, run `cat <file>` to verify the COMPLETE file contents — not just the diff.
+
+2. **Missing import after code restoration** — Restoring `create_from_csv` used `PaymentPattern.ON_TIME.value` but the import `from app.domain.enums import PaymentPattern` was missing. mypy did not catch this (mypy only checks static types on what IS imported).
+   - **Fix**: After writing/restoring code that uses a symbol, `grep -r "SymbolName" <file>` to verify its import exists.
+
+3. **Modified another developer's dataclass without running their tests** — Added required `category` field to `PrioritizedCase` (owned by Rodrigo for s4.5-formula) but did not update `_case()` helper in `test_prioritized_case.py`, causing 8 test failures.
+   - **Fix**: IMMEDIATELY run existing tests of ANY module you modify, especially dataclasses/interfaces owned by other developers.
+
+4. **Declared story complete without full test suite** — Reported "12 tests pass, 37 related tests pass" but only ran scoped tests. Full `pytest -q` revealed 14 failing tests (CSV upload, PrioritizedCase tests, etc.).
+   - **Fix**: Before declaring any story complete, run `pytest -q` (full suite, no scope) and paste actual results. Scoped tests are for per-task gates ONLY.
+
+**Mandatory pre-close checklist** (add to Step 5 end-of-story gates):
+```bash
+# 1. Full test suite (not scoped)
+pytest -q
+
+# 2. Verify no orphaned test failures
+pytest tests/ -x -q 2>&1 | tail -20
+
+# 3. Only then emit implement-complete
+rai signal emit-work story "{story_id}" --event complete --phase implement
+```
+
 #### `rai gate check` may not be available — fall back to direct tooling
 
 If `rai gate check gate-tests --scope ...` fails or the `gate` command is missing from the local `rai`, run the underlying tools directly from the appropriate subdirectory:
