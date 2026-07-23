@@ -217,7 +217,7 @@ with mocks cannot catch contract mismatches between stories; only real E2E does.
 | s4.4 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#10) | RF-02.3 delivered. Direction-aware phrasing after a contradiction found by reading real output |
 | s4.5-formula | Rodrigo | ready | — | — | s4.3 merged |
 || s4.5-API | Nano | ✅ **done** | 2026-07-22 | 2026-07-22 | 12 tests, contract verified, 422 validation |
-| s4.6 | Nano | ready | — | — | s4.3 merged |
+| s4.6 | Nano | ✅ **done** | 2026-07-22 | 2026-07-22 | 6 tests, score heuristics, Pareto recomputed |
 | s4.8 | Rodrigo | **blocked** | — | — | ⛔ `OPENROUTER_API_KEY` |
 
 ## Sequencing risks
