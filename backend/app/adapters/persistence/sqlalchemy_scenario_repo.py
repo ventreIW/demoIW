@@ -9,7 +9,7 @@ from app.adapters.persistence.mappers import (
 )
 from app.adapters.persistence.models import ClientORM, InvoiceORM, PaymentORM, ScenarioORM
 from app.domain.entities.scenario import Scenario
-from app.domain.enums import ScenarioStatus
+from app.domain.enums import PaymentPattern, ScenarioStatus
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.repositories import IScenarioRepository
@@ -90,12 +90,33 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
 
     async def create_from_csv(self, scenario: Scenario, rows: list[dict[str, str]]) -> Scenario:
         """Create a scenario with clients and invoices from parsed CSV rows."""
-        from datetime import datetime
-
+        from datetime import UTC, datetime
         orm = scenario_domain_to_orm(scenario)
         orm.id = str(uuid4())
         self._session.add(orm)
-
+        for row in rows:
+            client_id = str(uuid4())
+            client_orm = ClientORM(
+                id=client_id,
+                scenario_id=orm.id,
+                name=row["client_name"],
+                sector_description=None,
+                payment_history_pattern=PaymentPattern.ON_TIME.value,
+            )
+            self._session.add(client_orm)
+            due_date = datetime.strptime(row["due_date"], "%Y-%m-%d").replace(tzinfo=UTC)
+            days_overdue = max(0, (datetime.now(UTC) - due_date).days)
+            invoice_orm = InvoiceORM(
+                id=str(uuid4()),
+                client_id=client_id,
+                folio=row["invoice_id"],
+                amount=float(row["amount"]),
+                issue_date=datetime.now(UTC),
+                due_date=due_date,
+                days_overdue=days_overdue,
+                status="pending",
+            )
+            self._session.add(invoice_orm)
         await self._session.commit()
         return scenario_orm_to_domain(orm)
 

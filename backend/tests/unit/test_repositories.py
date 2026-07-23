@@ -74,4 +74,5 @@ def test_isce_nario_repository_unchanged():
         "get_active",
         "get_client_count",
         "create_from_csv",
+        "get_raw_dataset",
     }

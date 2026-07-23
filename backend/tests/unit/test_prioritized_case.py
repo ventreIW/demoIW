@@ -6,6 +6,8 @@ contract, so the tests double as the specification he builds against.
 
 import pytest
 
+from app.domain.enums import ScoreCategory
+
 from app.domain.value_objects.prioritized_case import (
     DEFAULT_PARETO_THRESHOLD,
     PrioritizedCase,
@@ -13,12 +15,13 @@ from app.domain.value_objects.prioritized_case import (
 )
 
 
-def _case(score: float, outstanding: float, rank: int = 1) -> PrioritizedCase:
+def _case(score: float, outstanding: float, rank: int = 1, category: ScoreCategory = ScoreCategory.LOW) -> PrioritizedCase:
     return PrioritizedCase(
         client_id=f"client-{rank}",
         score=score,
         outstanding=outstanding,
         rank=rank,
+        category=category,
     )
 
 
