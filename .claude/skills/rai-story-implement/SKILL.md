@@ -255,6 +255,40 @@ Additionally, when working with immutable or frozen data structures (e.g., Pydan
 
 Always verify scope claims against the actual codebase; do not rely solely on documentation (e.g., scope.md) as it may be outdated. In WSL, use `uv venv` (not `python3 -m venv`) for creating virtual environments due to lack of sudo access. Branch names must use the `story/` prefix (e.g., `story/s3.4/generate-scenario-endpoint`). When editing files, prefer modifying existing files over creating new ones, and maintain a single source of truth for scope and story documentation (avoid duplicating information in separate backend/frontend files).
 
+#### Project-local RaiSE CLI may be a minimal stub
+
+The `rai` command in the project root may be a minimal wrapper that only exposes a subset of commands (e.g., missing `db`, `mission`, `gate`, `session journal`). If a `rai <subcommand>` fails with "No such command", use the full RaiSE CLI via `uvx`:
+
+```bash
+uvx --from raise-cli rai <command>   # e.g., uvx --from raise-cli rai mission list
+```
+
+This ensures access to all RaiSE commands regardless of the project's local `rai` limitations.
+
+#### `rai gate check` may not be available — fall back to direct tooling
+
+If `rai gate check gate-tests --scope ...` fails or the `gate` command is missing from the local `rai`, run the underlying tools directly from the appropriate subdirectory:
+
+```bash
+cd backend && uv run pytest tests/test_prioritized_endpoint.py -v   # tests
+cd backend && uv run ruff check app/routers/scenarios.py             # lint
+cd backend && uv run ruff format --check app/routers/scenarios.py    # format
+cd backend && uv run mypy app/routers/scenarios.py                   # types
+```
+
+The gate runner is a convenience, not a hard requirement — verified output matters more than which CLI produced it.
+
+#### FastAPI router pattern replication
+
+When adding new endpoints to an existing router, replicate the exact pattern of existing endpoints:
+- Same import organization
+- Same dependency injection style (`Depends(get_xxx)`)
+- Same response model usage (`response_model=XxxSummary`)
+- Same error handling (`HTTPException` with consistent detail format)
+- Same docstring style (if any)
+
+This ensures consistency and reduces review friction.
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.
