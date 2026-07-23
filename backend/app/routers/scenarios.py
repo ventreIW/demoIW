@@ -474,4 +474,20 @@ async def rescore_client(
         repo=repo,
     )
 
-    return portfolio
+    # Convert domain model to response model
+    from app.routers.scenarios import _cases_to_response
+
+    cases_resp = _cases_to_response(portfolio.cases)
+    pareto_resp = _cases_to_response(portfolio.pareto_subset)
+
+    return PrioritizedPortfolioResponse(
+        cases=cases_resp,
+        pareto_subset=pareto_resp,
+        threshold=portfolio.threshold,
+        total_expected_recoverable=portfolio.total_expected_recoverable,
+        subset_expected_recoverable=portfolio.subset_expected_recoverable,
+        portfolio_count=portfolio.portfolio_count,
+        subset_count=len(portfolio.pareto_subset),
+        value_share=portfolio.value_share,
+        summary=portfolio.summary(),
+    )

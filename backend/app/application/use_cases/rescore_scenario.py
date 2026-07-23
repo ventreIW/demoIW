@@ -6,7 +6,8 @@ using the existing PrioritizeScenario use case.
 
 from uuid import UUID
 
-from app.application.use_cases.prioritize_scenario import PrioritizeScenario, prioritize
+from app.application.services.prioritizer import prioritize
+from app.application.use_cases.prioritize_scenario import PrioritizeScenario
 from app.application.use_cases.score_scenario import ScoreScenario
 from app.domain.value_objects.prioritized_case import PrioritizedPortfolio
 from app.ports.repositories import IScenarioRepository

@@ -3,6 +3,7 @@
 import httpx
 import pytest
 import respx
+from httpx import AsyncClient
 
 
 class TestRescoreEndpoint:
@@ -10,7 +11,7 @@ class TestRescoreEndpoint:
 
     @pytest.mark.anyio
     @respx.mock
-    async def test_invalid_contact_result(self, client) -> None:
+    async def test_invalid_contact_result(self, client: AsyncClient) -> None:
         """Invalid contact_result returns 422 with valid options."""
         # Mock OpenRouter LLM call
         mock_llm_response = [
@@ -67,3 +68,14 @@ class TestRescoreEndpoint:
         detail = response.json()["detail"]
         # Pydantic returns enum validation error as a list of errors
         assert any("invalid_value" in str(err) for err in detail)
+
+    @pytest.mark.anyio
+    async def test_container_provides_use_case(self) -> None:
+        """Container provides RescoreScenario use case."""
+        from app.container import get_rescore_scenario_use_case
+
+        use_case = await get_rescore_scenario_use_case()
+        assert use_case is not None
+        from app.application.use_cases.rescore_scenario import RescoreScenario
+
+        assert isinstance(use_case, RescoreScenario)
