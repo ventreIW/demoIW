@@ -33,5 +33,54 @@
   "app": {
     "title": "demoIW",
     "description": "Industrial wastewater treatment decision support"
+  },
+  "locale": {
+    "switchTo": "EN"
+  },
+  "scenarioForm": {
+    "sector": "Sector",
+    "clientCount": "Número de clientes",
+    "clientCountHelp": "Mínimo {min}, máximo {max}",
+    "invoiceVolume": "Facturas por cliente",
+    "invoiceVolumeHelp": "Mínimo {min}, máximo {max}",
+    "seed": "Semilla (opcional)",
+    "seedPlaceholder": "Auto",
+    "seedHelp": "Misma semilla = mismos datos. Vacío para semilla aleatoria.",
+    "generate": "Generar escenario",
+    "generating": "Generando datos...",
+    "sectors": {
+      "manufacturing": "Manufactura",
+      "retail": "Retail",
+      "professional_services": "Servicios Profesionales"
+    },
+    "results": {
+      "title": "Escenario generado",
+      "name": "Nombre:",
+      "sector": "Sector:",
+      "clients": "Clientes:",
+      "status": "Estado:",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "created": "Creado:",
+      "id": "ID:",
+      "copyId": "Copiar ID",
+      "download": "Descargar JSON",
+      "activate": "Activar y usar",
+      "activating": "Activando..."
+    },
+    "errors": {
+      "generate": "Error al generar el escenario",
+      "activate": "Error al activar el escenario",
+      "copyId": "No se pudo copiar el ID"
+    },
+    "success": {
+      "idCopied": "ID copiado al portapapeles"
+    }
+  },
+  "scenariosPage": {
+    "title": "Escenarios",
+    "description": "Selecciona un escenario para comenzar la demo.",
+    "errorLoading": "Error al cargar escenarios",
+    "generateNew": "Generar nuevo"
   }
 }

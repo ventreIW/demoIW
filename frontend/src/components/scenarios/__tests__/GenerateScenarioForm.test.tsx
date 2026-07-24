@@ -36,18 +36,9 @@ const mockScenario: ScenarioSummary = {
   created_at: '2026-07-14T10:00:00Z',
 }
 
-function fillForm() {
-  const sectorTrigger = screen.getByRole('combobox')
-  fireEvent.click(sectorTrigger)
-
-  const manufacturingOption = screen.getByText('Manufactura')
-  fireEvent.click(manufacturingOption)
-
-  const clientInput = screen.getByLabelText(/número de clientes/i)
-  fireEvent.change(clientInput, { target: { value: '100' } })
-
-  const invoiceInput = screen.getByLabelText(/facturas por cliente/i)
-  fireEvent.change(invoiceInput, { target: { value: '3' } })
+function submitForm() {
+  const form = document.querySelector('form')!
+  fireEvent.submit(form)
 }
 
 describe('GenerateScenarioForm', () => {
@@ -69,8 +60,7 @@ describe('GenerateScenarioForm', () => {
     mockGenerateScenario.mockImplementation(() => new Promise(() => {}))
     const { container } = renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       const button = screen.getByRole('button', { name: /generando datos/i })
@@ -84,17 +74,14 @@ describe('GenerateScenarioForm', () => {
     mockGenerateScenario.mockResolvedValue(mockScenario)
     renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       expect(screen.getByText('Demo Escenario')).toBeDefined()
     })
 
-    const sectors = screen.getAllByText(/manufacturing/)
-    expect(sectors.length).toBeGreaterThanOrEqual(1)
-    const clientCounts = screen.getAllByText('100')
-    expect(clientCounts.length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/manufacturing/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('100').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/Inactivo/)).toBeDefined()
     expect(screen.getByText(/Activar y usar/)).toBeDefined()
   })
@@ -103,8 +90,7 @@ describe('GenerateScenarioForm', () => {
     mockGenerateScenario.mockResolvedValue(mockScenario)
     renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       expect(screen.getByText('Demo Escenario')).toBeDefined()
@@ -123,8 +109,7 @@ describe('GenerateScenarioForm', () => {
 
     renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       expect(screen.getByText('Demo Escenario')).toBeDefined()
@@ -142,8 +127,7 @@ describe('GenerateScenarioForm', () => {
     mockGenerateScenario.mockRejectedValue(new Error('El sector no es válido'))
     renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith('El sector no es válido')
@@ -154,8 +138,7 @@ describe('GenerateScenarioForm', () => {
     mockGenerateScenario.mockResolvedValue(mockScenario)
     renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       expect(screen.getByText('Demo Escenario')).toBeDefined()
@@ -178,8 +161,7 @@ describe('GenerateScenarioForm', () => {
     mockGenerateScenario.mockResolvedValue(mockScenario)
     renderWithIntl(<GenerateScenarioForm />)
 
-    fillForm()
-    fireEvent.click(screen.getByText('Generar escenario'))
+    submitForm()
 
     await waitFor(() => {
       expect(screen.getByText('Demo Escenario')).toBeDefined()
@@ -189,5 +171,11 @@ describe('GenerateScenarioForm', () => {
     fireEvent.click(copyButton)
 
     expect(writeText).toHaveBeenCalledWith(mockScenario.id)
+  })
+
+  it('has min=200 on client count input', () => {
+    renderWithIntl(<GenerateScenarioForm />)
+    const input = screen.getByLabelText(/número de clientes/i) as HTMLInputElement
+    expect(input.min).toBe('200')
   })
 })

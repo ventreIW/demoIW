@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations, useFormatter } from 'next-intl'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,13 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { generateScenario, activateScenario } from '@/lib/api/scenarios'
 import type { ScenarioSummary, Sector } from '@/types/scenario'
 
-const SECTORS: { value: Sector; label: string }[] = [
-  { value: 'manufacturing', label: 'Manufactura' },
-  { value: 'retail', label: 'Retail' },
-  { value: 'professional_services', label: 'Servicios Profesionales' },
-]
-
 export default function GenerateScenarioForm() {
+  const t = useTranslations('scenarioForm')
+  const formatter = useFormatter()
   const router = useRouter()
 
   const [sector, setSector] = useState<Sector>('manufacturing')
@@ -27,6 +24,12 @@ export default function GenerateScenarioForm() {
   const [generating, setGenerating] = useState(false)
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null)
   const [activating, setActivating] = useState(false)
+
+  const sectors: { value: Sector; label: string }[] = [
+    { value: 'manufacturing', label: t('sectors.manufacturing') },
+    { value: 'retail', label: t('sectors.retail') },
+    { value: 'professional_services', label: t('sectors.professional_services') },
+  ]
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,7 +50,7 @@ export default function GenerateScenarioForm() {
       setScenario(result)
       router.replace(`/scenarios/generate?scenarioId=${result.id}`, { scroll: false })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al generar el escenario')
+      toast.error(err instanceof Error ? err.message : t('errors.generate'))
     } finally {
       setGenerating(false)
     }
@@ -60,7 +63,7 @@ export default function GenerateScenarioForm() {
       await activateScenario(scenario.id)
       router.push('/operations')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al activar el escenario')
+      toast.error(err instanceof Error ? err.message : t('errors.activate'))
     } finally {
       setActivating(false)
     }
@@ -70,9 +73,9 @@ export default function GenerateScenarioForm() {
     if (!scenario) return
     try {
       await navigator.clipboard.writeText(scenario.id)
-      toast.success('ID copiado al portapapeles')
+      toast.success(t('success.idCopied'))
     } catch {
-      toast.error('No se pudo copiar el ID')
+      toast.error(t('errors.copyId'))
     }
   }
 
@@ -81,13 +84,13 @@ export default function GenerateScenarioForm() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Sector */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Sector</label>
+          <label className="text-sm font-medium text-slate-700">{t('sector')}</label>
           <Select value={sector} onValueChange={(v) => setSector(v as Sector)}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SECTORS.map((s) => (
+              {sectors.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
                   {s.label}
                 </SelectItem>
@@ -99,24 +102,24 @@ export default function GenerateScenarioForm() {
         {/* Número de clientes */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="clientCount">
-            Número de clientes
+            {t('clientCount')}
           </label>
           <Input
             id="clientCount"
             type="number"
-            min={10}
+            min={200}
             max={500}
             value={clientCount}
             onChange={(e) => setClientCount(Number(e.target.value))}
             disabled={generating}
           />
-          <p className="text-xs text-slate-400">Mínimo 10, máximo 500</p>
+          <p className="text-xs text-slate-400">{t('clientCountHelp', { min: 200, max: 500 })}</p>
         </div>
 
         {/* Facturas por cliente */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="invoiceVolume">
-            Facturas por cliente
+            {t('invoiceVolume')}
           </label>
           <Input
             id="invoiceVolume"
@@ -127,18 +130,18 @@ export default function GenerateScenarioForm() {
             onChange={(e) => setInvoiceVolume(Number(e.target.value))}
             disabled={generating}
           />
-          <p className="text-xs text-slate-400">Mínimo 1, máximo 10</p>
+          <p className="text-xs text-slate-400">{t('invoiceVolumeHelp', { min: 1, max: 10 })}</p>
         </div>
 
         {/* Semilla */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="seed">
-            Semilla (opcional)
+            {t('seed')}
           </label>
           <Input
             id="seed"
             type="number"
-            placeholder="Auto"
+            placeholder={t('seedPlaceholder')}
             value={seed ?? ''}
             onChange={(e) => {
               const v = e.target.value
@@ -146,9 +149,7 @@ export default function GenerateScenarioForm() {
             }}
             disabled={generating}
           />
-          <p className="text-xs text-slate-400">
-            Misma semilla = mismos datos. Vacío para semilla aleatoria.
-          </p>
+          <p className="text-xs text-slate-400">{t('seedHelp')}</p>
         </div>
 
         {/* Submit */}
@@ -156,10 +157,10 @@ export default function GenerateScenarioForm() {
           {generating ? (
             <span className="flex items-center gap-2">
               <Spinner />
-              Generando datos...
+              {t('generating')}
             </span>
           ) : (
-            'Generar escenario'
+            t('generate')
           )}
         </Button>
       </form>
@@ -167,42 +168,42 @@ export default function GenerateScenarioForm() {
       {/* Results section */}
       {scenario && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Escenario generado</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t('results.title')}</h2>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-slate-500">Nombre:</span>
+              <span className="text-slate-500">{t('results.name')}</span>
               <p className="font-medium text-slate-900">{scenario.name}</p>
             </div>
             <div>
-              <span className="text-slate-500">Sector:</span>
+              <span className="text-slate-500">{t('results.sector')}</span>
               <p className="font-medium text-slate-900">{scenario.sector}</p>
             </div>
             <div>
-              <span className="text-slate-500">Clientes:</span>
+              <span className="text-slate-500">{t('results.clients')}</span>
               <p className="font-medium text-slate-900">{scenario.client_count}</p>
             </div>
             <div>
-              <span className="text-slate-500">Estado:</span>
+              <span className="text-slate-500">{t('results.status')}</span>
               <p className="font-medium text-slate-900 capitalize">
-                {scenario.status === 'active' ? 'Activo' : 'Inactivo'}
+                {scenario.status === 'active' ? t('results.active') : t('results.inactive')}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">Creado:</span>
+              <span className="text-slate-500">{t('results.created')}</span>
               <p className="font-medium text-slate-900">
-                {new Date(scenario.created_at).toLocaleDateString('es-MX')}
+                {formatter.dateTime(new Date(scenario.created_at), { dateStyle: 'long' })}
               </p>
             </div>
             <div>
-              <span className="text-slate-500">ID:</span>
+              <span className="text-slate-500">{t('results.id')}</span>
               <p className="font-mono text-xs text-slate-900 truncate">{scenario.id}</p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Button variant="outline" size="sm" onClick={handleCopyId}>
-              Copiar ID
+              {t('results.copyId')}
             </Button>
 
             <a
@@ -210,7 +211,7 @@ export default function GenerateScenarioForm() {
               download
             >
               <Button variant="outline" size="sm" type="button">
-                Descargar JSON
+                {t('results.download')}
               </Button>
             </a>
 
@@ -219,7 +220,7 @@ export default function GenerateScenarioForm() {
               disabled={activating}
               onClick={handleActivate}
             >
-              {activating ? 'Activando...' : 'Activar y usar'}
+              {activating ? t('results.activating') : t('results.activate')}
             </Button>
           </div>
         </div>
