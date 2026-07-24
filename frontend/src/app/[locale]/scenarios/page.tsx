@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import MainLayout from '@/components/layout/MainLayout'
 import ScenarioGrid from '@/components/scenarios/ScenarioGrid'
 import CsvUploadWrapper from './CsvUploadWrapper'
@@ -6,13 +7,14 @@ import { listScenarios } from '@/lib/api/scenarios'
 import type { ScenarioSummary } from '@/types/scenario'
 
 export default async function ScenariosPage() {
+  const t = await getTranslations('scenariosPage')
   let scenarios: ScenarioSummary[] = []
   let error: string | null = null
 
   try {
     scenarios = await listScenarios()
   } catch (e) {
-    error = e instanceof Error ? e.message : 'Error al cargar escenarios'
+    error = e instanceof Error ? e.message : t('errorLoading')
   }
 
   const cookieStore = await cookies()
@@ -22,9 +24,9 @@ export default async function ScenariosPage() {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Escenarios</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{t('title')}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Selecciona un escenario para comenzar la demo.
+            {t('description')}
           </p>
         </div>
 
@@ -41,7 +43,7 @@ export default async function ScenariosPage() {
             disabled
             className="inline-flex h-8 items-center justify-center rounded-lg border border-transparent bg-slate-200 px-3 text-sm font-medium text-slate-500 opacity-50"
           >
-            Generar nuevo
+            {t('generateNew')}
           </button>
           <CsvUploadWrapper />
         </div>
