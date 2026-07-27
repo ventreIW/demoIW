@@ -71,3 +71,78 @@ Execution: `s5.1 → s5.2 → {s5.3, s5.4 → s5.5}`. Case detail (s5.2) is the 
 | Free-tier OpenRouter cap (50 req/day) during comms demos | M/L | Draft generation is on-demand + editable; batch runs unnecessary. Reasoning-model note from s4.8: set generous max_tokens or use `:super` |
 | Contract seam between s5.1 UI and E4 `/prioritized` payload | L/M | Verified server-side by E4's E2E; s5.1 story-design adds a client-contract test |
 | "Send" ambiguity in a demo (no real transport) | L/L | Explicitly scoped: send = status `sent` + audit row, no external delivery |
+
+---
+
+# Implementation Plan
+
+Sequencing strategy: **walking-skeleton first**, then risk-first on the critical path. The riskiest
+elements are the **new case-aggregate read API** (s5.2, the hub) and the **LLM comms generation**
+(s5.4 — prompt quality, free-tier limits, reasoning-model noise per the s4.8 lesson). Prove the
+frontend↔E4 seam early (s5.1+s5.2), then attack comms.
+
+## Story sequence
+| # | Story | Size | Depends on | Rationale | Unblocks |
+|---|---|---|---|---|---|
+| 1 | s5.1 Operations panel — case list | S | E4 `/prioritized` (done) | Quick win + foundation; proves the frontend↔E4 payload seam | s5.2 |
+| 2 | s5.2 Case detail (+ aggregate read API) | M | s5.1 | **The hub.** New read model composed over existing repos; every action hangs off it | s5.3, s5.4 |
+| 3 | s5.3 Contact result + status → rescore | S | s5.2, E4 s4.6 (done) | Operator can act; reuses the rescore endpoint | — |
+| 3 | s5.4 Communications generator — backend | M | s5.2, s3.2 adapter (done) | **Highest-risk story** (LLM draft quality + audit). Parallel with s5.3 | s5.5 |
+| 4 | s5.5 Communications generator — frontend flow | S | s5.4 | Editable draft, channel/tone, confirm-to-send from case detail | — |
+
+**Critical path:** s5.1 → s5.2 → s5.4 → s5.5. s5.3 runs beside s5.4 once s5.2 lands.
+
+## Parallel work streams
+```
+Frontend-led   s5.1 ──▶ s5.2 ──┬────────────────▶ s5.5
+                               ├─▶ s5.3 (act)
+Backend-led                    └─▶ s5.4 (comms) ─▶ (hands draft API to s5.5)
+```
+After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and can run concurrently.
+
+## Milestones
+### M1 — Walking skeleton: operator sees a case and its detail
+**Stories:** s5.1, s5.2
+- [ ] Case list renders real `/prioritized` rows (client, amount, days overdue, score, category)
+- [ ] Opening a case shows profile + invoices + payment history + comms log (read-only)
+- [ ] Frontend↔backend payload seam verified (client-contract test)
+**Demo:** log in → prioritized list → open a case.
+
+### M2 — Core MVP: the operator can act
+**Stories:** + s5.3, s5.4
+- [ ] Recording a contact result persists it, updates status, and the score changes (rescore)
+- [ ] `POST …/communications` returns an OpenRouter draft from case+channel+tone; draft persisted + audited
+- [ ] Prompt templates live in config, not code
+**Demo:** open a case → record "promise to pay" → score updates → generate a draft (API).
+
+### M3 — Feature complete: end-to-end operator workflow
+**Stories:** + s5.5
+- [ ] Draft is editable; channel/tone selector; send requires explicit confirmation
+- [ ] Comms launched from within case detail; send transitions status → `sent` + audit row
+- [ ] `es.json`/`en.json` key parity maintained
+**Demo:** the full P-01 loop, list → detail → contact → draft → edit → send.
+
+### M4 — E2E integration checkpoint + epic close
+**Stories:** none new — verification only. **(Mandatory per E4's M4 lesson — mocked unit tests miss seams.)**
+- [ ] Full path works E2E against real infrastructure: list → detail → contact result → rescore → generate → send
+- [ ] Frontend consumes each new API with real payloads (contract seams verified)
+- [ ] Every acceptance-gate item verified against observable state
+- [ ] All retrospectives written; parking-lot follow-ups filed
+
+## Progress tracking
+| Story | Owner | Status | Started | Merged | Notes |
+|---|---|---|---|---|---|
+| s5.1 | — | ready | — | — | Start immediately (E4 merged) |
+| s5.2 | — | blocked | — | — | needs s5.1 |
+| s5.3 | — | blocked | — | — | needs s5.2 |
+| s5.4 | — | blocked | — | — | needs s5.2 |
+| s5.5 | — | blocked | — | — | needs s5.4 |
+
+## Sequencing risks
+| Risk | Mitigation |
+|---|---|
+| s5.2 aggregate API balloons (composing 4 repos) | Keep it a thin read model; no new persistence; sized M deliberately |
+| s5.4 comms quality/flakiness on the free reasoning model | Apply s4.8 lessons: generous max_tokens or `:super`/`:nano`; draft is editable so quality is human-gated |
+| Backend+frontend split per story hides effort | Story-design splits tasks explicitly; M1 walking skeleton surfaces seam issues early |
+| Plans are hypotheses | Re-sequence at M1 if the aggregate API or comms proves harder than sized |
+
