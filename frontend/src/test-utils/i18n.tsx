@@ -17,10 +17,7 @@ function IntlWrapper({ children, locale = 'es' }: { children: ReactNode; locale?
   )
 }
 
-export function renderWithIntl(
-  ui: ReactNode,
-  options?: RenderOptions & { locale?: string },
-) {
+export function renderWithIntl(ui: ReactNode, options?: RenderOptions & { locale?: string }) {
   const { locale, ...renderOptions } = options ?? {}
   return render(ui, {
     wrapper: ({ children }) => <IntlWrapper locale={locale}>{children}</IntlWrapper>,
