@@ -6,7 +6,13 @@ import { useTranslations, useFormatter } from 'next-intl'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { generateScenario, activateScenario } from '@/lib/api/scenarios'
 import type { ScenarioSummary, Sector } from '@/types/scenario'
 
@@ -167,7 +173,7 @@ export default function GenerateScenarioForm() {
 
       {/* Results section */}
       {scenario && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+        <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">{t('results.title')}</h2>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -185,7 +191,7 @@ export default function GenerateScenarioForm() {
             </div>
             <div>
               <span className="text-slate-500">{t('results.status')}</span>
-              <p className="font-medium text-slate-900 capitalize">
+              <p className="font-medium capitalize text-slate-900">
                 {scenario.status === 'active' ? t('results.active') : t('results.inactive')}
               </p>
             </div>
@@ -197,7 +203,7 @@ export default function GenerateScenarioForm() {
             </div>
             <div>
               <span className="text-slate-500">{t('results.id')}</span>
-              <p className="font-mono text-xs text-slate-900 truncate">{scenario.id}</p>
+              <p className="truncate font-mono text-xs text-slate-900">{scenario.id}</p>
             </div>
           </div>
 
@@ -215,11 +221,7 @@ export default function GenerateScenarioForm() {
               </Button>
             </a>
 
-            <Button
-              size="sm"
-              disabled={activating}
-              onClick={handleActivate}
-            >
+            <Button size="sm" disabled={activating} onClick={handleActivate}>
               {activating ? t('results.activating') : t('results.activate')}
             </Button>
           </div>
@@ -238,14 +240,7 @@ function Spinner() {
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path
         className="opacity-75"
         fill="currentColor"
