@@ -9,12 +9,14 @@ from pydantic import BaseModel
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.application.use_cases.prioritize_scenario import PrioritizeScenario
 from app.application.use_cases.rescore_scenario import RescoreScenario
+from app.application.use_cases.score_and_persist_scenario import ScoreAndPersistScenario
 from app.application.use_cases.score_scenario import ScoreScenario
 from app.config import settings
 from app.container import (
     get_generate_dataset_use_case,
     get_rescore_scenario_use_case,
     get_scenario_repo,
+    get_score_and_persist_use_case,
 )
 from app.domain.entities.scenario import Scenario
 from app.domain.enums import ContactResultType, ScenarioStatus, Sector
@@ -52,6 +54,15 @@ class GeneratedScenarioResponse(ScenarioSummary):
     names (degraded run), so a dead AI subsystem is visible at the API (s4.8)."""
 
     enriched: bool
+
+
+class ScoreRunResponse(BaseModel):
+    """Result of scoring + persisting a scenario (s4.10)."""
+
+    scenario_id: UUID
+    scored_count: int
+    unscored_count: int
+    already_persisted: bool
 
 
 class PrioritizedCaseResponse(BaseModel):
@@ -312,6 +323,27 @@ async def generate_scenario(
         client_count=client_count,
         created_at=scenario.created_at,
         enriched=enriched,
+    )
+
+
+@router.post("/{scenario_id}/score", response_model=ScoreRunResponse, status_code=201)
+async def score_and_persist_scenario(
+    scenario_id: UUID,
+    use_case: ScoreAndPersistScenario = Depends(get_score_and_persist_use_case),
+) -> ScoreRunResponse:
+    """Score a scenario and persist a Score for every scored client (s4.10).
+
+    Idempotent: re-calling returns the already-persisted count without duplicating rows.
+    """
+    try:
+        result = await use_case.execute(scenario_id)
+    except EntityNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Scenario with id={scenario_id} not found")
+    return ScoreRunResponse(
+        scenario_id=scenario_id,
+        scored_count=result.scored_count,
+        unscored_count=result.unscored_count,
+        already_persisted=result.already_persisted,
     )
 
 

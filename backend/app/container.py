@@ -23,6 +23,7 @@ from app.application.services.llm_enrichment_service import LLMEnrichmentService
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.application.use_cases.prioritize_scenario import PrioritizeScenario
 from app.application.use_cases.rescore_scenario import RescoreScenario
+from app.application.use_cases.score_and_persist_scenario import ScoreAndPersistScenario
 from app.config import settings
 from app.infrastructure.database import get_session
 from app.ports.llm_port import ILLMPort
@@ -105,6 +106,14 @@ async def get_generate_dataset_use_case(
         invoice_repo=invoice_repo,
         payment_repo=payment_repo,
     )
+
+
+async def get_score_and_persist_use_case(
+    scenario_repo: IScenarioRepository = Depends(get_scenario_repo),
+    score_repo: IScoreRepository = Depends(get_score_repo),
+) -> ScoreAndPersistScenario:
+    """Dependency that provides a ScoreAndPersistScenario use case instance."""
+    return ScoreAndPersistScenario(scenario_repo=scenario_repo, score_repo=score_repo)
 
 
 async def get_prioritize_scenario_use_case() -> PrioritizeScenario:
