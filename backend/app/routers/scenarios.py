@@ -46,6 +46,14 @@ class ScenarioDetail(ScenarioSummary):
     source: str
 
 
+class GeneratedScenarioResponse(ScenarioSummary):
+    """Generate response. `enriched` is the ground-truth signal that the LLM
+    actually enriched the data — False means the scenario carries raw Faker
+    names (degraded run), so a dead AI subsystem is visible at the API (s4.8)."""
+
+    enriched: bool
+
+
 class PrioritizedCaseResponse(BaseModel):
     """Response model matching PrioritizedCase domain object exactly."""
 
@@ -284,25 +292,26 @@ async def upload_csv(
     )
 
 
-@router.post("/generate", response_model=ScenarioSummary, status_code=201)
+@router.post("/generate", response_model=GeneratedScenarioResponse, status_code=201)
 async def generate_scenario(
     body: GenerationParams,
     use_case: GenerateDataset = Depends(get_generate_dataset_use_case),
     repo: IScenarioRepository = Depends(get_scenario_repo),
-) -> ScenarioSummary:
+) -> GeneratedScenarioResponse:
     model = settings.MODEL_DATA_ENRICHMENT
-    await use_case.execute(body, model)
+    enriched = await use_case.execute(body, model)
     scenario = await repo.get_active()
     if scenario is None:
         raise HTTPException(status_code=500, detail="Failed to retrieve generated scenario")
     client_count = await repo.get_client_count(scenario.id)
-    return ScenarioSummary(
+    return GeneratedScenarioResponse(
         id=scenario.id,
         name=scenario.name,
         sector=scenario.sector,
         status=scenario.status.value,
         client_count=client_count,
         created_at=scenario.created_at,
+        enriched=enriched,
     )
 
 
