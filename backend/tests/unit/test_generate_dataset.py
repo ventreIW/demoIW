@@ -5,7 +5,10 @@ from uuid import uuid4
 import pandas as pd
 import pytest
 
-from app.application.services.llm_enrichment_service import LLMEnrichmentService
+from app.application.services.llm_enrichment_service import (
+    EnrichmentOutcome,
+    LLMEnrichmentService,
+)
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.domain.entities.client import Client
 from app.domain.entities.invoice import Invoice
@@ -23,7 +26,11 @@ from app.ports.repositories import (
 
 
 @pytest.mark.asyncio
-async def test_generate_dataset_execute_persists_via_repositories():
+@pytest.mark.parametrize(
+    "enriched,expected_source",
+    [(True, "procedural+enrichment"), (False, "procedural")],
+)
+async def test_generate_dataset_execute_persists_via_repositories(enriched, expected_source):
     # Arrange
     raw_dataset = RawDataset(
         clients=pd.DataFrame(
@@ -90,7 +97,9 @@ async def test_generate_dataset_execute_persists_via_repositories():
     )
 
     mock_enrichment_service = AsyncMock(spec=LLMEnrichmentService)
-    mock_enrichment_service.enrich.return_value = enriched_dataset
+    mock_enrichment_service.enrich.return_value = EnrichmentOutcome(
+        dataset=enriched_dataset, enriched=enriched
+    )
 
     mock_scenario_repo = AsyncMock(spec=IScenarioRepository)
     mock_scenario_repo.add.return_value = Scenario(
@@ -180,4 +189,8 @@ async def test_generate_dataset_execute_persists_via_repositories():
     mock_client_repo.add_many.assert_awaited_once()
     mock_invoice_repo.add_many.assert_awaited_once()
     mock_payment_repo.add_many.assert_awaited_once()
-    assert result is enriched_dataset
+    # execute() reports the ground-truth enrichment flag, not the dataset.
+    assert result is enriched
+    # The persisted scenario's source is honest about whether the AI actually ran.
+    added_scenario = mock_scenario_repo.add.call_args.args[0]
+    assert added_scenario.source == expected_source
