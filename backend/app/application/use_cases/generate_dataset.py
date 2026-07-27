@@ -11,7 +11,6 @@ from app.domain.entities.payment import Payment
 from app.domain.entities.scenario import Scenario
 from app.domain.enums import PaymentPattern, ScenarioStatus
 from app.domain.value_objects.generation_params import GenerationParams
-from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.repositories import (
     IClientRepository,
     IInvoiceRepository,
@@ -35,22 +34,26 @@ class GenerateDataset:
         self._invoice_repo = invoice_repo
         self._payment_repo = payment_repo
 
-    async def execute(self, params: GenerationParams, model: str) -> RawDataset:
+    async def execute(self, params: GenerationParams, model: str) -> bool:
         # Step 1: Generate procedural dataset using the provided parameters.
         generator = ProceduralGenerator(params)
         raw_dataset = generator.generate()
 
         # Step 2: Enrich the dataset using the LLM service.
-        enriched_dataset = await self._enrichment_service.enrich(raw_dataset, model)
+        outcome = await self._enrichment_service.enrich(raw_dataset, model)
+        enriched_dataset = outcome.dataset
 
-        # Step 3: Create Scenario, persist and activate.
+        # Step 3: Create Scenario, persist and activate. The source is honest
+        # about whether enrichment actually ran — a degraded run must not claim
+        # the AI enriched the data (s4.8).
+        source = "procedural+enrichment" if outcome.enriched else "procedural"
         scenario = Scenario(
             id=uuid4(),  # temporary ID, will be replaced by repository
             name=f"Scenario-{params.sector.value}",
             sector=params.sector,
             seed=params.seed,
             parameters=params.model_dump(),
-            source="procedural+enrichment",
+            source=source,
             status=ScenarioStatus.INACTIVE,
             created_at=datetime.now(UTC),
         )
@@ -110,5 +113,5 @@ class GenerateDataset:
             payment_entities.append(payment)
         await self._payment_repo.add_many(payment_entities)
 
-        # Step 7: Return the enriched dataset (unchanged).
-        return enriched_dataset
+        # Step 7: Report whether enrichment actually ran, so the API can surface it.
+        return outcome.enriched

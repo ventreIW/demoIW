@@ -18,7 +18,6 @@ from typing import Final
 
 from app.domain.enums import ScoreCategory
 
-
 #: Share of expected recoverable value the Pareto subset must reach.
 #:
 #: A **business choice, not a property of the data.** The measured concentration

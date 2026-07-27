@@ -66,9 +66,7 @@ export default function ScenarioCard({
       </CardContent>
       <CardFooter>
         {isActive ? (
-          <span className="text-primary text-sm font-medium">
-            {t('scenario.status.active')}
-          </span>
+          <span className="text-primary text-sm font-medium">{t('scenario.status.active')}</span>
         ) : (
           <Button onClick={() => onActivate(scenario.id)} disabled={isActivating} variant="default">
             {isActivating ? t('scenario.actions.activating') : t('scenario.actions.select')}

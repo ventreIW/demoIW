@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,19 @@ from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.llm_port import ILLMPort
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class EnrichmentOutcome:
+    """Result of an enrichment run.
+
+    ``enriched`` is the ground-truth signal that the model actually ran for at
+    least one batch — not a downstream heuristic. It lets callers distinguish a
+    live AI subsystem from a silently-degraded one (s4.8).
+    """
+
+    dataset: RawDataset
+    enriched: bool
 
 
 class LLMEnrichmentService:
@@ -37,19 +51,23 @@ class LLMEnrichmentService:
         except FileNotFoundError:
             raise RuntimeError(f"Prompt template not found at {template_path}")
 
-    async def enrich(self, raw_dataset: RawDataset, model: str) -> RawDataset:
+    async def enrich(self, raw_dataset: RawDataset, model: str) -> EnrichmentOutcome:
         """
         Enrich the client data in the RawDataset using the LLM.
-        Returns a new RawDataset with enriched client data.
+        Returns an EnrichmentOutcome carrying the new RawDataset and whether the
+        model actually enriched at least one batch.
         """
         # Work on a copy to avoid mutating the frozen RawDataset
         clients = raw_dataset.clients.copy()
-        # If no clients, return early
+        # If no clients, return early — nothing to enrich.
         if clients.empty:
-            return RawDataset(
-                clients=clients,
-                invoices=raw_dataset.invoices,
-                payments=raw_dataset.payments,
+            return EnrichmentOutcome(
+                dataset=RawDataset(
+                    clients=clients,
+                    invoices=raw_dataset.invoices,
+                    payments=raw_dataset.payments,
+                ),
+                enriched=False,
             )
 
         # Split into batches
@@ -58,10 +76,12 @@ class LLMEnrichmentService:
         ]
 
         enriched_dfs = []
+        batches_enriched = 0
         for batch in batches:
             try:
                 enriched_batch = await self._enrich_batch(batch, model)
                 enriched_dfs.append(enriched_batch)
+                batches_enriched += 1
             except (ExternalServiceError, json.JSONDecodeError, ValueError):
                 # Graceful degradation: keep original batch data (no enrichment)
                 log.warning(
@@ -85,11 +105,14 @@ class LLMEnrichmentService:
 
         # Ensure we have the same columns as original (plus sector_description if any)
         # The enrichment should have added sector_description and possibly changed name.
-        # Return a new RawDataset with enriched clients, original invoices and payments.
-        return RawDataset(
-            clients=enriched_clients,
-            invoices=raw_dataset.invoices,
-            payments=raw_dataset.payments,
+        # Return the enriched dataset plus the ground-truth enrichment signal.
+        return EnrichmentOutcome(
+            dataset=RawDataset(
+                clients=enriched_clients,
+                invoices=raw_dataset.invoices,
+                payments=raw_dataset.payments,
+            ),
+            enriched=batches_enriched > 0,
         )
 
     async def _enrich_batch(self, batch: pd.DataFrame, model: str) -> pd.DataFrame:

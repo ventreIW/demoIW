@@ -128,3 +128,65 @@ async def test_get_active_returns_404(client: AsyncClient) -> None:
     """GET /api/v1/scenarios/active returns 404 when no scenario is active."""
     response = await client.get("/api/v1/scenarios/active")
     assert response.status_code == 404
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("enriched", [True, False])
+async def test_generate_scenario_surfaces_enriched_flag(
+    client: AsyncClient, enriched: bool
+) -> None:
+    """POST /generate returns the ground-truth `enriched` flag; 201 either way.
+
+    A degraded run (enriched=False) must be distinguishable from a live one at
+    the API — the whole point of s4.8. The use case and repo are overridden so
+    this test isolates the router's serialization from the generator/LLM path
+    (the real end-to-end run is verified against the model in T5).
+    """
+    from datetime import UTC, datetime
+
+    from app.container import get_generate_dataset_use_case, get_scenario_repo
+    from app.domain.entities.scenario import Scenario
+    from app.domain.enums import ScenarioStatus, Sector
+    from app.main import app
+
+    scenario = Scenario(
+        id=uuid.uuid4(),
+        name="Scenario-MANUFACTURING",
+        sector=Sector.MANUFACTURING,
+        seed=42,
+        parameters={},
+        source="procedural+enrichment" if enriched else "procedural",
+        status=ScenarioStatus.ACTIVE,
+        created_at=datetime.now(UTC),
+    )
+
+    class _FakeUseCase:
+        async def execute(self, body: object, model: str) -> bool:
+            return enriched
+
+    class _FakeRepo:
+        async def get_active(self) -> Scenario:
+            return scenario
+
+        async def get_client_count(self, scenario_id: object) -> int:
+            return 5
+
+    app.dependency_overrides[get_generate_dataset_use_case] = lambda: _FakeUseCase()
+    app.dependency_overrides[get_scenario_repo] = lambda: _FakeRepo()
+    try:
+        payload = {
+            "seed": 42,
+            "sector": "manufacturing",
+            "client_count": 5,
+            "invoice_volume": 1.0,
+            "amount_mean": 10000.0,
+            "amount_std": 3000.0,
+            "reference_date": None,
+        }
+        response = await client.post("/api/v1/scenarios/generate", json=payload)
+    finally:
+        app.dependency_overrides.pop(get_generate_dataset_use_case, None)
+        app.dependency_overrides.pop(get_scenario_repo, None)
+
+    assert response.status_code == 201
+    assert response.json()["enriched"] is enriched

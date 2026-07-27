@@ -91,6 +91,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
     async def create_from_csv(self, scenario: Scenario, rows: list[dict[str, str]]) -> Scenario:
         """Create a scenario with clients and invoices from parsed CSV rows."""
         from datetime import UTC, datetime
+
         orm = scenario_domain_to_orm(scenario)
         orm.id = str(uuid4())
         self._session.add(orm)
@@ -153,31 +154,46 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
         payments = payments_result.scalars().all()
 
         # Convert to DataFrames
-        clients_df = pd.DataFrame([{
-            "id": str(c.id),
-            "scenario_id": str(c.scenario_id),
-            "name": c.name,
-            "sector_description": c.sector_description,
-            "payment_history_pattern": c.payment_history_pattern,
-        } for c in clients])
+        clients_df = pd.DataFrame(
+            [
+                {
+                    "id": str(c.id),
+                    "scenario_id": str(c.scenario_id),
+                    "name": c.name,
+                    "sector_description": c.sector_description,
+                    "payment_history_pattern": c.payment_history_pattern,
+                }
+                for c in clients
+            ]
+        )
 
-        invoices_df = pd.DataFrame([{
-            "id": str(i.id),
-            "client_id": str(i.client_id),
-            "folio": i.folio,
-            "amount": i.amount,
-            "issue_date": i.issue_date,
-            "due_date": i.due_date,
-            "days_overdue": i.days_overdue,
-            "status": i.status,
-        } for i in invoices])
+        invoices_df = pd.DataFrame(
+            [
+                {
+                    "id": str(i.id),
+                    "client_id": str(i.client_id),
+                    "folio": i.folio,
+                    "amount": i.amount,
+                    "issue_date": i.issue_date,
+                    "due_date": i.due_date,
+                    "days_overdue": i.days_overdue,
+                    "status": i.status,
+                }
+                for i in invoices
+            ]
+        )
 
-        payments_df = pd.DataFrame([{
-            "id": str(p.id),
-            "invoice_id": str(p.invoice_id),
-            "amount": p.amount,
-            "paid_date": p.payment_date,
-        } for p in payments])
+        payments_df = pd.DataFrame(
+            [
+                {
+                    "id": str(p.id),
+                    "invoice_id": str(p.invoice_id),
+                    "amount": p.amount,
+                    "paid_date": p.payment_date,
+                }
+                for p in payments
+            ]
+        )
 
         return RawDataset(
             clients=clients_df,

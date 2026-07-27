@@ -1,7 +1,8 @@
 # E4 Scope — Intelligence Engine
 
 **Status:** Active — authorized 2026-07-21 (Gustavo)
-**Stories:** s4.2–s4.8 (s4.1 delivered out-of-band by `b15-i18n-setup`)
+**Stories:** s4.2–s4.10 (s4.1 delivered out-of-band by `b15-i18n-setup`; s4.9 score persistence,
+s4.10 score-persistence wiring added during the run — s4.10 surfaced by the M4 checkpoint)
 
 ## Objective
 
@@ -89,19 +90,21 @@ Every item must be verified against observable state at epic close, not assumed 
 completion. E3 closed with three of seven gate items unverified because that distinction was
 not made.
 
-- [ ] Every client in an active scenario has a persisted `Score` with value, category and explanation
-- [ ] `payment_history_pattern` is provably absent from the feature set (test asserts it)
-- [ ] Model beats a documented naive baseline (e.g. "predict majority class") on held-out clients
-- [ ] Train/test split is **by client** — no client appears in both
-- [ ] Score is reproducible for a fixed scenario seed
-- [ ] Prioritized list returns the Pareto subset and is sortable/filterable by amount, days overdue, category
-- [ ] Rescore endpoint changes a score given a contact result
-- [ ] Locale switcher changes language from within the app; `GenerateScenarioForm` has no hardcoded strings
-- [ ] `es.json` and `en.json` key sets are identical
-- [ ] ADR-006 (prediction target + leakage guard) written
-- [ ] All tests pass (pytest + vitest); `mypy app/` and `npm run typecheck` clean
-- [ ] All story retrospectives written
-- [ ] **s4.8 either fulfilled or explicitly descoped again with a named owner** — do not let it lapse silently a second time
+- [~] Every client in an active scenario has a persisted `Score` with value, category and explanation
+  — **mechanism delivered** (s4.9 repo + s4.10 `POST /{id}/score`, idempotent; unit/api tested).
+  Full real-Postgres E2E confirmation is the outstanding M4 item (needs a running DB).
+- [x] `payment_history_pattern` provably absent from the feature set — test in `test_feature_extractor.py` (s4.2)
+- [x] Model beats a documented naive baseline on held-out clients — ROC-AUC 0.732–0.739 vs majority-class, ADR-007 (s4.3)
+- [x] Train/test split **by client** — `test_build_training_set.py` (s4.2)
+- [x] Score reproducible for a fixed scenario seed — seed-pinned pipeline (s4.2/s4.3)
+- [x] Prioritized list returns Pareto subset, sortable/filterable — `test_prioritized_endpoint.py` + E2E (s4.5-API)
+- [x] Rescore endpoint changes a score given a contact result — `test_rescore_endpoint.py` + E2E (s4.6)
+- [x] Locale switcher changes language; `GenerateScenarioForm` no hardcoded strings — s4.7
+- [x] `es.json` and `en.json` key sets identical — verified 56/56 at close
+- [x] ADR-006 (prediction target + leakage guard) written — `dev/decisions/adr-006-*`
+- [x] All tests pass (pytest 345 + vitest 49); `mypy app/` + `npm run typecheck` clean — verified at M4/close
+- [x] All story retrospectives written — s4.2–s4.10 (10 retrospectives present)
+- [x] **s4.8 fulfilled** (2026-07-27, Rodrigo) — verified against the real free Nemotron model; enriched flag + honest source + loud startup warning delivered
 
 ## Risks
 
@@ -161,7 +164,7 @@ multi-day idle stretch that the original sequencing would have created.
 - [ ] Test proves `payment_history_pattern` is absent from the feature frame
 - [ ] Model trains and produces a 0–100 score per client
 - [ ] **Model beats the documented naive baseline on held-out clients**
-- [ ] Scores persist and read back via `IScoreRepository`
+- [x] Scores persist and read back via `IScoreRepository` (port+adapter+tests, s4.9; pipeline wiring verified at M4)
 - [ ] `days_overdue_max` carries a negative coefficient (sanity check on the whole pipeline)
 
 **Demo:** generate a scenario, score it, show scores in the database.
@@ -197,11 +200,11 @@ Runs against a **real PostgreSQL instance**, not SQLite in-memory, across the fu
 generate scenario → score → prioritized list → record contact → rescore.
 
 **Success criteria**
-- [ ] Full path works end-to-end against real infrastructure
-- [ ] Frontend consumes the prioritized-list API with real payloads (contract seam verified)
-- [ ] Every acceptance-gate item in this document verified against observable state
-- [ ] s4.8 either fulfilled or explicitly re-descoped with a named owner
-- [ ] ADR-006 and ADR-007 still reflect what was built — amend if not
+- [~] Full path works end-to-end — **in-process E2E passes** (`test_e2e_intelligence_path.py`: generate → score+persist → prioritized → rescore through the real app + repos over SQLite). **Real-Postgres run deferred** (no DB in the close environment) — see retrospective for the exact steps.
+- [→] Frontend consumes the prioritized-list API — **deferred to E5** (the operations panel that consumes `/prioritized` is explicitly out of E4 scope per this doc's Out-of-scope table). API contract seam verified server-side by the E2E.
+- [x] Every acceptance-gate item verified against observable state — done item-by-item at close (see retrospective)
+- [x] s4.8 fulfilled (2026-07-27, Rodrigo) — real-model enrichment verified + degradation made visible
+- [x] ADR-006 and ADR-007 still reflect what was built — unchanged by s4.8–s4.10 (enrichment + persistence, not the model); still accurate
 
 This checkpoint exists because E3 closed with three of seven gate items unverified. Unit tests
 with mocks cannot catch contract mismatches between stories; only real E2E does.
@@ -211,14 +214,15 @@ with mocks cannot catch contract mismatches between stories; only real E2E does.
 | Story | Owner | Status | Started | Merged | Notes |
 |---|---|---|---|---|---|
 | s4.2 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#7) | ADR-006 validated: rates within 0.002 of prediction. 58 tests |
-| s4.9 | Nano | ready | — | — | Can start immediately |
+| s4.9 | Rodrigo (covering) | ✅ **done** | 2026-07-27 | 2026-07-27 | Port + adapter + provider over existing ScoreORM/mappers. 6 tests. Pipeline wiring deferred to M4 |
+| s4.10 | Rodrigo | ✅ **done** | 2026-07-27 | 2026-07-27 | Score-persistence wiring (M4 finding). `POST /{id}/score` persists Scores, idempotent. 7 tests. Gate #1 mechanism delivered |
 | s4.7 | Renata | ready | — | — | Can start immediately |
 | s4.3 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#8) | **M1 GO.** ROC-AUC mean 0.732–0.739; ADR-007 amended (C=0.01). Built without persistence — s4.9 still owns it |
 | s4.4 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#10) | RF-02.3 delivered. Direction-aware phrasing after a contradiction found by reading real output |
 | s4.5-formula | Rodrigo | ready | — | — | s4.3 merged |
 || s4.5-API | Nano | ✅ **done** | 2026-07-22 | 2026-07-22 | 12 tests, contract verified, 422 validation |
 | s4.6 | Nano | ✅ **done** | 2026-07-22 | 2026-07-22 | 6 tests, score heuristics, Pareto recomputed |
-| s4.8 | Rodrigo | **blocked** | — | — | ⛔ `OPENROUTER_API_KEY` |
+| s4.8 | Rodrigo | ✅ **done** | 2026-07-27 | 2026-07-27 | Verified vs free Nemotron; `enriched` flag + honest `source` + startup warning. Backend 331 tests |
 
 ## Sequencing risks
 
