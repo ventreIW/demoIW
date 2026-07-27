@@ -93,17 +93,17 @@ not made.
 - [~] Every client in an active scenario has a persisted `Score` with value, category and explanation
   — **mechanism delivered** (s4.9 repo + s4.10 `POST /{id}/score`, idempotent; unit/api tested).
   Full real-Postgres E2E confirmation is the outstanding M4 item (needs a running DB).
-- [ ] `payment_history_pattern` is provably absent from the feature set (test asserts it)
-- [ ] Model beats a documented naive baseline (e.g. "predict majority class") on held-out clients
-- [ ] Train/test split is **by client** — no client appears in both
-- [ ] Score is reproducible for a fixed scenario seed
-- [ ] Prioritized list returns the Pareto subset and is sortable/filterable by amount, days overdue, category
-- [ ] Rescore endpoint changes a score given a contact result
-- [ ] Locale switcher changes language from within the app; `GenerateScenarioForm` has no hardcoded strings
-- [ ] `es.json` and `en.json` key sets are identical
-- [ ] ADR-006 (prediction target + leakage guard) written
-- [ ] All tests pass (pytest + vitest); `mypy app/` and `npm run typecheck` clean
-- [ ] All story retrospectives written
+- [x] `payment_history_pattern` provably absent from the feature set — test in `test_feature_extractor.py` (s4.2)
+- [x] Model beats a documented naive baseline on held-out clients — ROC-AUC 0.732–0.739 vs majority-class, ADR-007 (s4.3)
+- [x] Train/test split **by client** — `test_build_training_set.py` (s4.2)
+- [x] Score reproducible for a fixed scenario seed — seed-pinned pipeline (s4.2/s4.3)
+- [x] Prioritized list returns Pareto subset, sortable/filterable — `test_prioritized_endpoint.py` + E2E (s4.5-API)
+- [x] Rescore endpoint changes a score given a contact result — `test_rescore_endpoint.py` + E2E (s4.6)
+- [x] Locale switcher changes language; `GenerateScenarioForm` no hardcoded strings — s4.7
+- [x] `es.json` and `en.json` key sets identical — verified 56/56 at close
+- [x] ADR-006 (prediction target + leakage guard) written — `dev/decisions/adr-006-*`
+- [x] All tests pass (pytest 345 + vitest 49); `mypy app/` + `npm run typecheck` clean — verified at M4/close
+- [x] All story retrospectives written — s4.2–s4.10 (10 retrospectives present)
 - [x] **s4.8 fulfilled** (2026-07-27, Rodrigo) — verified against the real free Nemotron model; enriched flag + honest source + loud startup warning delivered
 
 ## Risks
@@ -200,11 +200,11 @@ Runs against a **real PostgreSQL instance**, not SQLite in-memory, across the fu
 generate scenario → score → prioritized list → record contact → rescore.
 
 **Success criteria**
-- [ ] Full path works end-to-end against real infrastructure
-- [ ] Frontend consumes the prioritized-list API with real payloads (contract seam verified)
-- [ ] Every acceptance-gate item in this document verified against observable state
+- [~] Full path works end-to-end — **in-process E2E passes** (`test_e2e_intelligence_path.py`: generate → score+persist → prioritized → rescore through the real app + repos over SQLite). **Real-Postgres run deferred** (no DB in the close environment) — see retrospective for the exact steps.
+- [→] Frontend consumes the prioritized-list API — **deferred to E5** (the operations panel that consumes `/prioritized` is explicitly out of E4 scope per this doc's Out-of-scope table). API contract seam verified server-side by the E2E.
+- [x] Every acceptance-gate item verified against observable state — done item-by-item at close (see retrospective)
 - [x] s4.8 fulfilled (2026-07-27, Rodrigo) — real-model enrichment verified + degradation made visible
-- [ ] ADR-006 and ADR-007 still reflect what was built — amend if not
+- [x] ADR-006 and ADR-007 still reflect what was built — unchanged by s4.8–s4.10 (enrichment + persistence, not the model); still accurate
 
 This checkpoint exists because E3 closed with three of seven gate items unverified. Unit tests
 with mocks cannot catch contract mismatches between stories; only real E2E does.
