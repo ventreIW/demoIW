@@ -1,9 +1,9 @@
 # E5 Brief — Operator Workspace (Operations Panel + Communications)
 
 **Backlog source:** B-08, B-09, B-10, B-11
-**Status:** Proposed — not yet authorized
+**Status:** Authorized (Gustavo, 2026-07-27) — designed + planned; E4 merged (`3c07ae0`)
 **Estimated size:** L (~7–10 days)
-**Branch model:** logical container; stories branch from `main` after E4 merges
+**Branch model:** logical container; stories branch from `main` (E4 now merged)
 
 ---
 
