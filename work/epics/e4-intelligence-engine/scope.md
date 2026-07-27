@@ -161,7 +161,7 @@ multi-day idle stretch that the original sequencing would have created.
 - [ ] Test proves `payment_history_pattern` is absent from the feature frame
 - [ ] Model trains and produces a 0–100 score per client
 - [ ] **Model beats the documented naive baseline on held-out clients**
-- [ ] Scores persist and read back via `IScoreRepository`
+- [x] Scores persist and read back via `IScoreRepository` (port+adapter+tests, s4.9; pipeline wiring verified at M4)
 - [ ] `days_overdue_max` carries a negative coefficient (sanity check on the whole pipeline)
 
 **Demo:** generate a scenario, score it, show scores in the database.
@@ -211,7 +211,7 @@ with mocks cannot catch contract mismatches between stories; only real E2E does.
 | Story | Owner | Status | Started | Merged | Notes |
 |---|---|---|---|---|---|
 | s4.2 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#7) | ADR-006 validated: rates within 0.002 of prediction. 58 tests |
-| s4.9 | Nano | ready | — | — | Can start immediately |
+| s4.9 | Rodrigo (covering) | ✅ **done** | 2026-07-27 | 2026-07-27 | Port + adapter + provider over existing ScoreORM/mappers. 6 tests. Pipeline wiring deferred to M4 |
 | s4.7 | Renata | ready | — | — | Can start immediately |
 | s4.3 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#8) | **M1 GO.** ROC-AUC mean 0.732–0.739; ADR-007 amended (C=0.01). Built without persistence — s4.9 still owns it |
 | s4.4 | Rodrigo | ✅ **done** | 2026-07-21 | 2026-07-21 (#10) | RF-02.3 delivered. Direction-aware phrasing after a contradiction found by reading real output |
