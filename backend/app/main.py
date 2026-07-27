@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -9,10 +10,17 @@ from app.infrastructure.logging import setup_logging
 from app.routers.health import router as health_router
 from app.routers.scenarios import router as scenarios_router
 
+log = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
+    if not settings.OPENROUTER_API_KEY:
+        log.warning(
+            "OPENROUTER_API_KEY is empty — LLM enrichment is DISABLED. "
+            "Generated scenarios will contain raw Faker company names (enriched=false)."
+        )
     yield
     await engine.dispose()
 
