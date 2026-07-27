@@ -5,6 +5,7 @@ from app.domain.entities.client import Client
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.scenario import Scenario
+from app.domain.entities.score import Score
 from app.domain.value_objects.raw_dataset import RawDataset
 
 
@@ -121,4 +122,18 @@ class IPaymentRepository(ABC):
     @abstractmethod
     async def get_by_id(self, payment_id: UUID) -> Payment | None:
         """Return a single payment by ID, or None if not found."""
+        ...
+
+
+class IScoreRepository(ABC):
+    """Abstract port for collectability score persistence operations."""
+
+    @abstractmethod
+    async def add_many(self, scores: list[Score]) -> list[Score]:
+        """Persist multiple scores and return them."""
+        ...
+
+    @abstractmethod
+    async def get_by_scenario(self, scenario_id: UUID) -> list[Score]:
+        """Return all scores associated with a scenario (empty list if none)."""
         ...
