@@ -16,6 +16,9 @@ from app.adapters.persistence.sqlalchemy_payment_repo import (
 from app.adapters.persistence.sqlalchemy_scenario_repo import (
     SQLAlchemyScenarioRepository,
 )
+from app.adapters.persistence.sqlalchemy_score_repo import (
+    SQLAlchemyScoreRepository,
+)
 from app.application.services.llm_enrichment_service import LLMEnrichmentService
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.application.use_cases.prioritize_scenario import PrioritizeScenario
@@ -28,6 +31,7 @@ from app.ports.repositories import (
     IInvoiceRepository,
     IPaymentRepository,
     IScenarioRepository,
+    IScoreRepository,
 )
 
 
@@ -57,6 +61,13 @@ async def get_payment_repo(
 ) -> IPaymentRepository:
     """Dependency that provides an IPaymentRepository implementation."""
     return SQLAlchemyPaymentRepository(session)
+
+
+async def get_score_repo(
+    session: AsyncSession = Depends(get_session),
+) -> IScoreRepository:
+    """Dependency that provides an IScoreRepository implementation."""
+    return SQLAlchemyScoreRepository(session)
 
 
 async def get_llm_port() -> ILLMPort:

@@ -83,3 +83,11 @@ async def test_round_trip_preserves_fields(async_session) -> None:
 async def test_get_by_scenario_empty_returns_empty_list(async_session) -> None:
     repo = SQLAlchemyScoreRepository(async_session)
     assert await repo.get_by_scenario(uuid4()) == []
+
+
+@pytest.mark.asyncio
+async def test_container_provides_score_repo(async_session) -> None:
+    from app.container import get_score_repo
+
+    repo = await get_score_repo(async_session)
+    assert isinstance(repo, SQLAlchemyScoreRepository)
