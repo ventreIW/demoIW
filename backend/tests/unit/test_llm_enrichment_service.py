@@ -69,7 +69,8 @@ async def test_enrich_with_mock_llm_returns_correct_enrichment():
         )
 
         # Act
-        enriched_dataset = await service.enrich(raw_dataset, model="test-model")
+        outcome = await service.enrich(raw_dataset, model="test-model")
+        enriched_dataset = outcome.dataset
 
         # Assert
         # Check that the LLM generate method was called once (since we have 2
@@ -88,6 +89,8 @@ async def test_enrich_with_mock_llm_returns_correct_enrichment():
         # The names should have been replaced
         assert enriched_dataset.clients.iloc[0]["name"] == "Innovatech Solutions"
         assert enriched_dataset.clients.iloc[1]["name"] == "DataSys LLC"
+        # Ground truth: the model ran, so the outcome reports enriched.
+        assert outcome.enriched is True
         # The sector_description should be added
         assert "sector_description" in enriched_dataset.clients.columns
         assert (
@@ -147,11 +150,14 @@ async def test_enrich_with_mock_llm_malformed_json_fallback_to_original():
         original_clients = raw_dataset.clients.copy()
 
         # Act
-        enriched_dataset = await service.enrich(raw_dataset, model="test-model")
+        outcome = await service.enrich(raw_dataset, model="test-model")
+        enriched_dataset = outcome.dataset
 
         # Assert
         # LLM generate called once (batch size 20, 2 clients)
         assert mock_llm.generate.call_count == 1
+        # Degradation: no batch was enriched, so the outcome reports not-enriched.
+        assert outcome.enriched is False
         # sector_description column should exist (added for all rows)
         assert "sector_description" in enriched_dataset.clients.columns
         # Names should remain unchanged (fallback)
@@ -209,11 +215,14 @@ async def test_enrich_with_mock_llm_external_service_error_fallback_to_original(
         original_clients = raw_dataset.clients.copy()
 
         # Act
-        enriched_dataset = await service.enrich(raw_dataset, model="test-model")
+        outcome = await service.enrich(raw_dataset, model="test-model")
+        enriched_dataset = outcome.dataset
 
         # Assert
         # LLM generate called once (batch size 20, 2 clients)
         assert mock_llm.generate.call_count == 1
+        # Degradation: no batch was enriched, so the outcome reports not-enriched.
+        assert outcome.enriched is False
         # sector_description column should exist (added for all rows)
         assert "sector_description" in enriched_dataset.clients.columns
         # Names should remain unchanged (fallback)
@@ -276,9 +285,12 @@ async def test_enrich_with_mock_llm_batching_correct_number_of_calls():
         original_clients = raw_dataset.clients.copy()  # noqa: F841
 
         # Act
-        enriched_dataset = await service.enrich(raw_dataset, model="test-model")
+        outcome = await service.enrich(raw_dataset, model="test-model")
+        enriched_dataset = outcome.dataset
 
         # Assert
+        # Both batches enriched, so the outcome reports enriched.
+        assert outcome.enriched is True
         # LLM generate called twice (batch size 20, 25 clients => 2 calls)
         assert mock_llm.generate.call_count == 2
         # Check that the prompts contain the correct counts
