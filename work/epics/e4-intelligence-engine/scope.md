@@ -101,7 +101,7 @@ not made.
 - [ ] ADR-006 (prediction target + leakage guard) written
 - [ ] All tests pass (pytest + vitest); `mypy app/` and `npm run typecheck` clean
 - [ ] All story retrospectives written
-- [ ] **s4.8 either fulfilled or explicitly descoped again with a named owner** — do not let it lapse silently a second time
+- [x] **s4.8 fulfilled** (2026-07-27, Rodrigo) — verified against the real free Nemotron model; enriched flag + honest source + loud startup warning delivered
 
 ## Risks
 
@@ -200,7 +200,7 @@ generate scenario → score → prioritized list → record contact → rescore.
 - [ ] Full path works end-to-end against real infrastructure
 - [ ] Frontend consumes the prioritized-list API with real payloads (contract seam verified)
 - [ ] Every acceptance-gate item in this document verified against observable state
-- [ ] s4.8 either fulfilled or explicitly re-descoped with a named owner
+- [x] s4.8 fulfilled (2026-07-27, Rodrigo) — real-model enrichment verified + degradation made visible
 - [ ] ADR-006 and ADR-007 still reflect what was built — amend if not
 
 This checkpoint exists because E3 closed with three of seven gate items unverified. Unit tests
@@ -218,7 +218,7 @@ with mocks cannot catch contract mismatches between stories; only real E2E does.
 | s4.5-formula | Rodrigo | ready | — | — | s4.3 merged |
 || s4.5-API | Nano | ✅ **done** | 2026-07-22 | 2026-07-22 | 12 tests, contract verified, 422 validation |
 | s4.6 | Nano | ✅ **done** | 2026-07-22 | 2026-07-22 | 6 tests, score heuristics, Pareto recomputed |
-| s4.8 | Rodrigo | **blocked** | — | — | ⛔ `OPENROUTER_API_KEY` |
+| s4.8 | Rodrigo | ✅ **done** | 2026-07-27 | 2026-07-27 | Verified vs free Nemotron; `enriched` flag + honest `source` + startup warning. Backend 331 tests |
 
 ## Sequencing risks
 
