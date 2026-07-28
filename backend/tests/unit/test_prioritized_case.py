@@ -15,12 +15,19 @@ from app.domain.value_objects.prioritized_case import (
 
 
 def _case(
-    score: float, outstanding: float, rank: int = 1, category: ScoreCategory = ScoreCategory.LOW
+    score: float,
+    outstanding: float,
+    rank: int = 1,
+    category: ScoreCategory = ScoreCategory.LOW,
+    client_name: str = "Cliente de prueba",
+    days_overdue: int = 0,
 ) -> PrioritizedCase:
     return PrioritizedCase(
         client_id=f"client-{rank}",
+        client_name=client_name,
         score=score,
         outstanding=outstanding,
+        days_overdue=days_overdue,
         rank=rank,
         category=category,
     )
@@ -58,6 +65,32 @@ def test_case_is_frozen() -> None:
 
     with pytest.raises(Exception):
         case.score = 99.0  # type: ignore[misc]
+
+
+# --- Operator-facing attributes (s5.1) ------------------------------------
+
+
+def test_case_carries_the_operator_facing_identity() -> None:
+    """s5.1: a row showing a UUID is useless to a collector — the name travels with the case."""
+    case = _case(score=50.0, outstanding=1_000.0, client_name="Refacciones del Bajío S.A.")
+
+    assert case.client_name == "Refacciones del Bajío S.A."
+
+
+def test_case_carries_days_overdue_as_whole_days() -> None:
+    """D1: the maximum across open invoices, in whole days — the oldest thing owed."""
+    case = _case(score=50.0, outstanding=1_000.0, days_overdue=47)
+
+    assert case.days_overdue == 47
+    assert isinstance(case.days_overdue, int)
+
+
+def test_operator_attributes_do_not_affect_the_ranking_arithmetic() -> None:
+    """AC-14: name and ageing are descriptive. Expected value is still balance x probability."""
+    plain = _case(score=40.0, outstanding=50_000.0)
+    annotated = _case(score=40.0, outstanding=50_000.0, client_name="Otro", days_overdue=300)
+
+    assert plain.expected_recoverable == annotated.expected_recoverable == pytest.approx(20_000.0)
 
 
 # --- The portfolio --------------------------------------------------------

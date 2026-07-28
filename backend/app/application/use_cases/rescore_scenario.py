@@ -79,6 +79,11 @@ class RescoreScenario:
         }
 
         # Re-rank using prioritizer
-        portfolio = prioritize(scores, scoring_run.outstanding_by_client)
+        portfolio = prioritize(
+            scores,
+            scoring_run.outstanding_by_client,
+            scoring_run.name_by_client,
+            scoring_run.days_overdue_by_client,
+        )
 
         return portfolio

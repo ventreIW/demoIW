@@ -56,11 +56,21 @@ class PrioritizedCase:
 
     ``expected_recoverable`` is derived rather than stored, so it can never drift
     from the score and balance it is computed from.
+
+    ``client_name`` and ``days_overdue`` are **descriptive, not arithmetic** (s5.1).
+    They exist because a queue row showing a UUID cannot be worked by a human, and
+    they never enter the ranking. ``days_overdue`` is the **maximum across the
+    client's open invoices** — the age of the oldest thing owed, which is what a
+    collector triages on; a mean would flatter a badly aged account by averaging it
+    against recent invoices. Whole days, because the column it feeds is whole days
+    and carrying float precision here would be false precision.
     """
 
     client_id: str
+    client_name: str
     score: float
     outstanding: float
+    days_overdue: int
     rank: int
     category: ScoreCategory
 
