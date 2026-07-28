@@ -52,7 +52,7 @@ No new ADRs. E5 reuses established patterns:
 Execution: `s5.1 → s5.2 → {s5.3, s5.4 → s5.5}`. Case detail (s5.2) is the hub.
 
 ## Done when
-- [ ] Case list shows client, amount, days overdue, score, category per row (RF-05.1)
+- [x] Case list shows client, amount, days overdue, score, category per row (RF-05.1) — s5.1
 - [ ] Case detail shows profile + invoices + payment history + comms log (RF-05.2)
 - [ ] Operator can record a contact result and update status (RF-05.3–4)
 - [ ] Recording a result calls the E4 rescore endpoint and the score updates (RF-02.5)
@@ -103,7 +103,7 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 ## Milestones
 ### M1 — Walking skeleton: operator sees a case and its detail
 **Stories:** s5.1, s5.2
-- [ ] Case list renders real `/prioritized` rows (client, amount, days overdue, score, category)
+- [x] Case list renders real `/prioritized` rows (client, amount, days overdue, score, category) — s5.1, verified against the running app
 - [ ] Opening a case shows profile + invoices + payment history + comms log (read-only)
 - [ ] Frontend↔backend payload seam verified (client-contract test)
 **Demo:** log in → prioritized list → open a case.
@@ -132,8 +132,8 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 ## Progress tracking
 | Story | Owner | Status | Started | Merged | Notes |
 |---|---|---|---|---|---|
-| s5.1 | — | ready | — | — | Start immediately (E4 merged) |
-| s5.2 | — | blocked | — | — | needs s5.1 |
+| s5.1 | Rodrigo | **done** ✓ | 2026-07-27 | 2026-07-28 | Backend contract extended (`client_name`, `days_overdue`) + repaired the never-working `days_overdue_min` filter and `days_overdue` sort. Manual integration caught a lowercase-enum seam bug and a middleware guard that made every operator route unreachable |
+| s5.2 | — | ready | — | — | Unblocked — s5.1 merged |
 | s5.3 | — | blocked | — | — | needs s5.2 |
 | s5.4 | — | blocked | — | — | needs s5.2 |
 | s5.5 | — | blocked | — | — | needs s5.4 |
