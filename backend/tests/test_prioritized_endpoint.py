@@ -211,10 +211,66 @@ class TestPrioritizedEndpoint:
 
     @pytest.mark.anyio
     @respx.mock
-    async def test_days_overdue_min_filter(self, client: AsyncClient) -> None:
-        """days_overdue_min filter works (requires days_overdue on case)."""
-        _mock_openrouter()
+    async def test_days_overdue_min_actually_filters(self, client: AsyncClient) -> None:
+        """s5.1: the filter must filter.
 
+        This test previously asserted only ``status_code == 200``, which is why the
+        endpoint could advertise ``days_overdue_min`` while returning an empty
+        portfolio for every value: ``PrioritizedCase`` had no ``days_overdue``, so
+        ``getattr(c, "days_overdue", 0) >= 30`` was false for every case. A test that
+        asserts the endpoint *responds* rather than that it *works* is how that
+        survived. Assert the subset relationship instead.
+        """
+        _mock_openrouter()
+        sid = await self._generate(client)
+
+        unfiltered = await client.get(f"/api/v1/scenarios/{sid}/prioritized")
+        filtered = await client.get(f"/api/v1/scenarios/{sid}/prioritized?days_overdue_min=30")
+        assert filtered.status_code == 200
+
+        all_cases = unfiltered.json()["cases"]
+        kept = filtered.json()["cases"]
+
+        assert kept, "filter returned nothing — the silent-zero bug is back"
+        assert len(kept) < len(all_cases), "filter kept everything — it is not filtering"
+        assert all(case["days_overdue"] >= 30 for case in kept)
+
+        expected = {c["client_id"] for c in all_cases if c["days_overdue"] >= 30}
+        assert {c["client_id"] for c in kept} == expected
+
+    @pytest.mark.anyio
+    @respx.mock
+    async def test_sort_by_days_overdue_orders_the_queue(self, client: AsyncClient) -> None:
+        """s5.1: ``sort=days_overdue`` was a no-op — every sort key was the fallback 0."""
+        _mock_openrouter()
+        sid = await self._generate(client)
+
+        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?sort=days_overdue&order=desc")
+        assert resp.status_code == 200
+
+        ageing = [case["days_overdue"] for case in resp.json()["cases"]]
+        assert ageing == sorted(ageing, reverse=True)
+        assert len(set(ageing)) > 1, "all equal — sorting proves nothing on this data"
+
+    @pytest.mark.anyio
+    @respx.mock
+    async def test_every_case_carries_operator_facing_fields(self, client: AsyncClient) -> None:
+        """s5.1 AC-1: a row the operator can work — name, not a UUID; real ageing."""
+        _mock_openrouter()
+        sid = await self._generate(client)
+
+        payload = (await client.get(f"/api/v1/scenarios/{sid}/prioritized")).json()
+
+        assert payload["cases"], "expected a non-empty portfolio for seed 42"
+        for group in ("cases", "pareto_subset"):
+            for case in payload[group]:
+                assert case["client_name"], f"empty client_name in {group}"
+                assert case["client_name"] != case["client_id"]
+                assert isinstance(case["days_overdue"], int)
+                assert case["days_overdue"] >= 0
+
+    async def _generate(self, client: AsyncClient) -> str:
+        """Generate the seed-42 retail scenario these contract tests share."""
         gen_resp = await client.post(
             "/api/v1/scenarios/generate",
             json={
@@ -226,10 +282,8 @@ class TestPrioritizedEndpoint:
                 "amount_std": 3000.0,
             },
         )
-        sid = gen_resp.json()["id"]
-
-        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?days_overdue_min=30")
-        assert resp.status_code == 200
+        assert gen_resp.status_code == 201
+        return str(gen_resp.json()["id"])
 
     @pytest.mark.anyio
     @respx.mock

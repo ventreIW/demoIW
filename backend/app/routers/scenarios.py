@@ -69,8 +69,10 @@ class PrioritizedCaseResponse(BaseModel):
     """Response model matching PrioritizedCase domain object exactly."""
 
     client_id: str
+    client_name: str
     score: float
     outstanding: float
+    days_overdue: int
     rank: int
     expected_recoverable: float
     category: str
@@ -431,9 +433,9 @@ async def get_prioritized(
 
         cases = [c for c in cases if _cat_matches(c)]
 
-    # Filter by days_overdue_min if provided (requires days_overdue on case)
+    # Filter by days_overdue_min if provided
     if days_overdue_min is not None:
-        cases = [c for c in cases if getattr(c, "days_overdue", 0) >= days_overdue_min]
+        cases = [c for c in cases if c.days_overdue >= days_overdue_min]
 
     # Sort
     sort_key_map = {
@@ -441,7 +443,7 @@ async def get_prioritized(
         "score": lambda c: c.score,
         "outstanding": lambda c: c.outstanding,
         "expected_recoverable": lambda c: c.expected_recoverable,
-        "days_overdue": lambda c: getattr(c, "days_overdue", 0),
+        "days_overdue": lambda c: c.days_overdue,
     }
     if sort in sort_key_map:
         reverse = order.lower() == "desc"
@@ -474,8 +476,10 @@ def _cases_to_response(cases: list["PrioritizedCase"]) -> list[PrioritizedCaseRe
     return [
         PrioritizedCaseResponse(
             client_id=str(c.client_id),
+            client_name=c.client_name,
             score=c.score,
             outstanding=c.outstanding,
+            days_overdue=c.days_overdue,
             rank=c.rank,
             expected_recoverable=c.expected_recoverable,
             category=c.category.value if hasattr(c.category, "value") else str(c.category),
