@@ -82,5 +82,22 @@
     "description": "Selecciona un escenario para comenzar la demo.",
     "errorLoading": "Error al cargar escenarios",
     "generateNew": "Generar nuevo"
+  },
+  "casesPage": {
+    "title": "Panel de operaciones",
+    "description": "Cartera priorizada por valor recuperable esperado.",
+    "columnRank": "#",
+    "columnClient": "Cliente",
+    "columnOutstanding": "Saldo",
+    "columnDaysOverdue": "Días de atraso",
+    "columnScore": "Score",
+    "columnCategory": "Categoría",
+    "daysUnit": "{days} d",
+    "categoryHigh": "Alta",
+    "categoryMedium": "Media",
+    "categoryLow": "Baja",
+    "empty": "No hay cuentas por cobrar en el escenario activo.",
+    "noActiveScenario": "No hay un escenario activo. Selecciona uno en Escenarios.",
+    "errorLoading": "Error al cargar la cartera priorizada"
   }
 }
