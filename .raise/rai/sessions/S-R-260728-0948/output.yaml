@@ -1,0 +1,140 @@
+session_id: "S-R-260728-0948"
+summary: "SES-S-R-260728-0948: s5.1 Operations Panel (lista priorizada) completa y mergeada — E5 arrancado, dos filtros muertos reparados"
+type: feature
+
+outcomes:
+  - "s5.1 cerrada de extremo a extremo: ciclo RaiSE completo (design, plan, implement, review, close) en una sesión, mergeada a main y pusheada a origin (05b7bd6 → c0940b1)"
+  - "Panel de operaciones en /cases: lista priorizada con nombre, saldo, días de atraso, score y categoría; estados vacío, error y sin-escenario-activo; ES/EN con paridad de claves"
+  - "Contrato backend extendido: client_name y days_overdue viajan por el patrón de dicts por cliente de ScoringRun, no por un join en el router"
+  - "Reparado ?days_overdue_min (devolvía cartera vacía siempre) y ?sort=days_overdue (era no-op) — el getattr(c,'days_overdue',0) contra una dataclass sin ese campo"
+  - "T6 (integración manual contra software corriendo) atrapó dos defectos que 424 tests en verde no vieron: category serializa en minúscula y /cases era inalcanzable por un guard de middleware"
+  - "Tests: backend 345 → 353, frontend 49 → 70. Todos los gates verdes"
+  - "Cinco hallazgos archivados en dev/parking-lot.md, incluido un filtro roto de la misma especie que el reparado"
+  - "Tres patrones nuevos persistidos; BASE-016 y BASE-029 reforzados (+1)"
+
+patterns:
+  - description: "Un test de filtro que sólo afirma status 200 — o que itera el resultado sin exigir que no esté vacío — no prueba nada y esconde un filtro muerto. Afirmar la relación de subconjunto: no vacío, estrictamente menor que sin filtrar, todo elemento cumple el predicado, y membresía exacta."
+    context: "testing,api,filters,vacuous-assertions,test-muda"
+    type: technical
+  - description: "Cuando el fixture, el tipo y el componente se escriben de una sentada, pueden compartir la misma suposición equivocada y coincidir entre sí. Los tests mockeados pasan mientras producción se rompe. Fijar el fixture a un payload capturado del sistema corriendo y enumerar el conjunto real de valores del enum."
+    context: "testing,contracts,fixtures,seam-bugs,integration"
+    type: process
+  - description: "Un guard de ruta que lee un estado que nadie escribe permanece invisible mientras la app tenga una sola ruta alcanzable. Añadir la segunda ruta es cuando dispara. Antes de añadir una ruta a una app con middleware, buscar quién escribe el estado que el middleware lee."
+    context: "nextjs,middleware,routing,dead-code"
+    type: codebase
+
+corrections:
+  - what: "Escribí el tipo TS, el componente y el fixture en una sola pasada, con el enum del backend a tres líneas de distancia, y nunca lo abrí. Los tres coincidieron en 'High' y los tres estaban mal."
+    lesson: "Verificar los *valores* de un enum contra la fuente de verdad, no inferirlos de los nombres de miembro de Python. Durante el gemba verifiqué los nombres de campo contra el payload vivo pero no el dominio de valores del único campo que es enum."
+  - what: "El chequeo de tests huérfanos interpoló una ruta con [locale] dentro de un patrón grep, donde los corchetes son una clase de caracteres."
+    lesson: "grep -F para rutas. Costó un round-trip desmentir un falso positivo."
+
+coaching:
+  autonomy: "high — pidió ejecutar la story completa sin checkpoints por tarea y revisar al final"
+  relationship:
+    quality: "productive"
+    trajectory: "stable"
+
+current_work:
+  epic: E5
+  story: S5.1
+  phase: closed
+  branch: main
+
+pending:
+  decisions:
+    - "Maximizar recuperación vs. prevenir castigos: la cola persigue dinero cobrable, no las cuentas más riesgosas. Decisión de política para Gustavo, heredada de E4, aún sin codificar."
+    - "Nadie que haga cobranza ha leído todavía el español de las explicaciones ni de la nueva tabla. Juicio humano pendiente antes del demo."
+  blockers:
+    - "Sin PostgreSQL ni Docker en este entorno: la verificación de s5.1 corrió sobre SQLite. El gate de E2E contra Postgres real sigue abierto desde E4 y ahora lo hereda M4 de E5 — necesita a alguien con Docker antes de M4, no en M4."
+  next_actions:
+    - "s5.2 (detalle de caso + API agregada) es la única story de E5 desbloqueada; es el hub del que cuelgan s5.3 y s5.4"
+    - "Tres bugfixes independientes disponibles en paralelo: filtro ?category=High, status de CSV, hardening del adaptador OpenRouter"
+    - "Hacer el hardening del adaptador ANTES de s5.4, que es la story que más se apoya en él bajo el tope de 50 req/día"
+
+narrative: |
+  ## Decisions
+  - s5.1: client_name y days_overdue se hilan por ScoringRun (mismo patrón que
+    outstanding_by_client) en vez de unirse en el router. El docstring de ScoringRun ya
+    declara ese propósito, y el endpoint de rescore comparte el response model: un join
+    en el router le daría un segundo camino divergente a los mismos campos.
+  - days_overdue es el máximo sobre facturas abiertas, no el promedio. Un promedio
+    halaga a una cuenta muy envejecida al promediarla contra facturas recientes; el
+    cobrador tría sobre lo más viejo que se debe.
+  - Ausencia de nombre o de antigüedad levanta KeyError, no default. Un nombre vacío
+    pone una fila anónima frente a quien tiene que llamar por teléfono, y un 0 por
+    defecto reporta una deuda de 200 días como corriente — exactamente la falla de
+    cero-silencioso que este story vino a reparar.
+  - El filtro ?category=High quedó roto a propósito: ningún AC de s5.1 lo necesita y la
+    UI de filtros está explícitamente fuera de alcance. Archivado, no escondido.
+  - Se quitó el guard de middleware en vez de darle una cookie que funcione: el status
+    persistido en backend es la verdad durable (una cookie es por navegador) y las
+    páginas ya explican el estado vacío en vez de redirigir en silencio.
+  - Formateo de pesos mapea es → es-MX. 'es' pelado es España y renderiza "184.321 MXN",
+    convención de separadores equivocada para una cartera mexicana ("$184,321").
+
+  ## Research
+  - Gemba sobre routers/scenarios.py encontró el bug antes de escribir código: el
+    endpoint anunciaba ?days_overdue_min y ?sort=days_overdue contra una dataclass sin
+    ese campo. Medido contra la app corriendo: min=30 → 19 casos, min=100 → 11,
+    min=500 → 2; antes devolvía vacío en todos los umbrales.
+  - Confirmado que ?category=High devuelve cero casos por la misma especie de bug:
+    ScoreCategory es StrEnum con valores en minúscula y el router valida contra
+    {"High","Medium","Low"}. El test pasa porque el for itera una lista vacía y
+    value_share se calcula sobre la cartera SIN filtrar.
+  - Nada en la app escribe la cookie active_scenario_id — sólo se lee, en el middleware
+    y en la página de escenarios.
+
+  ## Artifacts
+  - backend: domain/value_objects/prioritized_case.py, application/services/prioritizer.py,
+    application/use_cases/{score_scenario,prioritize_scenario,rescore_scenario}.py,
+    routers/scenarios.py
+  - frontend: app/[locale]/cases/page.tsx, components/cases/CaseTable.tsx,
+    lib/api/prioritized.ts, types/prioritized.ts, test-utils/prioritized-fixture.ts,
+    components/layout/MainLayout.tsx, middleware.ts, messages/{es,en}.json
+  - work/epics/e5-operator-workspace/stories/s5.1-{design,plan,progress,retrospective}.md
+  - dev/parking-lot.md — cinco entradas nuevas
+  - Commits c698bb8 → c0940b1; merge d108249; push 7899a92..05b7bd6 y c0940b1
+
+  ## Branch State
+  - main, sincronizado con origin/main. Rama story/s5.1/operations-panel-case-list
+    borrada tras merge --no-ff. Árbol limpio, sin ramas ni PRs pendientes.
+
+next_session_prompt: |
+  s5.1 está cerrada, mergeada y pusheada. main == origin/main, árbol limpio.
+
+  E5 va 1 de 5. La secuencia es s5.1 → s5.2 → {s5.3, s5.4} → s5.5, así que **s5.2 es la
+  única story desbloqueada** y es el hub: el API agregado de detalle de caso del que
+  cuelgan tanto s5.3 (resultado de contacto) como s5.4 (comunicaciones). Es la ruta
+  crítica y merece al desarrollador más fuerte.
+
+  ANTES DE ELEGIR TRABAJO — dos cosas con más apalancamiento que otra pantalla:
+
+  1. Hardening del adaptador OpenRouter (KeyError sin 'choices' + ReadTimeout que
+     devuelve 500). s5.4 es la story que más se apoya en ese adaptador, bajo el tope de
+     50 req/día del free tier. Hacerlo antes de s5.4, no durante.
+  2. El E2E contra PostgreSQL real sigue abierto desde el cierre de E4 y ahora lo hereda
+     M4 de E5. No hay Docker ni Postgres en este entorno, así que s5.1 se verificó sobre
+     SQLite. Alguien con Docker debería cerrarlo ANTES de M4; si llega a M4 sin cerrarse,
+     E5 cerraría con el mismo gate abierto que E4 — dos épicas seguidas.
+
+  Bugfixes independientes disponibles para paralelizar (ninguno bloqueado por s5.2):
+  - ?category=High devuelve cero casos. Misma especie que el filtro que s5.1 reparó,
+    escondido por el mismo tipo de aserción vacua. Arreglo de una línea. Quien lo tome
+    debería barrer el resto de la API buscando filtros afirmados por bucles vacíos —
+    dos bugs de la misma especie en un endpoint sugieren un tercero.
+  - Escenarios subidos por CSV no se pueden puntuar nunca: el loader escribe
+    status="pending" y el feature extractor sólo cuenta "overdue" como abierta. La
+    función de subir CSV produce escenarios que ningún módulo aguas abajo puede usar.
+
+  LECCIÓN DE PROCESO PARA QUIEN TOME s5.2: capturar un payload real con curl DURANTE el
+  diseño, no en la verificación manual. En s5.1 el payload de ejemplo del diseño se
+  escribió a mano leyendo las clases de dominio, y salió mal exactamente igual que el
+  código, porque ambos vinieron de la misma lectura. El tipo TS, el componente y el
+  fixture compartieron la suposición equivocada ('High' en vez de 'high') y los tests
+  pasaron igual. s5.2 compone cuatro repos en un read model: el mismo riesgo, más grande.
+
+  Decisiones de política aún abiertas con Gustavo (heredadas de E4): maximizar
+  recuperación vs. prevenir castigos en el orden de la cola; y nadie que haga cobranza ha
+  leído todavía el español de las explicaciones ni de la tabla nueva. Faltan 17 días para
+  el demo del 2026-08-14.
