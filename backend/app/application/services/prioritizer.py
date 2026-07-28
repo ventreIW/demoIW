@@ -20,6 +20,8 @@ is therefore a business choice, and the reported concentration is measured rathe
 than assumed. See `dev/parking-lot.md`.
 """
 
+from collections.abc import Mapping
+
 from app.domain.enums import ScoreCategory
 from app.domain.value_objects.prioritized_case import (
     DEFAULT_PARETO_THRESHOLD,
@@ -32,16 +34,21 @@ from app.domain.value_objects.prioritized_case import (
 def prioritize(
     scores: dict[str, float],
     outstanding_by_client: dict[str, float],
+    names_by_client: dict[str, str],
+    days_overdue_by_client: dict[str, int],
     categories: dict[str, ScoreCategory] | None = None,
     threshold: float = DEFAULT_PARETO_THRESHOLD,
 ) -> PrioritizedPortfolio:
     """Rank scored clients and return the value-concentrating subset.
 
-    Raises ``KeyError`` when a scored client has no recorded exposure. That is a
-    bug upstream in scoring, not a condition to absorb — defaulting to zero would
-    silently rank a real account last instead of failing where the fault is.
+    Raises ``KeyError`` when a scored client has no recorded exposure, no name, or
+    no ageing. That is a bug upstream in scoring, not a condition to absorb —
+    defaulting would silently rank a real account last, render an anonymous row, or
+    report an aged debt as current, instead of failing where the fault is.
     """
-    cases = _rank(scores, outstanding_by_client, categories)
+    cases = _rank(
+        scores, outstanding_by_client, names_by_client, days_overdue_by_client, categories
+    )
     subset = _pareto_prefix(cases, threshold)
     return PrioritizedPortfolio(cases=cases, pareto_subset=subset, threshold=threshold)
 
@@ -49,21 +56,22 @@ def prioritize(
 def _rank(
     scores: dict[str, float],
     outstanding_by_client: dict[str, float],
+    names_by_client: dict[str, str],
+    days_overdue_by_client: dict[str, int],
     categories: dict[str, ScoreCategory] | None = None,
 ) -> list[PrioritizedCase]:
     """Order by expected recoverable value, descending."""
-    missing = sorted(set(scores) - set(outstanding_by_client))
-    if missing:
-        raise KeyError(
-            f"scored clients have no outstanding balance recorded: {missing}. "
-            "Every scored client must carry exposure — see ScoringRun.outstanding_by_client."
-        )
+    _require_complete(scores, outstanding_by_client, "outstanding balance", "outstanding_by_client")
+    _require_complete(scores, names_by_client, "name", "name_by_client")
+    _require_complete(scores, days_overdue_by_client, "days overdue", "days_overdue_by_client")
 
     unranked = [
         PrioritizedCase(
             client_id=client_id,
+            client_name=names_by_client[client_id],
             score=scores[client_id],
             outstanding=outstanding_by_client[client_id],
+            days_overdue=days_overdue_by_client[client_id],
             rank=0,
             category=categories.get(client_id, categorize(scores[client_id]))
             if categories
@@ -78,13 +86,30 @@ def _rank(
     return [
         PrioritizedCase(
             client_id=case.client_id,
+            client_name=case.client_name,
             score=case.score,
             outstanding=case.outstanding,
+            days_overdue=case.days_overdue,
             rank=position,
             category=case.category,
         )
         for position, case in enumerate(ordered, start=1)
     ]
+
+
+def _require_complete(
+    scores: Mapping[str, float],
+    attribute_by_client: Mapping[str, object],
+    label: str,
+    source: str,
+) -> None:
+    """Fail loudly when a scored client is missing an attribute the queue needs."""
+    missing = sorted(set(scores) - set(attribute_by_client))
+    if missing:
+        raise KeyError(
+            f"scored clients have no {label} recorded: {missing}. "
+            f"Every scored client must carry one — see ScoringRun.{source}."
+        )
 
 
 def _pareto_prefix(cases: list[PrioritizedCase], threshold: float) -> list[PrioritizedCase]:

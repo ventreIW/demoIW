@@ -33,4 +33,10 @@ class PrioritizeScenario:
         assessed and found hopeless.
         """
         scores = {str(score.client_id): score.score_value for score in scoring_run.scores}
-        return prioritize(scores, scoring_run.outstanding_by_client, threshold=threshold)
+        return prioritize(
+            scores,
+            scoring_run.outstanding_by_client,
+            scoring_run.name_by_client,
+            scoring_run.days_overdue_by_client,
+            threshold=threshold,
+        )

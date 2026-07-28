@@ -38,12 +38,20 @@ class ScoringRun:
     input object and the system keeps **one** definition of exposure. The balance
     is already net of partial payments (s4.2). Keyed by client id as a string, and
     populated for every client in ``scores``.
+
+    ``name_by_client`` and ``days_overdue_by_client`` follow the same rule for the
+    same reason (s5.1): the operations panel needs a row a human can act on, and
+    joining that data in the router would give the rescore endpoint a second,
+    divergent path to the same fields. ``days_overdue`` is the maximum across open
+    invoices — the age of the oldest thing owed.
     """
 
     scores: list[Score]
     evaluation: EvaluationMetrics
     unscored_client_count: int
     outstanding_by_client: dict[str, float]
+    name_by_client: dict[str, str]
+    days_overdue_by_client: dict[str, int]
 
 
 class ScoreScenario:
@@ -85,6 +93,8 @@ class ScoreScenario:
             )
         ]
 
+        names = dict(zip(dataset.clients["id"], dataset.clients["name"], strict=True))
+
         return ScoringRun(
             scores=entities,
             evaluation=evaluation,
@@ -93,6 +103,16 @@ class ScoreScenario:
                 zip(
                     training_set.client_ids,
                     (float(value) for value in training_set.X["outstanding_amount"]),
+                    strict=True,
+                )
+            ),
+            name_by_client={
+                client_id: str(names[client_id]) for client_id in training_set.client_ids
+            },
+            days_overdue_by_client=dict(
+                zip(
+                    training_set.client_ids,
+                    (int(value) for value in training_set.X["days_overdue_max"]),
                     strict=True,
                 )
             ),

@@ -68,6 +68,8 @@ def _fake_scorer(scores: list[Score], unscored: int) -> MagicMock:
         evaluation=MagicMock(),
         unscored_client_count=unscored,
         outstanding_by_client={},
+        name_by_client={},
+        days_overdue_by_client={},
     )
     return scorer
 

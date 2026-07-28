@@ -82,5 +82,22 @@
     "description": "Select a scenario to start the demo.",
     "errorLoading": "Error loading scenarios",
     "generateNew": "Generate new"
+  },
+  "casesPage": {
+    "title": "Operations panel",
+    "description": "Portfolio prioritized by expected recoverable value.",
+    "columnRank": "#",
+    "columnClient": "Client",
+    "columnOutstanding": "Balance",
+    "columnDaysOverdue": "Days overdue",
+    "columnScore": "Score",
+    "columnCategory": "Category",
+    "daysUnit": "{days} d",
+    "categoryHigh": "High",
+    "categoryMedium": "Medium",
+    "categoryLow": "Low",
+    "empty": "No receivables in the active scenario.",
+    "noActiveScenario": "No active scenario. Select one under Scenarios.",
+    "errorLoading": "Failed to load the prioritized portfolio"
   }
 }
