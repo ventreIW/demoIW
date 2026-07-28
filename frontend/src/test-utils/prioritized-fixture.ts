@@ -17,7 +17,7 @@ export const caseFixture: PrioritizedCase = {
   days_overdue: 47,
   rank: 1,
   expected_recoverable: 144507.27,
-  category: 'High',
+  category: 'high',
 }
 
 export const secondCaseFixture: PrioritizedCase = {
@@ -28,7 +28,7 @@ export const secondCaseFixture: PrioritizedCase = {
   days_overdue: 3,
   rank: 2,
   expected_recoverable: 31680,
-  category: 'Low',
+  category: 'low',
 }
 
 export const portfolioFixture: PrioritizedPortfolio = {

@@ -20,25 +20,20 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Step 1: i18n routing (locale detection, redirect, rewrite)
-  const response = i18nMiddleware(request)
-
-  // Step 2: scenario redirect guard (after locale routing)
-  // Strip locale prefix to check the actual route
-  const pathWithoutLocale = pathname.replace(/^\/(en|es)(?=\/|$)/, '') || '/'
-
-  // Allow scenarios page without active scenario cookie
-  if (pathWithoutLocale === '/scenarios' || pathWithoutLocale.startsWith('/scenarios/')) {
-    return response
-  }
-
-  // Guard: redirect to /scenarios if no active scenario
-  const activeScenario = request.cookies.get('active_scenario_id')
-  if (!activeScenario) {
-    return NextResponse.redirect(new URL('/scenarios', request.url))
-  }
-
-  return response
+  // i18n routing (locale detection, redirect, rewrite)
+  //
+  // There was an `active_scenario_id` cookie guard here that redirected every
+  // non-/scenarios route back to /scenarios. Nothing in the app ever *set* that
+  // cookie — it was only ever read — so the guard fired unconditionally and made
+  // every operator route permanently unreachable. It went unnoticed because the
+  // sidebar's only real link was /scenarios itself; s5.1 is the first story to add
+  // a second route (and s5.2–s5.5 add more).
+  //
+  // The guard is not reinstated with a working cookie because the backend's
+  // persisted scenario `status` is the durable truth (a cookie is per-browser), and
+  // the pages already handle "no active scenario" with an explanatory message rather
+  // than a silent redirect that leaves the operator wondering where they went.
+  return i18nMiddleware(request)
 }
 
 export const config = {

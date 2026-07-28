@@ -7,15 +7,15 @@ interface CaseTableProps {
 }
 
 const CATEGORY_KEY: Record<ScoreCategory, 'categoryHigh' | 'categoryMedium' | 'categoryLow'> = {
-  High: 'categoryHigh',
-  Medium: 'categoryMedium',
-  Low: 'categoryLow',
+  high: 'categoryHigh',
+  medium: 'categoryMedium',
+  low: 'categoryLow',
 }
 
 const CATEGORY_STYLE: Record<ScoreCategory, string> = {
-  High: 'bg-emerald-100 text-emerald-800',
-  Medium: 'bg-amber-100 text-amber-800',
-  Low: 'bg-slate-200 text-slate-700',
+  high: 'bg-emerald-100 text-emerald-800',
+  medium: 'bg-amber-100 text-amber-800',
+  low: 'bg-slate-200 text-slate-700',
 }
 
 export default function CaseTable({ cases }: CaseTableProps) {

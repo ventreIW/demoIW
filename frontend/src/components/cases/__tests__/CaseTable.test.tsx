@@ -5,6 +5,7 @@ import { caseFixture, secondCaseFixture } from '@/test-utils/prioritized-fixture
 import esMessages from '../../../../messages/es.json'
 import enMessages from '../../../../messages/en.json'
 import CaseTable from '../CaseTable'
+import type { ScoreCategory } from '@/types/prioritized'
 
 const rows = [caseFixture, secondCaseFixture]
 
@@ -57,6 +58,26 @@ describe('CaseTable', () => {
 
     expect(screen.getByText('High')).toBeDefined()
     expect(screen.getByText('Low')).toBeDefined()
+  })
+
+  it('renders a label for every category the backend can send', () => {
+    // The live payload serializes ScoreCategory as lowercase ("high"), not "High".
+    // Typing it capitalized made CATEGORY_KEY[row.category] undefined and the badge
+    // blank — a seam bug the mocked tests could not see, because the fixture shared
+    // the same wrong assumption. Enumerate the real values so a recurrence fails here.
+    const categories: ScoreCategory[] = ['high', 'medium', 'low']
+    const cases = categories.map((category, i) => ({
+      ...caseFixture,
+      client_id: `case-${i}`,
+      rank: i + 1,
+      category,
+    }))
+
+    renderWithIntl(<CaseTable cases={cases} />)
+
+    expect(screen.getByText('Alta')).toBeDefined()
+    expect(screen.getByText('Media')).toBeDefined()
+    expect(screen.getByText('Baja')).toBeDefined()
   })
 
   it('renders the empty message rather than a blank table', () => {

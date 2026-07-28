@@ -1,6 +1,11 @@
 /** Backend API types matching PrioritizedPortfolioResponse in backend/app/routers/scenarios.py */
 
-export type ScoreCategory = 'High' | 'Medium' | 'Low'
+/**
+ * Serialized from the backend's `ScoreCategory` StrEnum, whose values are lowercase.
+ * Verified against a live payload — the endpoint's own `?category=` filter validates
+ * against the capitalized spelling and therefore matches nothing (parked follow-up).
+ */
+export type ScoreCategory = 'high' | 'medium' | 'low'
 
 export interface PrioritizedCase {
   client_id: string
