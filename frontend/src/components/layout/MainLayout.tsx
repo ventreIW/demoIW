@@ -26,7 +26,7 @@ function Sidebar() {
           </div>
         </div>
         <nav className="flex-1 space-y-1 p-4">
-          <SidebarLink href="#">{t('sidebar.operations')}</SidebarLink>
+          <SidebarLink href="/cases">{t('sidebar.operations')}</SidebarLink>
           <SidebarLink href="#">{t('sidebar.executive')}</SidebarLink>
           <SidebarLink href="/scenarios">{t('sidebar.scenarios')}</SidebarLink>
         </nav>
