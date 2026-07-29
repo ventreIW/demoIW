@@ -37,6 +37,7 @@ def test_sqlalchemy_payment_repository_has_required_methods():
     assert hasattr(SQLAlchemyPaymentRepository, "add_many")
     assert hasattr(SQLAlchemyPaymentRepository, "get_by_scenario_id")
     assert hasattr(SQLAlchemyPaymentRepository, "get_by_id")
+    assert hasattr(SQLAlchemyPaymentRepository, "get_by_client_id")
 
 
 @pytest.mark.asyncio
@@ -304,6 +305,112 @@ async def test_get_by_scenario_id_returns_list_of_payments(async_session):
     assert amounts == {100.0, 150.0}
     methods = {p.method for p in payments}
     assert methods == {"BANK", "CARD"}
+
+
+@pytest.mark.asyncio
+async def test_get_by_client_id_returns_list_of_payments(async_session):
+    repo = SQLAlchemyPaymentRepository(async_session)
+    scenario_id = uuid4()
+    client_id = uuid4()
+    other_client_id = uuid4()
+    invoice_id = uuid4()
+    other_invoice_id = uuid4()
+    from sqlalchemy import insert
+
+    # scenario
+    await async_session.execute(
+        insert(ScenarioORM).values(
+            {
+                "id": str(scenario_id),
+                "name": "Scenario",
+                "sector": "TEST",
+                "seed": None,
+                "parameters": {},
+                "source": "manual",
+                "status": "active",
+                "created_at": datetime.now(UTC),
+            }
+        )
+    )
+    # target client
+    await async_session.execute(
+        insert(ClientORM).values(
+            {
+                "id": str(client_id),
+                "scenario_id": str(scenario_id),
+                "name": "Target Client",
+                "sector_description": None,
+                "payment_history_pattern": "ON_TIME",
+            }
+        )
+    )
+    # other client
+    await async_session.execute(
+        insert(ClientORM).values(
+            {
+                "id": str(other_client_id),
+                "scenario_id": str(scenario_id),
+                "name": "Other Client",
+                "sector_description": None,
+                "payment_history_pattern": "ERRATIC",
+            }
+        )
+    )
+    # invoices for each client
+    await async_session.execute(
+        insert(InvoiceORM).values(
+            [
+                {
+                    "id": str(invoice_id),
+                    "client_id": str(client_id),
+                    "folio": "INV-TGT",
+                    "amount": 500.0,
+                    "issue_date": datetime(2024, 1, 1, tzinfo=UTC),
+                    "due_date": datetime(2024, 2, 1, tzinfo=UTC),
+                    "days_overdue": 10,
+                    "status": "OVERDUE",
+                },
+                {
+                    "id": str(other_invoice_id),
+                    "client_id": str(other_client_id),
+                    "folio": "INV-OTH",
+                    "amount": 300.0,
+                    "issue_date": datetime(2024, 1, 2, tzinfo=UTC),
+                    "due_date": datetime(2024, 2, 2, tzinfo=UTC),
+                    "days_overdue": 0,
+                    "status": "PAID",
+                },
+            ]
+        )
+    )
+    # payment for target's invoice
+    payment_id_tgt = uuid4()
+    await async_session.execute(
+        insert(PaymentORM).values(
+            {
+                "id": str(payment_id_tgt),
+                "invoice_id": str(invoice_id),
+                "amount": 250.0,
+                "payment_date": datetime(2024, 1, 15, tzinfo=UTC),
+                "method": "BANK",
+            }
+        )
+    )
+    await async_session.commit()
+
+    # Call the method
+    payments = await repo.get_by_client_id(client_id)
+    assert len(payments) == 1
+    assert payments[0].amount == 250.0
+    assert payments[0].method == "BANK"
+
+
+@pytest.mark.asyncio
+async def test_get_by_client_id_returns_empty_list_for_no_payments(async_session):
+    repo = SQLAlchemyPaymentRepository(async_session)
+    client_id = uuid4()
+    payments = await repo.get_by_client_id(client_id)
+    assert payments == []
 
 
 @pytest.mark.asyncio

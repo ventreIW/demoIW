@@ -1,11 +1,28 @@
 import { screen, within } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { renderWithIntl } from '@/test-utils/i18n'
 import { caseFixture, secondCaseFixture } from '@/test-utils/prioritized-fixture'
 import esMessages from '../../../../messages/es.json'
 import enMessages from '../../../../messages/en.json'
 import CaseTable from '../CaseTable'
 import type { ScoreCategory } from '@/types/prioritized'
+
+// next/link is a client component that renders an <a> tag in tests
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    className,
+  }: {
+    children: React.ReactNode
+    href: string
+    className?: string
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  ),
+}))
 
 const rows = [caseFixture, secondCaseFixture]
 
@@ -85,6 +102,14 @@ describe('CaseTable', () => {
 
     expect(screen.getByText('No hay cuentas por cobrar en el escenario activo.')).toBeDefined()
     expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('wraps each client name in a link to the case detail page', () => {
+    renderWithIntl(<CaseTable cases={[caseFixture]} />)
+
+    const link = screen.getByRole('link', { name: caseFixture.client_name })
+    expect(link).toBeDefined()
+    expect(link.getAttribute('href')).toBe(`/es/cases/${caseFixture.client_id}`)
   })
 })
 

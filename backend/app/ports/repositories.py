@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 
 from app.domain.entities.client import Client
+from app.domain.entities.communication import Communication
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.scenario import Scenario
@@ -96,6 +97,11 @@ class IInvoiceRepository(ABC):
         ...
 
     @abstractmethod
+    async def get_by_client_id(self, client_id: UUID) -> list[Invoice]:
+        """Return all invoices associated with a client."""
+        ...
+
+    @abstractmethod
     async def get_by_id(self, invoice_id: UUID) -> Invoice | None:
         """Return a single invoice by ID, or None if not found."""
         ...
@@ -120,6 +126,11 @@ class IPaymentRepository(ABC):
         ...
 
     @abstractmethod
+    async def get_by_client_id(self, client_id: UUID) -> list[Payment]:
+        """Return all payments associated with a client (via invoices)."""
+        ...
+
+    @abstractmethod
     async def get_by_id(self, payment_id: UUID) -> Payment | None:
         """Return a single payment by ID, or None if not found."""
         ...
@@ -136,4 +147,18 @@ class IScoreRepository(ABC):
     @abstractmethod
     async def get_by_scenario(self, scenario_id: UUID) -> list[Score]:
         """Return all scores associated with a scenario (empty list if none)."""
+        ...
+
+
+class ICommunicationRepository(ABC):
+    """Abstract port for communication persistence operations."""
+
+    @abstractmethod
+    async def add(self, communication: Communication) -> Communication:
+        """Persist a new communication and return it with assigned ID."""
+        ...
+
+    @abstractmethod
+    async def get_by_client_id(self, client_id: UUID) -> list[Communication]:
+        """Return all communications for a client ordered by created_at desc."""
         ...

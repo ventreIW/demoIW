@@ -105,11 +105,13 @@ describe('CasesPage', () => {
 
     await renderPage()
 
-    // AC-12: sorting/filtering UI is parked, and case detail is s5.2. Scoped to the
-    // table — the layout chrome legitimately carries the locale switcher and nav.
+    // AC-12 (s5.1): sorting/filtering UI is parked. s5.2 added case detail links.
     const table = screen.getByRole('table')
     expect(within(table).queryAllByRole('combobox')).toHaveLength(0)
     expect(within(table).queryAllByRole('button')).toHaveLength(0)
-    expect(within(table).queryAllByRole('link')).toHaveLength(0)
+    // s5.2: each client name is now a link to the case detail page
+    const links = within(table).queryAllByRole('link')
+    expect(links.length).toBeGreaterThan(0)
+    expect(links[0].getAttribute('href')).toMatch(/^\/\w{2}\/cases\//)
   })
 })
