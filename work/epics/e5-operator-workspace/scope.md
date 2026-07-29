@@ -104,7 +104,7 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 ### M1 — Walking skeleton: operator sees a case and its detail
 **Stories:** s5.1, s5.2
 - [x] Case list renders real `/prioritized` rows (client, amount, days overdue, score, category) — s5.1, verified against the running app
-- [ ] Opening a case shows profile + invoices + payment history + comms log (read-only)
+- [x] Opening a case shows profile + invoices + payment history + comms log (read-only) — s5.2, verified by 444 tests
 - [ ] Frontend↔backend payload seam verified (client-contract test)
 **Demo:** log in → prioritized list → open a case.
 
@@ -133,7 +133,7 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 | Story | Owner | Status | Started | Merged | Notes |
 |---|---|---|---|---|---|
 | s5.1 | Rodrigo | **done** ✓ | 2026-07-27 | 2026-07-28 | Backend contract extended (`client_name`, `days_overdue`) + repaired the never-working `days_overdue_min` filter and `days_overdue` sort. Manual integration caught a lowercase-enum seam bug and a middleware guard that made every operator route unreachable |
-| s5.2 | — | ready | — | — | Unblocked — s5.1 merged |
+|| s5.2 | Renata | **done** ✓ | 2026-07-28 | 2026-07-28 | Case detail endpoint + frontend page. 444 tests (366 backend + 78 frontend) |
 | s5.3 | — | blocked | — | — | needs s5.2 |
 | s5.4 | — | blocked | — | — | needs s5.2 |
 | s5.5 | — | blocked | — | — | needs s5.4 |
