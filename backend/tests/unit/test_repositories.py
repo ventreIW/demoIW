@@ -41,6 +41,7 @@ def test_iinvoice_repository_has_expected_abstract_methods():
         "add",
         "add_many",
         "get_by_scenario_id",
+        "get_by_client_id",
         "get_by_id",
     }
 
@@ -59,6 +60,7 @@ def test_ipayment_repository_has_expected_abstract_methods():
         "add",
         "add_many",
         "get_by_scenario_id",
+        "get_by_client_id",
         "get_by_id",
     }
 
