@@ -1,4 +1,5 @@
 import { useTranslations, useLocale } from 'next-intl'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import type { PrioritizedCase, ScoreCategory } from '@/types/prioritized'
 
@@ -70,7 +71,14 @@ export default function CaseTable({ cases }: CaseTableProps) {
           {cases.map((row) => (
             <tr key={row.client_id} className="hover:bg-slate-50">
               <td className="px-4 py-3 tabular-nums text-slate-400">{row.rank}</td>
-              <td className="px-4 py-3 font-medium text-slate-900">{row.client_name}</td>
+              <td className="px-4 py-3 font-medium text-slate-900">
+                <Link
+                  href={`/${locale}/cases/${row.client_id}`}
+                  className="hover:text-blue-600 hover:underline"
+                >
+                  {row.client_name}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-right tabular-nums text-slate-700">
                 {currency.format(row.outstanding)}
               </td>
