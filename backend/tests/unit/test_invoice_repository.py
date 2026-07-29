@@ -37,6 +37,7 @@ def test_sqlalchemy_invoice_repository_has_required_methods():
     assert hasattr(SQLAlchemyInvoiceRepository, "add_many")
     assert hasattr(SQLAlchemyInvoiceRepository, "get_by_scenario_id")
     assert hasattr(SQLAlchemyInvoiceRepository, "get_by_id")
+    assert hasattr(SQLAlchemyInvoiceRepository, "get_by_client_id")
 
 
 @pytest.mark.asyncio
@@ -165,6 +166,85 @@ async def test_get_by_scenario_id_returns_list_of_invoices(async_session):
     # Check amounts
     amounts = {inv.amount for inv in invoices}
     assert amounts == {250.0, 500.0}
+
+
+@pytest.mark.asyncio
+async def test_get_by_client_id_returns_list_of_invoices(async_session):
+    repo = SQLAlchemyInvoiceRepository(async_session)
+    scenario_id = uuid4()
+    client_id = uuid4()
+    other_client_id = uuid4()
+    from sqlalchemy import insert
+
+    # Create a client linked to the scenario
+    await async_session.execute(
+        insert(ClientORM).values(
+            {
+                "id": str(client_id),
+                "scenario_id": str(scenario_id),
+                "name": "Target Client",
+                "sector_description": None,
+                "payment_history_pattern": "ON_TIME",
+            }
+        )
+    )
+    # Create another client (should not see this client's invoices)
+    await async_session.execute(
+        insert(ClientORM).values(
+            {
+                "id": str(other_client_id),
+                "scenario_id": str(scenario_id),
+                "name": "Other Client",
+                "sector_description": None,
+                "payment_history_pattern": "ERRATIC",
+            }
+        )
+    )
+    # Create invoices for both clients
+    invoice_id_target = uuid4()
+    invoice_id_other = uuid4()
+    await async_session.execute(
+        insert(InvoiceORM).values(
+            [
+                {
+                    "id": str(invoice_id_target),
+                    "client_id": str(client_id),
+                    "folio": "INV-TARGET",
+                    "amount": 100.0,
+                    "issue_date": datetime(2024, 1, 1),
+                    "due_date": datetime(2024, 2, 1),
+                    "days_overdue": 10,
+                    "status": "OVERDUE",
+                },
+                {
+                    "id": str(invoice_id_other),
+                    "client_id": str(other_client_id),
+                    "folio": "INV-OTHER",
+                    "amount": 200.0,
+                    "issue_date": datetime(2024, 1, 2),
+                    "due_date": datetime(2024, 2, 2),
+                    "days_overdue": 0,
+                    "status": "PAID",
+                },
+            ]
+        )
+    )
+    await async_session.commit()
+
+    # Call the method
+    invoices = await repo.get_by_client_id(client_id)
+    assert len(invoices) == 1
+    assert invoices[0].folio == "INV-TARGET"
+    assert invoices[0].amount == 100.0
+    assert invoices[0].days_overdue == 10
+
+
+@pytest.mark.asyncio
+async def test_get_by_client_id_returns_empty_list_for_no_invoices(async_session):
+    repo = SQLAlchemyInvoiceRepository(async_session)
+    client_id = uuid4()
+    invoices = await repo.get_by_client_id(client_id)
+    assert invoices == []
 
 
 @pytest.mark.asyncio

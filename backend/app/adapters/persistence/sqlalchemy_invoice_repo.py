@@ -47,6 +47,13 @@ class SQLAlchemyInvoiceRepository(IInvoiceRepository):
         )
         return [invoice_orm_to_domain(orm) for orm in result.scalars()]
 
+    async def get_by_client_id(self, client_id: UUID) -> list[Invoice]:
+        """Return all invoices associated with a client."""
+        result = await self._session.execute(
+            select(InvoiceORM).where(InvoiceORM.client_id == str(client_id))
+        )
+        return [invoice_orm_to_domain(orm) for orm in result.scalars()]
+
     async def get_by_id(self, invoice_id: UUID) -> Invoice | None:
         """Return a single invoice by ID, or None if not found."""
         result = await self._session.execute(

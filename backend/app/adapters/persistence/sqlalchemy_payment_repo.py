@@ -48,6 +48,15 @@ class SQLAlchemyPaymentRepository(IPaymentRepository):
         )
         return [payment_orm_to_domain(orm) for orm in result.scalars()]
 
+    async def get_by_client_id(self, client_id: UUID) -> list[Payment]:
+        """Return all payments associated with a client (via invoices)."""
+        result = await self._session.execute(
+            select(PaymentORM)
+            .join(InvoiceORM, PaymentORM.invoice_id == InvoiceORM.id)
+            .where(InvoiceORM.client_id == str(client_id))
+        )
+        return [payment_orm_to_domain(orm) for orm in result.scalars()]
+
     async def get_by_id(self, payment_id: UUID) -> Payment | None:
         """Return a single payment by ID, or None if not found."""
         result = await self._session.execute(

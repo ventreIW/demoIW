@@ -7,6 +7,9 @@ from app.adapters.llm.openrouter_adapter import OpenRouterAdapter
 from app.adapters.persistence.sqlalchemy_client_repo import (
     SQLAlchemyClientRepository,
 )
+from app.adapters.persistence.sqlalchemy_communication_repo import (
+    SQLAlchemyCommunicationRepository,
+)
 from app.adapters.persistence.sqlalchemy_invoice_repo import (
     SQLAlchemyInvoiceRepository,
 )
@@ -29,6 +32,7 @@ from app.infrastructure.database import get_session
 from app.ports.llm_port import ILLMPort
 from app.ports.repositories import (
     IClientRepository,
+    ICommunicationRepository,
     IInvoiceRepository,
     IPaymentRepository,
     IScenarioRepository,
@@ -124,3 +128,10 @@ async def get_prioritize_scenario_use_case() -> PrioritizeScenario:
 async def get_rescore_scenario_use_case() -> RescoreScenario:
     """Dependency that provides a RescoreScenario use case instance."""
     return RescoreScenario()
+
+
+async def get_communication_repo(
+    session: AsyncSession = Depends(get_session),
+) -> ICommunicationRepository:
+    """Dependency that provides an ICommunicationRepository implementation."""
+    return SQLAlchemyCommunicationRepository(session)
