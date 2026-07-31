@@ -128,5 +128,21 @@
     "explanation": "Explanation",
     "errorLoading": "Failed to load case detail",
     "backToCasesLink": "Back to operations panel"
+  },
+  "contactResult": {
+    "sectionTitle": "Record Contact",
+    "contactResult": "Contact result",
+    "notes": "Notes (optional)",
+    "record": "Recording...",
+    "recordButton": "Record Contact",
+    "success": "Contact recorded successfully",
+    "error": "Failed to record contact result",
+    "types": {
+      "promise_to_pay": "Promise to Pay",
+      "partial_payment": "Partial Payment",
+      "no_answer": "No Answer",
+      "disputed": "Disputed",
+      "paid": "Paid"
+    }
   }
 }
