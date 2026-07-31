@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.domain.entities.client import Client
 from app.domain.entities.communication import Communication
+from app.domain.entities.contact_result import ContactResult
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.scenario import Scenario
@@ -161,4 +162,18 @@ class ICommunicationRepository(ABC):
     @abstractmethod
     async def get_by_client_id(self, client_id: UUID) -> list[Communication]:
         """Return all communications for a client ordered by created_at desc."""
+        ...
+
+
+class IContactResultRepository(ABC):
+    """Abstract port for contact result persistence operations."""
+
+    @abstractmethod
+    async def add(self, contact_result: ContactResult) -> ContactResult:
+        """Persist a new contact result and return it with assigned ID."""
+        ...
+
+    @abstractmethod
+    async def get_by_client_id(self, client_id: UUID) -> list[ContactResult]:
+        """Return all contact results for a client ordered by recorded_at desc."""
         ...
