@@ -30,7 +30,7 @@ from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.score import Score
 from app.domain.enums import Channel, Tone
-from app.domain.exceptions import EntityNotFoundError
+from app.domain.exceptions import EntityNotFoundError, ExternalServiceError
 from app.ports.repositories import (
     IClientRepository,
     ICommunicationRepository,
@@ -240,12 +240,17 @@ async def generate_communication(
 
     Returns the generated draft text with channel, tone, and DRAFT status.
     """
-    response = await use_case.execute(
-        GenerateCommunicationDraftRequest(
-            scenario_id=scenario_id,
-            client_id=client_id,
-            channel=body.channel,
-            tone=body.tone,
+    try:
+        response = await use_case.execute(
+            GenerateCommunicationDraftRequest(
+                scenario_id=scenario_id,
+                client_id=client_id,
+                channel=body.channel,
+                tone=body.tone,
+            )
         )
-    )
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ExternalServiceError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     return _communication_to_summary(response.communication)
