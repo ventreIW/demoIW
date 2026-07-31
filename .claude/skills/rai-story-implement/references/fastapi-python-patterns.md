@@ -463,3 +463,188 @@ async def test_generate_communication_integration(client: AsyncClient):
     assert "Estimado cliente" in response.json()["draft_text"]
     assert mock_route.called
 ```
+
+### 7. Integration Test with Sequential Mock Responses (side_effect)
+
+When the endpoint makes multiple OpenRouter calls (e.g., enrichment + communication), use `side_effect` to sequence responses:
+
+```python
+# tests/integration/test_communications_integration.py
+@respx.mock
+async def test_generate_communication_integration_persists_draft(client: AsyncClient):
+    # Mock ALL OpenRouter calls: 3 enrichment batches + 1 communication call
+    mock_route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        side_effect=[
+            _enrichment_mock_response(20),
+            _enrichment_mock_response(20),
+            _enrichment_mock_response(20),
+            _llm_mock_response("Estimado cliente, le recordamos su pago..."),
+        ]
+    )
+
+    response = await client.post(
+        f"/api/v1/scenarios/{sid}/clients/{cid}/communications",
+        json={"channel": "email", "tone": "formal"},
+    )
+
+    assert response.status_code == 201
+    assert mock_route.call_count == 4  # 3 enrichment + 1 communication
+
+def _llm_mock_response(content: str) -> httpx.Response:
+    return httpx.Response(
+        200,
+        json={
+            "choices": [{"message": {"content": content}}],
+            "usage": {"prompt_tokens": 50, "completion_tokens": 20},
+        },
+    )
+
+def _enrichment_mock_response(count: int) -> httpx.Response:
+    import json
+    enriched = [
+        {"name": f"Cliente {i}", "sector_description": "Empresa retail."}
+        for i in range(count)
+    ]
+    return httpx.Response(
+        200,
+        json={"choices": [{"message": {"content": json.dumps(enriched)}}]},
+    )
+```
+
+**Note**: OpenRouterAdapter retries 3 times on 5xx/timeout (MAX_RETRIES=3). For failure tests, provide 4 responses (1 initial + 3 retries):
+
+```python
+# 500 error test - 4 failures (1 initial + 3 retries)
+respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+    side_effect=[
+        _enrichment_mock_response(20),  # enrichment
+        _enrichment_mock_response(20),
+        _enrichment_mock_response(20),
+        httpx.Response(500),  # attempt 1
+        httpx.Response(500),  # retry 1
+        httpx.Response(500),  # retry 2
+        httpx.Response(500),  # retry 3
+    ]
+)
+```
+
+### 8. Shared Service Extraction Pattern (Router + Use Case)
+
+When both a router endpoint and a use case need the same data-fetching logic, extract to a shared service:
+
+```python
+# app/application/services/case_aggregate_service.py
+from dataclasses import dataclass
+from uuid import UUID
+
+from app.domain.entities.client import Client
+from app.domain.entities.communication import Communication
+from app.domain.entities.invoice import Invoice
+from app.domain.entities.payment import Payment
+from app.domain.entities.score import Score
+from app.domain.exceptions import EntityNotFoundError
+from app.ports.repositories import (
+    IClientRepository, ICommunicationRepository, IInvoiceRepository,
+    IPaymentRepository, IScenarioRepository, IScoreRepository,
+)
+
+@dataclass(frozen=True)
+class CaseAggregate:
+    client: Client
+    invoices: list[Invoice]        # sorted by due_date desc
+    payments: list[Payment]        # sorted by payment_date desc
+    communications: list[Communication]  # sorted by created_at desc
+    score: Score | None
+
+async def fetch_case_aggregate(
+    scenario_id: UUID,
+    client_id: UUID,
+    scenario_repo: IScenarioRepository,
+    client_repo: IClientRepository,
+    invoice_repo: IInvoiceRepository,
+    payment_repo: IPaymentRepository,
+    score_repo: IScoreRepository,
+    communication_repo: ICommunicationRepository,
+) -> CaseAggregate:
+    # Verify scenario exists
+    scenario = await scenario_repo.get_by_id(scenario_id)
+    if scenario is None:
+        raise EntityNotFoundError("Scenario", str(scenario_id))
+
+    client = await client_repo.get_by_id(client_id)
+    if client is None:
+        raise EntityNotFoundError("Client", str(client_id))
+
+    invoices = await invoice_repo.get_by_client_id(client_id)
+    invoices.sort(key=lambda inv: inv.due_date, reverse=True)
+
+    payments = await payment_repo.get_by_client_id(client_id)
+    payments.sort(key=lambda pmt: pmt.payment_date, reverse=True)
+
+    communications = await communication_repo.get_by_client_id(client_id)
+    communications.sort(key=lambda c: c.created_at, reverse=True)
+
+    scores = await score_repo.get_by_scenario(scenario_id)
+    client_score = next((sc for sc in scores if sc.client_id == client_id), None)
+
+    return CaseAggregate(
+        client=client,
+        invoices=invoices,
+        payments=payments,
+        communications=communications,
+        score=client_score,
+    )
+```
+
+**Router usage** (converts to HTTPException):
+```python
+# app/routers/cases.py
+from app.application.services.case_aggregate_service import fetch_case_aggregate
+from app.domain.exceptions import EntityNotFoundError
+
+@router.get("/{scenario_id}/clients/{client_id}")
+async def get_case_detail(...):
+    try:
+        aggregate = await fetch_case_aggregate(...)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    # Convert to response model...
+```
+
+**Use case usage** (lets EntityNotFoundError propagate):
+```python
+# app/application/use_cases/generate_communication_draft.py
+from app.application.services.case_aggregate_service import fetch_case_aggregate
+
+class GenerateCommunicationDraft:
+    async def execute(self, request):
+        aggregate = await fetch_case_aggregate(
+            scenario_id=request.scenario_id,
+            client_id=request.client_id,
+            scenario_repo=self._scenario_repo,
+            client_repo=self._client_repo,
+            # ... pass all repos
+        )
+        # Build CaseDetail for prompt from aggregate
+```
+
+### 9. ExternalServiceError Handling in Router
+
+Convert LLM adapter errors to 502 Bad Gateway:
+
+```python
+# app/routers/cases.py
+from app.domain.exceptions import EntityNotFoundError, ExternalServiceError
+
+@router.post("/{scenario_id}/clients/{client_id}/communications")
+async def generate_communication(...):
+    try:
+        response = await use_case.execute(...)
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ExternalServiceError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return _communication_to_summary(response.communication)
+```
+
+**Why 502?**: Upstream service (OpenRouter) failed — this is a bad gateway, not a client error.

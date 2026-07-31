@@ -360,6 +360,41 @@ For stories that expose domain logic via HTTP:
 
 This separation makes both layers independently testable and keeps the API layer trivial to verify.
 
+#### Shared Service Extraction (Avoid Duplication)
+
+When both a router endpoint and a use case need the same data-fetching logic (e.g., "case aggregate" — client + invoices + payments + score + communications), **extract to a shared service** in `app/application/services/` rather than duplicating in both places.
+
+**Pattern:**
+1. Create `fetch_case_aggregate()` in a new service file (`case_aggregate_service.py`)
+2. Return a frozen dataclass (`CaseAggregate`) with raw domain entities
+3. Router calls service → converts to Pydantic response models
+4. Use case calls service → converts to internal domain model for prompt building
+5. Both handle `EntityNotFoundError` at their layer (router → HTTPException, use case → propagates)
+
+**Why**: Single source of truth for sorting, filtering, error handling. Prevents drift when one layer is updated and the other isn't.
+
+#### Git Identity Confirmation (Mandatory)
+
+Before ANY commit in this project, **confirm git identity matches the repo's required author**:
+
+```bash
+git config user.name && git config user.email
+```
+
+Must output:
+```
+bernardo-525
+bernardojgm05@gmail.com
+```
+
+If it shows any other identity (especially `ventreIW`), **STOP** — do not commit. The user must fix the config. This prevents commits with wrong authorship on shared branches.
+
+#### Full Test Suite After Refactoring
+
+After any refactoring that touches shared logic (services, utilities, base classes), **run the full test suite** (`pytest -q`), not just scoped tests. Scoped tests catch regressions in the changed module; full suite catches breakage in downstream consumers.
+
+In this session, after extracting `fetch_case_aggregate()`, running the full 393-test suite caught 2 integration test failures where the router's 404 handling changed from `HTTPException` to `EntityNotFoundError` → `HTTPException` wrapper. Fixed by adding try/except in router.
+
 ### Step 4: Commit & Checkpoint
 
 > **Token marker** — Call `raise_session_topic(kind="implement", topic="commit")` before executing this step.
