@@ -94,10 +94,10 @@ Working tree is clean (or user explicitly chose to keep changes). No orphan stag
 
 ### Step 0.5: Storage Health Check (non-blocking)
 
-Quick sanity check on SQLite storage. **Never blocks session start** — warn and continue. If the `rai` command is not found, ensure the RaiSE CLI is installed and the virtual environment is activated (e.g., `source .venv/bin/activate`).
+Quick sanity check on SQLite storage. **Never blocks session start** — warn and continue.
 
 ```bash
-rai db status 2>&1 || true
+uvx --from raise-cli rai db status 2>&1 || true
 ```
 
 If `rai db status` is not available, run manually:
@@ -121,6 +121,8 @@ else:
 " 2>&1 || true
 ```
 
+> **Note:** The RaiSE CLI is distributed as the `raise-cli` package on PyPI. Run it via `uvx --from raise-cli rai <command>` or install it in your project venv. The local `rai` package (if present) is a different library (Radiotherapy AI) — do not confuse them.
+
 | Condition | Action |
 |-----------|--------|
 | DB OK | Continue silently |
@@ -134,11 +136,14 @@ Storage health checked (or skipped silently on error). Warnings surfaced if foun
 </verification>
 
 ### Step 0.6: Verify RaiSE CLI availability
-If the `rai` command is missing expected subcommands (e.g., `rai mission list` fails with "No such command"), the project's local `rai` may be a minimal stub. In that case, use the full RaiSE CLI via:
+
+The RaiSE CLI is the `raise-cli` package on PyPI. Run it via `uvx --from raise-cli rai <command>`. If the project has a local `rai` package installed (Radiotherapy AI), it will shadow the CLI — always use the `uvx` form to be sure.
+
 ```bash
-uvx --from raise-cli rai <command>
+uvx --from raise-cli rai --help
 ```
-This ensures access to all RaiSE commands (mission, session, graph, etc.) regardless of project-specific `rai` limitations.
+
+If this fails, install the CLI: `uv pip install raise-cli` (then use `rai` directly).
 
 ### Step 1: Mission Selection
 
@@ -147,7 +152,7 @@ Select the mission for this session **before** loading the context bundle. The b
 1. **Check if a mission is already active:**
 
 ```bash
-rai mission list
+uvx --from raise-cli rai mission list
 ```
 
 | Condition | Action |
@@ -202,7 +207,7 @@ Select mission (1-N) or Enter to skip:
 4. **Activate selected mission:**
 
 ```bash
-rai mission switch {selected_mission_id}
+uvx --from raise-cli rai mission switch {selected_mission_id}
 ```
 
 This activates the mission AND regenerates MEMORY.md with mission-scoped memory. If the user skips, continue without a mission.
@@ -214,7 +219,7 @@ Mission selected and activated (or explicitly skipped). MEMORY.md regenerated fo
 ### Step 2: Load Orientation Bundle
 
 ```bash
-rai session start --project . --context
+uvx --from raise-cli rai session start --project . --context
 ```
 
 Loads developer profile, session state, and orientation bundle. If graph unavailable: run `rai graph build` first.
@@ -235,9 +240,9 @@ The bundle now includes mission-scoped context (memories, objectives, last-sessi
    - Communication preferences → adapt tone
 
 2. **Check MCP health** (non-blocking, never alarming):
-   - Run `rai mcp list` to detect registered servers
+   - Run `uvx --from raise-cli rai mcp list` to detect registered servers
    - If no servers registered: skip silently (no output)
-   - If servers found: run `rai mcp health <name>` for each
+   - If servers found: run `uvx --from raise-cli rai mcp health <name>` for each
    - Collect status: healthy count, unhealthy count, total
    - **If health check fails** (missing module, connection error, etc.): report as "not connected" — never show tracebacks or error details to the user. MCP servers are optional integrations, not critical infrastructure
 
@@ -248,7 +253,7 @@ The bundle now includes mission-scoped context (memories, objectives, last-sessi
 If the orientation bundle identifies a current story with a Jira key, bind it to the per-session context file so CC hooks + MCP tool emissions inherit `RAISE_SESSION_JIRA_KEY` for this session (the bundle is the source of truth — resolve once, persist, stop):
 
 ```bash
-rai session bind RAISE_SESSION_JIRA_KEY "{jira_key}"
+uvx --from raise-cli rai session bind RAISE_SESSION_JIRA_KEY "{jira_key}"
 ```
 
 The CLI uses line-replace semantics — it preserves other keys (e.g. `RAISE_SESSION_MISSION_ID`) and creates the session directory if needed. Skip silently if there's no bound Jira key — `jira_key=None` behavior is preserved. Namespacing by `$RAISE_CC_SESSION_ID` (RAISE-1982) prevents collisions between concurrent CC sessions in the same worktree.
@@ -306,6 +311,6 @@ Do not execute RaiSE commands such as `rai story start`, `rai story design`, or 
 
 - Profile: `~/.rai/developer.yaml`
 - Session state: `.raise/rai/session-state.yaml`
-- Missions: `rai mission list`, `rai mission switch`
-- MCP: `rai mcp list`, `rai mcp health`, `/rai-mcp-status`
+- Missions: `uvx --from raise-cli rai mission list`, `uvx --from raise-cli rai mission switch`
+- MCP: `uvx --from raise-cli rai mcp list`, `uvx --from raise-cli rai mcp health`, `/rai-mcp-status`
 - Complement: `/rai-session-close`

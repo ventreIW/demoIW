@@ -62,7 +62,7 @@ See `raise.mastery` in frontmatter.
 ### Step 0: Instrument
 
 ```bash
-rai signal emit-work story "{story_id}" --event start --phase init 2>/dev/null || true
+uvx --from raise-cli rai signal emit-work story "{story_id}" --event start --phase init 2>/dev/null || true
 ```
 
 ### Step 1: Verify Epic Context (if applicable)
