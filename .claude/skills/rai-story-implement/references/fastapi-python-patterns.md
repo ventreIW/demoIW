@@ -279,3 +279,187 @@ async def rescore_client(
 
 **Wrong**: `invoice_id` in clients DataFrame, `payment_id` in payments DataFrame
 **Right**: All ID columns use `id` as column name
+
+
+## LLM Service Implementation Patterns (s3.2, s5.4)
+
+### 1. Config-Driven Prompt Templates
+
+Store prompts as `.txt` files in `prompts/<feature>/v1_<name>.txt` — not in code:
+
+```
+prompts/
+├── data_enrichment/
+│   └── v1_company_description.txt
+└── communications/
+    └── v1_draft.txt
+```
+
+Template uses Python `str.format()` placeholders: `{client_name}`, `{invoice_list}`, etc.
+
+### 2. LLM Service Structure
+
+```python
+# app/application/services/communication_draft_service.py
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from app.config import settings
+from app.domain.enums import Channel, Tone
+from app.ports.llm_port import ILLMPort
+
+if TYPE_CHECKING:
+    from app.routers.cases import CaseDetailResponse
+
+@dataclass(frozen=True)
+class CaseDetail:
+    """Internal domain model for prompt building — decoupled from router response."""
+    client_name: str
+    sector_description: str | None
+    payment_history_pattern: str
+    invoices: list[dict[str, str | int | float]]
+    payments: list[dict[str, str | int | float]]
+    score_value: float | None
+    score_category: str | None
+    communications: list[dict[str, str]]
+
+class CommunicationDraftService:
+    def __init__(
+        self,
+        llm_port: ILLMPort,
+        prompt_dir: Path | str,
+        model: str | None = None,
+    ) -> None:
+        self._llm = llm_port
+        self._prompt_dir = Path(prompt_dir)
+        self._model = model or settings.MODEL_COMMUNICATIONS
+        self._template = self._load_template()
+
+    def _load_template(self) -> str:
+        template_path = self._prompt_dir / "communications" / "v1_draft.txt"
+        try:
+            return template_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            raise RuntimeError(f"Prompt template not found at {template_path}")
+
+    def _build_prompt(self, case_detail: CaseDetail, channel: Channel, tone: Tone) -> str:
+        # Format all placeholders from case_detail
+        invoice_list = "\n".join(
+            f"- {inv['folio']}: {inv['amount']} "
+            f"(due {inv['due_date']}, {inv['days_overdue']} days overdue, status: {inv['status']})"
+            for inv in case_detail.invoices
+        ) or "No outstanding invoices."
+        # ... similar for payments, communications
+        
+        return self._template.format(
+            client_name=case_detail.client_name,
+            sector_description=case_detail.sector_description or "N/A",
+            payment_history_pattern=case_detail.payment_history_pattern,
+            invoice_list=invoice_list,
+            # ... all placeholders
+            channel=channel.value,
+            tone=tone.value,
+        )
+
+    async def generate(self, case_detail: CaseDetail, channel: Channel, tone: Tone) -> str:
+        prompt = self._build_prompt(case_detail, channel, tone)
+        return await self._llm.generate(prompt, model=self._model, max_tokens=512)
+
+def case_detail_response_to_domain(response: CaseDetailResponse) -> CaseDetail:
+    """Convert router response to internal domain model."""
+    return CaseDetail(
+        client_name=response.client.name,
+        sector_description=response.client.sector_description,
+        payment_history_pattern=response.client.payment_history_pattern,
+        invoices=[{"folio": inv.folio, "amount": inv.amount, ...} for inv in response.invoices],
+        payments=[{"amount": pmt.amount, "payment_date": pmt.payment_date, ...} for pmt in response.payments],
+        score_value=response.score.score_value if response.score else None,
+        score_category=response.score.category if response.score else None,
+        communications=[{"channel": c.channel, "tone": c.tone, ...} for c in response.communications],
+    )
+```
+
+Key principles:
+- **Internal `CaseDetail`** is a frozen dataclass with simple types (no Pydantic, no enums) — pure data for prompt formatting
+- **Router response → internal domain** via converter function (keeps service independent of API layer)
+- **Template loading** at init time with clear error if missing
+- **Model from config** (`settings.MODEL_COMMUNICATIONS`) with optional override
+- **Max tokens** tuned per use case (512 for drafts, 1024 for queries)
+
+### 3. Container Wiring for LLM Services
+
+```python
+# app/container.py
+from app.application.services.communication_draft_service import CommunicationDraftService
+from app.ports.llm_port import ILLMPort
+from app.config import settings
+from pathlib import Path
+
+async def get_draft_service(
+    llm_port: ILLMPort = Depends(get_llm_port),
+) -> CommunicationDraftService:
+    prompt_dir = Path(__file__).resolve().parents[2] / "prompts"
+    return CommunicationDraftService(
+        llm_port=llm_port,
+        prompt_dir=prompt_dir,
+        model=settings.MODEL_COMMUNICATIONS,
+    )
+```
+
+### 4. Type Annotations for Mixed-Value Dicts
+
+When dicts contain mixed value types (str, int, float), use explicit union:
+
+```python
+# Correct
+invoices: list[dict[str, str | int | float]]
+payments: list[dict[str, str | int | float]]
+communications: list[dict[str, str]]  # all string values
+
+# WRONG - bare dict loses type info
+invoices: list[dict]
+```
+
+### 5. Long f-string Formatting (ruff E501)
+
+Split long f-strings across implicit concatenation:
+
+```python
+# Instead of one long line:
+f"- {inv['folio']}: {inv['amount']} (due {inv['due_date']}, {inv['days_overdue']} days overdue, status: {inv['status']})"
+
+# Split:
+f"- {inv['folio']}: {inv['amount']} "
+f"(due {inv['due_date']}, {inv['days_overdue']} days overdue, status: {inv['status']})"
+```
+
+### 6. Integration Test with respx Mock
+
+```python
+# tests/integration/test_communications_integration.py
+import respx
+import httpx
+
+@respx.mock
+async def test_generate_communication_integration(client: AsyncClient):
+    # Mock OpenRouter
+    mock_route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "Estimado cliente, le recordamos su saldo..."}}],
+                "usage": {"prompt_tokens": 200, "completion_tokens": 100},
+            },
+        )
+    )
+    
+    response = await client.post(
+        f"/api/v1/scenarios/{sid}/clients/{cid}/communications",
+        json={"channel": "email", "tone": "formal"},
+    )
+    
+    assert response.status_code == 201
+    assert "Estimado cliente" in response.json()["draft_text"]
+    assert mock_route.called
+```

@@ -4,8 +4,7 @@ allowed-tools:
 - Grep
 - Glob
 - Bash(rai:*)
-description: Decompose story into atomic tasks with TDD verification. Use after story
-  design.
+description: Decompose story into atomic tasks with TDD verification. Use after story design.
 license: MIT
 metadata:
   raise.adaptable: 'true'
@@ -13,11 +12,9 @@ metadata:
   raise.fase: '5'
   raise.frequency: per-story
   raise.gate: gate-plan
-  raise.inputs: '- design_md: file_path, optional, previous_skill
-
-    - story_md: file_path, required, story-start
-
-    '
+  raise.inputs:
+  - design_md: file_path, optional, previous_skill
+  - story_md: file_path, required, story-start
   raise.introspection:
     affected_modules: []
     context_source: design doc
@@ -29,9 +26,8 @@ metadata:
     - TDD patterns for {affected_modules}
     - estimation calibration for {size} stories
   raise.next: story-implement
-  raise.outputs: '- plan_md: file_path, next_skill
-
-    '
+  raise.outputs:
+  - plan_md: file_path, next_skill
   raise.prerequisites: project-backlog
   raise.version: 2.3.0
   raise.visibility: public
@@ -220,3 +216,4 @@ rai signal emit-work story "{story_id}" --event complete --phase plan 2>/dev/nul
 - Previous: `/rai-story-design`
 - Next: `/rai-story-implement`
 - `references/adr-005-llm-batching.md` – summary of ADR-005 on LLM enrichment batching strategy
+- `references/communications-prompt-template-pattern.md` – config-driven prompt template pattern for LLM communication drafts (mirrors data_enrichment pattern)
