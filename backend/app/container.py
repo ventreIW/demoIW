@@ -10,6 +10,9 @@ from app.adapters.persistence.sqlalchemy_client_repo import (
 from app.adapters.persistence.sqlalchemy_communication_repo import (
     SQLAlchemyCommunicationRepository,
 )
+from app.adapters.persistence.sqlalchemy_contact_result_repo import (
+    SQLAlchemyContactResultRepository,
+)
 from app.adapters.persistence.sqlalchemy_invoice_repo import (
     SQLAlchemyInvoiceRepository,
 )
@@ -25,6 +28,7 @@ from app.adapters.persistence.sqlalchemy_score_repo import (
 from app.application.services.llm_enrichment_service import LLMEnrichmentService
 from app.application.use_cases.generate_dataset import GenerateDataset
 from app.application.use_cases.prioritize_scenario import PrioritizeScenario
+from app.application.use_cases.record_contact_result import RecordContactResult
 from app.application.use_cases.rescore_scenario import RescoreScenario
 from app.application.use_cases.score_and_persist_scenario import ScoreAndPersistScenario
 from app.config import settings
@@ -33,6 +37,7 @@ from app.ports.llm_port import ILLMPort
 from app.ports.repositories import (
     IClientRepository,
     ICommunicationRepository,
+    IContactResultRepository,
     IInvoiceRepository,
     IPaymentRepository,
     IScenarioRepository,
@@ -73,6 +78,20 @@ async def get_score_repo(
 ) -> IScoreRepository:
     """Dependency that provides an IScoreRepository implementation."""
     return SQLAlchemyScoreRepository(session)
+
+
+async def get_contact_result_repo(
+    session: AsyncSession = Depends(get_session),
+) -> IContactResultRepository:
+    """Dependency that provides an IContactResultRepository implementation."""
+    return SQLAlchemyContactResultRepository(session)
+
+
+async def get_communication_repo(
+    session: AsyncSession = Depends(get_session),
+) -> ICommunicationRepository:
+    """Dependency that provides an ICommunicationRepository implementation."""
+    return SQLAlchemyCommunicationRepository(session)
 
 
 async def get_llm_port() -> ILLMPort:
@@ -120,6 +139,20 @@ async def get_score_and_persist_use_case(
     return ScoreAndPersistScenario(scenario_repo=scenario_repo, score_repo=score_repo)
 
 
+async def get_record_contact_result_use_case(
+    scenario_repo: IScenarioRepository = Depends(get_scenario_repo),
+    client_repo: IClientRepository = Depends(get_client_repo),
+    contact_result_repo: IContactResultRepository = Depends(get_contact_result_repo),
+) -> RecordContactResult:
+    """Dependency that provides a RecordContactResult use case instance."""
+    return RecordContactResult(
+        scenario_repo=scenario_repo,
+        client_repo=client_repo,
+        contact_result_repo=contact_result_repo,
+        rescore_use_case=RescoreScenario(),
+    )
+
+
 async def get_prioritize_scenario_use_case() -> PrioritizeScenario:
     """Dependency that provides a PrioritizeScenario use case instance."""
     return PrioritizeScenario()
@@ -128,10 +161,3 @@ async def get_prioritize_scenario_use_case() -> PrioritizeScenario:
 async def get_rescore_scenario_use_case() -> RescoreScenario:
     """Dependency that provides a RescoreScenario use case instance."""
     return RescoreScenario()
-
-
-async def get_communication_repo(
-    session: AsyncSession = Depends(get_session),
-) -> ICommunicationRepository:
-    """Dependency that provides an ICommunicationRepository implementation."""
-    return SQLAlchemyCommunicationRepository(session)

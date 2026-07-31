@@ -3,15 +3,20 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.application.use_cases.record_contact_result import (
+    RecordContactResult,
+    RecordContactResultRequest,
+    RecordContactResultResponse,
+)
 from app.container import (
     get_client_repo,
     get_communication_repo,
     get_invoice_repo,
     get_payment_repo,
+    get_record_contact_result_use_case,
     get_scenario_repo,
     get_score_repo,
 )
-from app.domain.entities.client import Client
 from app.domain.entities.communication import Communication
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
@@ -183,4 +188,30 @@ async def get_case_detail(
         invoices=invoice_summaries,
         payments=payment_summaries,
         communications=comm_summaries,
+    )
+
+
+@router.post(
+    "/{scenario_id}/clients/{client_id}/contact-result",
+    response_model=RecordContactResultResponse,
+    status_code=201,
+)
+async def record_contact_result(
+    scenario_id: UUID,
+    client_id: UUID,
+    body: RecordContactResultRequest,
+    use_case: RecordContactResult = Depends(get_record_contact_result_use_case),
+) -> RecordContactResultResponse:
+    """Record a contact result and trigger rescore (s5.3).
+
+    Persists the ContactResult, updates client status, and calls the
+    E4 rescore endpoint to return an updated prioritized portfolio.
+    """
+    return await use_case.execute(
+        RecordContactResultRequest(
+            scenario_id=scenario_id,
+            client_id=client_id,
+            contact_result=body.contact_result,
+            notes=body.notes,
+        )
     )
