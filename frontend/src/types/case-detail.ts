@@ -43,3 +43,32 @@ export interface CaseDetail {
   payments: PaymentSummary[]
   communications: CommunicationSummary[]
 }
+
+/** Contact result types accepted by POST /contact-result (mirrors backend ContactResultType). */
+export type ContactResultType =
+  | 'promise_to_pay'
+  | 'partial_payment'
+  | 'no_answer'
+  | 'disputed'
+  | 'paid'
+
+export interface RecordContactResultRequest {
+  contact_result: ContactResultType
+  notes?: string
+}
+
+export interface ClientScoreEntry {
+  client_id: string
+  client_name: string
+  score_value: number
+  category: string
+  explanation: string
+}
+
+export interface RecordContactResultResponse {
+  scenario_id: string
+  client_id: string
+  portfolio: {
+    scores: ClientScoreEntry[]
+  }
+}

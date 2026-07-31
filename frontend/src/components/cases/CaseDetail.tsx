@@ -1,16 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations, useFormatter, useLocale } from 'next-intl'
-import type { CaseDetail } from '@/types/case-detail'
+import type { CaseDetail, RecordContactResultResponse } from '@/types/case-detail'
+import ContactResultForm from '@/components/cases/ContactResultForm'
 
 interface CaseDetailViewProps {
   detail: CaseDetail
+  scenarioId?: string
+  clientId?: string
 }
 
-export default function CaseDetailView({ detail }: CaseDetailViewProps) {
+export default function CaseDetailView({ detail, scenarioId, clientId }: CaseDetailViewProps) {
   const t = useTranslations('caseDetail')
   const formatter = useFormatter()
   const locale = useLocale()
+  const [updatedScore, setUpdatedScore] = useState<number | null>(null)
 
   const REGIONAL: Record<string, string> = { es: 'es-MX', en: 'en-US' }
   const currency = new Intl.NumberFormat(REGIONAL[locale] ?? locale, {
@@ -18,6 +23,19 @@ export default function CaseDetailView({ detail }: CaseDetailViewProps) {
     currency: 'MXN',
     maximumFractionDigits: 0,
   })
+
+  const scoreValue = updatedScore ?? detail.score?.score_value ?? null
+  const scoreCategory = detail.score?.category ?? null
+  const scoreExplanation = detail.score?.explanation ?? null
+
+  function handleContactSuccess(response: RecordContactResultResponse) {
+    const clientScore = response.portfolio.scores.find(
+      (s) => s.client_id === clientId,
+    )
+    if (clientScore) {
+      setUpdatedScore(clientScore.score_value)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -53,22 +71,22 @@ export default function CaseDetailView({ detail }: CaseDetailViewProps) {
         <h2 className="mb-3 text-lg font-semibold text-slate-900">
           {t('sectionScore')}
         </h2>
-        {detail.score ? (
+        {scoreValue !== null ? (
           <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
             <dl className="grid grid-cols-3 gap-3">
               <div>
                 <dt className="text-slate-500">{t('scoreValue')}</dt>
                 <dd className="text-xl font-bold text-slate-900">
-                  {Math.round(detail.score.score_value)}
+                  {Math.round(scoreValue)}
                 </dd>
               </div>
               <div>
                 <dt className="text-slate-500">{t('category')}</dt>
-                <dd className="text-slate-700">{detail.score.category}</dd>
+                <dd className="text-slate-700">{scoreCategory}</dd>
               </div>
               <div>
                 <dt className="text-slate-500">{t('explanation')}</dt>
-                <dd className="text-slate-700">{detail.score.explanation}</dd>
+                <dd className="text-slate-700">{scoreExplanation}</dd>
               </div>
             </dl>
           </div>
@@ -190,6 +208,17 @@ export default function CaseDetailView({ detail }: CaseDetailViewProps) {
           </p>
         )}
       </section>
+
+      {/* Contact Result Form */}
+      {scenarioId && clientId && (
+        <section>
+          <ContactResultForm
+            scenarioId={scenarioId}
+            clientId={clientId}
+            onSuccess={handleContactSuccess}
+          />
+        </section>
+      )}
     </div>
   )
 }

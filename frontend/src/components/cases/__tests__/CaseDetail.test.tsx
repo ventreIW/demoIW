@@ -7,6 +7,10 @@ import CaseDetailView from '@/components/cases/CaseDetail'
 // useFormatter and useLocale are provided by NextIntlClientProvider in renderWithIntl
 
 describe('CaseDetailView', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('renders the client profile section', () => {
     renderWithIntl(<CaseDetailView detail={caseDetailFixture} />)
     expect(screen.getByText('Refacciones del Bajío S.A. de C.V.')).toBeDefined()
@@ -49,5 +53,21 @@ describe('CaseDetailView', () => {
     renderWithIntl(<CaseDetailView detail={caseDetailNoCommsFixture} />)
     // The noComms key renders "Sin comunicaciones"
     expect(screen.getByText('Sin comunicaciones')).toBeDefined()
+  })
+
+  it('renders the contact result form section when scenarioId and clientId are provided', () => {
+    renderWithIntl(
+      <CaseDetailView
+        detail={caseDetailFixture}
+        scenarioId="550e8400-e29b-41d4-a716-446655440000"
+        clientId="3f2a1b8c-0000-4000-8000-000000000001"
+      />,
+    )
+    expect(screen.getAllByText('Registrar contacto').length).toBe(2)
+  })
+
+  it('does not render the contact result form section when scenarioId is not provided', () => {
+    renderWithIntl(<CaseDetailView detail={caseDetailFixture} />)
+    expect(screen.queryByText('Registrar contacto')).toBeNull()
   })
 })

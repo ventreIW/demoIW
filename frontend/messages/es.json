@@ -128,5 +128,21 @@
     "explanation": "Explicación",
     "errorLoading": "Error al cargar el detalle del caso",
     "backToCasesLink": "Regresar al panel de operaciones"
+  },
+  "contactResult": {
+    "sectionTitle": "Registrar contacto",
+    "contactResult": "Resultado del contacto",
+    "notes": "Notas (opcional)",
+    "record": "Grabando...",
+    "recordButton": "Registrar contacto",
+    "success": "Contacto registrado exitosamente",
+    "error": "Error al registrar el contacto",
+    "types": {
+      "promise_to_pay": "Promesa de pago",
+      "partial_payment": "Pago parcial",
+      "no_answer": "Sin respuesta",
+      "disputed": "Disputado",
+      "paid": "Pagado"
+    }
   }
 }
