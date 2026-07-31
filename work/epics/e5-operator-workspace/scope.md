@@ -54,8 +54,8 @@ Execution: `s5.1 → s5.2 → {s5.3, s5.4 → s5.5}`. Case detail (s5.2) is the 
 ## Done when
 - [x] Case list shows client, amount, days overdue, score, category per row (RF-05.1) — s5.1
 - [ ] Case detail shows profile + invoices + payment history + comms log (RF-05.2)
-- [ ] Operator can record a contact result and update status (RF-05.3–4)
-- [ ] Recording a result calls the E4 rescore endpoint and the score updates (RF-02.5)
+- [x] Operator can record a contact result and update status (RF-05.3–4) — s5.3
+- [x] Recording a result calls the E4 rescore endpoint and the score updates (RF-02.5) — s5.3
 - [ ] Draft produced via OpenRouter from case + channel + tone (RF-04.1–2)
 - [ ] Draft is editable; send requires explicit confirmation (RF-04.3–4)
 - [ ] Every draft + send stored with timestamp, operator, model, prompt version (RF-04.5, NFR-06)
@@ -134,7 +134,7 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 |---|---|---|---|---|---|
 | s5.1 | Rodrigo | **done** ✓ | 2026-07-27 | 2026-07-28 | Backend contract extended (`client_name`, `days_overdue`) + repaired the never-working `days_overdue_min` filter and `days_overdue` sort. Manual integration caught a lowercase-enum seam bug and a middleware guard that made every operator route unreachable |
 || s5.2 | Renata | **done** ✓ | 2026-07-28 | 2026-07-28 | Case detail endpoint + frontend page. 444 tests (366 backend + 78 frontend) |
-| s5.3 | — | blocked | — | — | needs s5.2 |
+| s5.3 | Renor | **done** ✓ | 2026-07-30 | 2026-07-30 | Contact result form frontend — type dropdown, notes, record button, score update. 88 frontend tests + 377 backend tests pass |
 | s5.4 | — | blocked | — | — | needs s5.2 |
 | s5.5 | — | blocked | — | — | needs s5.4 |
 
