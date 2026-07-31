@@ -16,9 +16,10 @@ export default async function CaseDetailPage({
   let detail = null
   let error: string | null = null
   let noActiveScenario = false
+  let scenario: { id: string } | null = null
 
   try {
-    const scenario = await getActiveScenario()
+    scenario = await getActiveScenario()
     if (scenario === null) {
       noActiveScenario = true
     } else {
@@ -53,8 +54,8 @@ export default async function CaseDetailPage({
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
             {t('noScore')}
           </div>
-        ) : detail ? (
-          <CaseDetailView detail={detail} />
+        ) : detail && scenario ? (
+          <CaseDetailView detail={detail} scenarioId={scenario.id} clientId={clientId} />
         ) : null}
       </div>
     </MainLayout>
