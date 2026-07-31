@@ -6,6 +6,10 @@ from pydantic import BaseModel
 from app.application.services.case_aggregate_service import (
     fetch_case_aggregate,
 )
+from app.application.use_cases.generate_communication_draft import (
+    GenerateCommunicationDraft,
+    GenerateCommunicationDraftRequest,
+)
 from app.application.use_cases.record_contact_result import (
     RecordContactResult,
     RecordContactResultRequest,
@@ -14,6 +18,7 @@ from app.application.use_cases.record_contact_result import (
 from app.container import (
     get_client_repo,
     get_communication_repo,
+    get_generate_communication_draft_use_case,
     get_invoice_repo,
     get_payment_repo,
     get_record_contact_result_use_case,
@@ -24,6 +29,7 @@ from app.domain.entities.communication import Communication
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.score import Score
+from app.domain.enums import Channel, Tone
 from app.domain.exceptions import EntityNotFoundError
 from app.ports.repositories import (
     IClientRepository,
@@ -81,6 +87,13 @@ class ScoreSummaryResponse(BaseModel):
     score_value: float
     category: str
     explanation: str
+
+
+class GenerateCommunicationRequest(BaseModel):
+    """Request model for generating a communication draft."""
+
+    channel: Channel
+    tone: Tone
 
 
 class CaseDetailResponse(BaseModel):
@@ -210,3 +223,29 @@ async def record_contact_result(
             notes=body.notes,
         )
     )
+
+
+@router.post(
+    "/{scenario_id}/clients/{client_id}/communications",
+    response_model=CommunicationSummaryResponse,
+    status_code=201,
+)
+async def generate_communication(
+    scenario_id: UUID,
+    client_id: UUID,
+    body: GenerateCommunicationRequest,
+    use_case: GenerateCommunicationDraft = Depends(get_generate_communication_draft_use_case),
+) -> CommunicationSummaryResponse:
+    """Generate a communication draft for a client (s5.4).
+
+    Returns the generated draft text with channel, tone, and DRAFT status.
+    """
+    response = await use_case.execute(
+        GenerateCommunicationDraftRequest(
+            scenario_id=scenario_id,
+            client_id=client_id,
+            channel=body.channel,
+            tone=body.tone,
+        )
+    )
+    return _communication_to_summary(response.communication)
