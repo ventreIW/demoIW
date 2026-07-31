@@ -74,24 +74,27 @@ Before starting Step 1, you MUST execute the PRIME protocol:
 
 ### Step 1: Verify Tests Pass
 
-Trust the end-of-story scoped gate from `/rai-story-implement` Step 5 — do **not** re-run
-the full suite here. Review requires that the scoped gates passed; the full suite runs once
-at push time via `/rai-mr-create`.
+**CRITICAL**: The implement phase may have only run scoped tests. You MUST run the FULL test suite here before proceeding.
 
 ```bash
-# Confirm the implement-complete signal was emitted for the current HEAD
+# 1. Full test suite (not scoped)
+pytest -q
+
+# 2. Verify implement-complete signal for current HEAD
 rai signal query story "{story_id}" --event complete --phase implement \
   --session-id "${RAISE_CC_SESSION_ID}" --latest --fields commit 2>/dev/null
 ```
 
 | Condition | Action |
 |-----------|--------|
-| Signal found for current HEAD | ✓ Tests already verified — continue |
+| Full suite passes + signal found for current HEAD | ✓ Continue |
+| Full suite fails | Fix before reviewing — review requires green full suite |
 | Signal missing or stale commit | Run scoped package gate: `rai gate check gate-tests --scope packages/<pkg>/` |
-| Scoped gate fails | Fix before reviewing — review requires green tests |
+
+**Lesson learned (s4.5-API)**: The implement phase reported "12 tests pass, 37 related tests pass" but only ran scoped tests. Full `pytest -q` revealed 14 failing tests (CSV upload, PrioritizedCase tests, etc.) that were not caught by scoped gates. The review phase MUST run the full suite to catch these.
 
 <verification>
-Implement-complete signal confirmed for current HEAD (or scoped gate re-run and passing).
+Full test suite passes. Implement-complete signal confirmed for current HEAD.
 </verification>
 
 ### Step 2: Gather Data & Reflect
