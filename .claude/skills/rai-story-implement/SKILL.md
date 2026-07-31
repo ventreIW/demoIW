@@ -63,6 +63,7 @@ See `raise.mastery` in frontmatter.
 ## Reference Files
 
 - `references/integration-test-patterns.md` — Patterns for integration tests with mocked external services (LLM, payment APIs). Includes bug detection lesson about producer/consumer field mismatches.
+- `references/fastapi-python-patterns.md` — demoIW-specific patterns: Pydantic/FastAPI, DI container, respx mocking, async SQLAlchemy, enum validation, nullable FKs, container provider ordering, RawDataset columns.
 
 ## Steps
 
@@ -325,6 +326,28 @@ When adding new endpoints to an existing router, replicate the exact pattern of 
 - Same docstring style (if any)
 
 This ensures consistency and reduces review friction.
+
+#### Container provider ordering (Critical)
+
+When adding new providers to `app/container.py`, **order matters**: a provider must be defined BEFORE any other provider that depends on it via `Depends()`.
+
+```python
+# WRONG — get_record_contact_result_use_case uses get_contact_result_repo but it's defined after
+async def get_record_contact_result_use_case(
+    contact_result_repo: IContactResultRepository = Depends(get_contact_result_repo),
+): ...
+
+async def get_contact_result_repo(...): ...
+
+# CORRECT — dependency defined first
+async def get_contact_result_repo(...): ...
+
+async def get_record_contact_result_use_case(
+    contact_result_repo: IContactResultRepository = Depends(get_contact_result_repo),
+): ...
+```
+
+**Why**: Python executes top-to-bottom; `Depends(get_contact_result_repo)` resolves at function definition time, so the target must already exist in the module namespace. This bit us in S5.3 T3 — the endpoint test failed with `NameError: get_contact_result_repo` until we reordered.
 
 #### Contract-first API development
 

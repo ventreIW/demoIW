@@ -134,6 +134,113 @@ Domain `ScoreCategory` is a StrEnum - serialize correctly:
 category = c.category.value if hasattr(c.category, "value") else str(c.category)
 ```
 
+## Container Provider Ordering (Critical)
+
+When adding new providers to `app/container.py`, **order matters**: a provider must be defined BEFORE any other provider that depends on it via `Depends()`.
+
+```python
+# WRONG - get_record_contact_result_use_case uses get_contact_result_repo but it's defined after
+async def get_record_contact_result_use_case(
+    contact_result_repo: IContactResultRepository = Depends(get_contact_result_repo),
+): ...
+
+async def get_contact_result_repo(...): ...
+
+# CORRECT - dependency defined first
+async def get_contact_result_repo(...): ...
+
+async def get_record_contact_result_use_case(
+    contact_result_repo: IContactResultRepository = Depends(get_contact_result_repo),
+): ...
+```
+
+**Pitfall**: Python executes top-to-bottom; `Depends(get_contact_result_repo)` resolves at function definition time, so the target must already exist in the module namespace.
+
+## Nullable Foreign Key Pattern
+
+When a relationship is optional (e.g., `ContactResult` may not have a `Communication` yet — s5.3 records contact, s5.4 links communication), apply at three layers:
+
+### 1. ORM Model
+```python
+class ContactResultORM(Base):
+    communication_id: Mapped[str | None] = mapped_column(
+        ForeignKey("communications.id", ondelete="CASCADE"), nullable=True
+    )
+```
+
+### 2. Mapper (both directions)
+```python
+def contact_result_orm_to_domain(orm: ContactResultORM) -> ContactResult:
+    return ContactResult(
+        ...
+        communication_id=UUID(orm.communication_id) if orm.communication_id else None,
+    )
+
+def contact_result_domain_to_orm(domain: ContactResult) -> ContactResultORM:
+    return ContactResultORM(
+        ...
+        communication_id=str(domain.communication_id) if domain.communication_id else None,
+    )
+```
+
+### 3. Domain Entity
+```python
+class ContactResult(BaseModel):
+    communication_id: UUID | None  # Optional for audit-only rows
+```
+
+## Test Fixture Pattern for FK Relationships
+
+When testing repositories with FK constraints, create parent entities via raw SQL before exercising the child repository:
+
+```python
+@pytest.fixture
+async def async_session():
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)()
+    yield session
+    await session.close()
+    await engine.dispose()
+
+async def _create_scenario_and_client(async_session, scenario_id, client_id):
+    await async_session.execute(
+        insert(ScenarioORM).values({...})
+    )
+    await async_session.execute(
+        insert(ClientORM).values({...})
+    )
+    await async_session.commit()
+
+# In test:
+scenario_id = uuid4()
+client_id = uuid4()
+await _create_scenario_and_client(async_session, scenario_id, client_id)
+
+repo = SQLAlchemyContactResultRepository(async_session)
+await repo.add(contact_result)  # FK satisfied
+```
+
+## FastAPI Enum Auto-Validation
+
+Use the domain enum directly in Pydantic request models — FastAPI automatically validates and returns 422 for invalid values:
+
+```python
+from app.domain.enums import ContactResultType
+
+class ContactResultRequest(BaseModel):
+    contact_result: ContactResultType  # Auto-validates against enum values
+    notes: str | None = None
+
+@router.post("/contact-result")
+async def record_contact(body: ContactResultRequest):
+    # body.contact_result is already a ContactResultType member
+    # Invalid values → 422 before handler runs
+```
+
+**No custom validator needed** — `StrEnum` + Pydantic v2 handles it.
+
 ## Rescore Endpoint Pattern
 
 For rescore endpoints that adjust a single client's score and re-rank:

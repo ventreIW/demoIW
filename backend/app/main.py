@@ -7,8 +7,8 @@ from fastapi import FastAPI
 from app.config import settings
 from app.infrastructure.database import engine
 from app.infrastructure.logging import setup_logging
-from app.routers.health import router as health_router
 from app.routers.cases import router as cases_router
+from app.routers.health import router as health_router
 from app.routers.scenarios import router as scenarios_router
 
 log = logging.getLogger(__name__)

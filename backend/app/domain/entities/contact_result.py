@@ -9,7 +9,7 @@ from app.domain.enums import ContactResultType
 class ContactResult(BaseModel):
     id: UUID
     client_id: UUID
-    communication_id: UUID
+    communication_id: UUID | None
     result_type: ContactResultType
     notes: str | None
     recorded_at: datetime

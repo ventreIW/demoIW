@@ -2,7 +2,6 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.adapters.persistence.mappers import (
     communication_domain_to_orm,

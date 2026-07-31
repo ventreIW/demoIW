@@ -180,7 +180,7 @@ def contact_result_orm_to_domain(orm: ContactResultORM) -> ContactResult:
     return ContactResult(
         id=UUID(orm.id),
         client_id=UUID(orm.client_id),
-        communication_id=UUID(orm.communication_id),
+        communication_id=UUID(orm.communication_id) if orm.communication_id else None,
         result_type=ContactResultType(orm.result_type),
         notes=orm.notes,
         recorded_at=_utc(orm.recorded_at),
@@ -191,7 +191,7 @@ def contact_result_domain_to_orm(domain: ContactResult) -> ContactResultORM:
     return ContactResultORM(
         id=str(domain.id),
         client_id=str(domain.client_id),
-        communication_id=str(domain.communication_id),
+        communication_id=str(domain.communication_id) if domain.communication_id else None,
         result_type=domain.result_type.value,
         notes=domain.notes,
         recorded_at=domain.recorded_at,

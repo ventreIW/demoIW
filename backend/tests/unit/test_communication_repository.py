@@ -48,7 +48,7 @@ async def test_add_returns_communication(async_session):
     repo = SQLAlchemyCommunicationRepository(async_session)
     scenario_id = uuid4()
     client_id = uuid4()
-    from datetime import datetime, UTC
+    from datetime import UTC, datetime
 
     from sqlalchemy import insert
 
@@ -111,7 +111,8 @@ async def test_get_by_client_id_returns_communications_sorted_by_created_at_desc
     repo = SQLAlchemyCommunicationRepository(async_session)
     scenario_id = uuid4()
     client_id = uuid4()
-    from datetime import datetime, UTC, timedelta
+    from datetime import UTC, datetime, timedelta
+
     from sqlalchemy import insert
 
     # Create scenario and client

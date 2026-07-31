@@ -83,8 +83,8 @@ class ContactResultORM(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     client_id: Mapped[str] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"))
-    communication_id: Mapped[str] = mapped_column(
-        ForeignKey("communications.id", ondelete="CASCADE")
+    communication_id: Mapped[str | None] = mapped_column(
+        ForeignKey("communications.id", ondelete="CASCADE"), nullable=True
     )
     result_type: Mapped[str] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
