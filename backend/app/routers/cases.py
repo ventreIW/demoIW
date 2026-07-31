@@ -3,6 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.application.services.case_aggregate_service import (
+    fetch_case_aggregate,
+)
 from app.application.use_cases.record_contact_result import (
     RecordContactResult,
     RecordContactResultRequest,
@@ -21,6 +24,7 @@ from app.domain.entities.communication import Communication
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.score import Score
+from app.domain.exceptions import EntityNotFoundError
 from app.ports.repositories import (
     IClientRepository,
     ICommunicationRepository,
@@ -143,44 +147,35 @@ async def get_case_detail(
     payments (sorted by payment_date desc), communications (sorted by
     created_at desc), and the client's score (if one exists).
     """
-    # Verify scenario exists
-    scenario = await scenario_repo.get_by_id(scenario_id)
-    if scenario is None:
-        raise HTTPException(status_code=404, detail="Scenario not found")
-
-    # Fetch client and verify it belongs to this scenario
-    client = await client_repo.get_by_id(client_id)
-    if client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        aggregate = await fetch_case_aggregate(
+            scenario_id=scenario_id,
+            client_id=client_id,
+            scenario_repo=scenario_repo,
+            client_repo=client_repo,
+            invoice_repo=invoice_repo,
+            payment_repo=payment_repo,
+            score_repo=score_repo,
+            communication_repo=communication_repo,
+        )
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
     # Client profile
     client_profile = ClientProfileResponse(
-        id=str(client.id),
-        name=client.name,
-        sector_description=client.sector_description,
-        payment_history_pattern=client.payment_history_pattern.value
-        if hasattr(client.payment_history_pattern, "value")
-        else str(client.payment_history_pattern),
+        id=str(aggregate.client.id),
+        name=aggregate.client.name,
+        sector_description=aggregate.client.sector_description,
+        payment_history_pattern=aggregate.client.payment_history_pattern.value
+        if hasattr(aggregate.client.payment_history_pattern, "value")
+        else str(aggregate.client.payment_history_pattern),
     )
 
-    # Invoices sorted by due_date desc
-    invoices = await invoice_repo.get_by_client_id(client_id)
-    invoices.sort(key=lambda inv: inv.due_date, reverse=True)
-    invoice_summaries = [_invoice_to_summary(inv) for inv in invoices]
-
-    # Payments sorted by payment_date desc
-    payments = await payment_repo.get_by_client_id(client_id)
-    payments.sort(key=lambda pmt: pmt.payment_date, reverse=True)
-    payment_summaries = [_payment_to_summary(pmt) for pmt in payments]
-
-    # Communications sorted by created_at desc
-    communications = await communication_repo.get_by_client_id(client_id)
-    comm_summaries = [_communication_to_summary(comm) for comm in communications]
-
-    # Score — filter from scenario scores
-    scores = await score_repo.get_by_scenario(scenario_id)
-    client_score = next((sc for sc in scores if sc.client_id == client_id), None)
-    score_summary = _score_to_summary(client_score) if client_score else None
+    # Convert to summary responses
+    invoice_summaries = [_invoice_to_summary(inv) for inv in aggregate.invoices]
+    payment_summaries = [_payment_to_summary(pmt) for pmt in aggregate.payments]
+    comm_summaries = [_communication_to_summary(comm) for comm in aggregate.communications]
+    score_summary = _score_to_summary(aggregate.score) if aggregate.score else None
 
     return CaseDetailResponse(
         client=client_profile,
