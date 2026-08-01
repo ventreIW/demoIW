@@ -56,10 +56,10 @@ Execution: `s5.1 → s5.2 → {s5.3, s5.4 → s5.5}`. Case detail (s5.2) is the 
 - [ ] Case detail shows profile + invoices + payment history + comms log (RF-05.2)
 - [x] Operator can record a contact result and update status (RF-05.3–4) — s5.3
 - [x] Recording a result calls the E4 rescore endpoint and the score updates (RF-02.5) — s5.3
-- [ ] Draft produced via OpenRouter from case + channel + tone (RF-04.1–2)
-- [ ] Draft is editable; send requires explicit confirmation (RF-04.3–4)
-- [ ] Every draft + send stored with timestamp, operator, model, prompt version (RF-04.5, NFR-06)
-- [ ] Prompt templates live in config, not code (RF-04.6)
+- [x] Draft produced via OpenRouter from case + channel + tone (RF-04.1–2)
+- [x] Draft is editable; send requires explicit confirmation (RF-04.3–4)
+- [x] Every draft + send stored with timestamp, operator, model, prompt version (RF-04.5, NFR-06)
+- [x] Prompt templates live in config, not code (RF-04.6)
 - [ ] Comms launched from within case detail (RF-05.5)
 - [ ] All tests pass (pytest + vitest); mypy + typecheck + lint + format clean
 - [ ] All story retrospectives written; E2E covers list → detail → contact → draft
@@ -134,9 +134,9 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 |---|---|---|---|---|---|
 | s5.1 | Rodrigo | **done** ✓ | 2026-07-27 | 2026-07-28 | Backend contract extended (`client_name`, `days_overdue`) + repaired the never-working `days_overdue_min` filter and `days_overdue` sort. Manual integration caught a lowercase-enum seam bug and a middleware guard that made every operator route unreachable |
 || s5.2 | Renata | **done** ✓ | 2026-07-28 | 2026-07-28 | Case detail endpoint + frontend page. 444 tests (366 backend + 78 frontend) |
-| s5.3 | Renor | **done** ✓ | 2026-07-30 | 2026-07-30 | Contact result form frontend — type dropdown, notes, record button, score update. 88 frontend tests + 377 backend tests pass |
-| s5.4 | — | blocked | — | — | needs s5.2 |
-| s5.5 | — | blocked | — | — | needs s5.4 |
+|| s5.3 | Renor | **done** ✓ | 2026-07-30 | 2026-07-30 | Contact result form frontend — type dropdown, notes, record button, score update. 88 frontend tests + 377 backend tests pass |
+|| s5.4 | Nano | **done** ✓ | 2026-07-31 | 2026-07-31 | Communications generator backend — prompt template, CommunicationDraftService, GenerateCommunicationDraft use case, shared fetch_case_aggregate, router endpoint. 329 backend tests + 10 unit + 6 use case + 9 router + 3 integration. All pass. |
+|| s5.5 | — | blocked | — | — | needs s5.4 |
 
 ## Sequencing risks
 | Risk | Mitigation |
