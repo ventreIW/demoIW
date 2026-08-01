@@ -231,3 +231,293 @@ pareto_subset = _pareto_prefix(cases, threshold)
 ```
 
 This ensures the "smallest prefix reaching threshold" invariant holds on the view the user sees.
+
+---
+
+## New Patterns from S5.4 Communications Generator
+
+### 8. LLM Service with Prompt Templates (Config-Driven)
+
+For services that call LLMs via `ILLMPort`, use a **prompt template file** in `prompts/<service>/` (mirrors `prompts/data_enrichment/` pattern):
+
+```python
+# app/application/services/communication_draft_service.py
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from app.config import settings
+from app.domain.enums import Channel, Tone
+from app.ports.llm_port import ILLMPort
+
+if TYPE_CHECKING:
+    from app.routers.cases import CaseDetailResponse
+
+log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class CaseDetail:
+    """Minimal case detail for prompt building — decoupled from router response model."""
+    client_name: str
+    sector_description: str | None
+    payment_history_pattern: str
+    invoices: list[dict[str, str | int | float]]
+    payments: list[dict[str, str | int | float]]
+    score_value: float | None
+    score_category: str | None
+    communications: list[dict[str, str]]
+
+
+class CommunicationDraftService:
+    """Service for generating communication drafts via LLM."""
+
+    def __init__(
+        self,
+        llm_port: ILLMPort,
+        prompt_dir: Path | str,
+        model: str | None = None,
+    ) -> None:
+        self._llm = llm_port
+        self._prompt_dir = Path(prompt_dir)
+        self._model = model or settings.MODEL_COMMUNICATIONS
+        self._template = self._load_template()
+
+    def _load_template(self) -> str:
+        template_path = self._prompt_dir / "communications" / "v1_draft.txt"
+        try:
+            return template_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            raise RuntimeError(f"Prompt template not found at {template_path}")
+
+    def _build_prompt(self, case_detail: CaseDetail, channel: Channel, tone: Tone) -> str:
+        """Build prompt by filling all placeholders from case detail."""
+        # Format invoices, payments, communications into strings
+        invoice_lines = [
+            f"- {inv['folio']}: {inv['amount']} "
+            f"(due {inv['due_date']}, {inv['days_overdue']} days overdue, status: {inv['status']})"
+            for inv in case_detail.invoices
+        ]
+        invoice_list = "\n".join(invoice_lines) if invoice_lines else "No outstanding invoices."
+        # ... similarly for payments and communications
+
+        return self._template.format(
+            client_name=case_detail.client_name,
+            sector_description=case_detail.sector_description or "N/A",
+            payment_history_pattern=case_detail.payment_history_pattern,
+            invoice_list=invoice_list,
+            payment_history=payment_history,
+            score_value=case_detail.score_value if case_detail.score_value is not None else "N/A",
+            score_category=case_detail.score_category or "N/A",
+            comms_log=comms_log,
+            channel=channel.value,  # Enum .value is LOWERCASE ("email", "phone", "whatsapp")
+            tone=tone.value,        # Enum .value is LOWERCASE ("formal", "firm", "urgent")
+        )
+
+    async def generate(self, case_detail: CaseDetail, channel: Channel, tone: Tone) -> str:
+        prompt = self._build_prompt(case_detail, channel, tone)
+        log.info("Generating communication draft", extra={"channel": channel.value, "tone": tone.value})
+        return await self._llm.generate(prompt, model=self._model, max_tokens=512)
+
+
+def case_detail_response_to_domain(response: "CaseDetailResponse") -> CaseDetail:
+    """Convert router CaseDetailResponse to internal CaseDetail for prompt building."""
+    return CaseDetail(
+        client_name=response.client.name,
+        sector_description=response.client.sector_description,
+        payment_history_pattern=response.client.payment_history_pattern,
+        invoices=[...],
+        payments=[...],
+        score_value=response.score.score_value if response.score else None,
+        score_category=response.score.category if response.score else None,
+        communications=[...],
+    )
+```
+
+**Key rules:**
+- **Prompt template in config, not code** — `prompts/communications/v1_draft.txt`
+- **Model from settings** — `settings.MODEL_COMMUNICATIONS` (default), overrideable for tests
+- **Channel/Tone enum values are lowercase** — `channel.value` → `"email"`, not `"EMAIL"`
+- **Missing template → RuntimeError** during construction (fail fast)
+- **Internal `CaseDetail` dataclass** — decouples service from router Pydantic models
+- **Converter function** — `case_detail_response_to_domain` maps router → service types
+
+### 9. Mocking ILLMPort for Unit Tests
+
+Create a mock class implementing the `ILLMPort` protocol:
+
+```python
+# tests/unit/test_communication_draft_service.py
+from app.ports.llm_port import ILLMPort
+
+class MockLLMPort(ILLMPort):
+    """Mock ILLMPort for testing."""
+    def __init__(self) -> None:
+        self.generate_calls: list[tuple[str, str, int]] = []
+
+    async def generate(self, prompt: str, model: str, max_tokens: int = 512) -> str:
+        self.generate_calls.append((prompt, model, max_tokens))
+        return "Estimado cliente, le recordamos su saldo pendiente de $50,000."
+
+    async def query(self, system_prompt: str, user_message: str, model: str) -> str:
+        return "mock response"
+```
+
+**Usage in tests:**
+```python
+def test_generate_calls_llm_with_correct_params(mock_llm_port, prompt_dir, sample_case_detail):
+    service = CommunicationDraftService(llm_port=mock_llm_port, prompt_dir=prompt_dir, model="test-model")
+    result = await service.generate(sample_case_detail, Channel.PHONE, Tone.FIRM)
+    
+    prompt, model, max_tokens = mock_llm_port.generate_calls[0]
+    assert model == "test-model"
+    assert max_tokens == 512
+    assert "phone" in prompt   # lowercase channel value
+    assert "firm" in prompt    # lowercase tone value
+```
+
+**Key rules:**
+- **Implement `ILLMPort`** — satisfies type checker (`mypy --strict`)
+- **Track calls** — `generate_calls` list for assertion
+- **Return realistic text** — Spanish draft for communications
+- **Type annotate tuple** — `tuple[str, str, int]` for mypy strict
+
+---
+
+## New Patterns from S5.4 Refactoring (Shared Case Aggregate Service)
+
+### 10. Shared Case Aggregate Service (Single Source of Truth)
+
+When multiple consumers (router + use cases) need the same composed data, extract to a **shared service** in `app/application/services/`:
+
+```python
+# app/application/services/case_aggregate_service.py
+from __future__ import annotations
+
+from dataclasses import dataclass
+from uuid import UUID
+
+from app.domain.entities.client import Client
+from app.domain.entities.communication import Communication
+from app.domain.entities.invoice import Invoice
+from app.domain.entities.payment import Payment
+from app.domain.entities.score import Score
+from app.domain.exceptions import EntityNotFoundError
+from app.ports.repositories import (
+    IClientRepository,
+    ICommunicationRepository,
+    IInvoiceRepository,
+    IPaymentRepository,
+    IScenarioRepository,
+    IScoreRepository,
+)
+
+
+@dataclass(frozen=True)
+class CaseAggregate:
+    """Raw case aggregate data for use by both router and use cases."""
+    client: Client
+    invoices: list[Invoice]          # sorted by due_date desc
+    payments: list[Payment]          # sorted by payment_date desc
+    communications: list[Communication]  # sorted by created_at desc
+    score: Score | None
+
+
+async def fetch_case_aggregate(
+    scenario_id: UUID,
+    client_id: UUID,
+    scenario_repo: IScenarioRepository,
+    client_repo: IClientRepository,
+    invoice_repo: IInvoiceRepository,
+    payment_repo: IPaymentRepository,
+    score_repo: IScoreRepository,
+    communication_repo: ICommunicationRepository,
+) -> CaseAggregate:
+    """Fetch and compose the full case aggregate for a client within a scenario.
+    Raises EntityNotFoundError if scenario or client not found.
+    """
+    # Verify scenario exists
+    scenario = await scenario_repo.get_by_id(scenario_id)
+    if scenario is None:
+        raise EntityNotFoundError("Scenario", str(scenario_id))
+
+    # Fetch client
+    client = await client_repo.get_by_id(client_id)
+    if client is None:
+        raise EntityNotFoundError("Client", str(client_id))
+
+    # Invoices sorted by due_date desc
+    invoices = await invoice_repo.get_by_client_id(client_id)
+    invoices.sort(key=lambda inv: inv.due_date, reverse=True)
+
+    # Payments sorted by payment_date desc
+    payments = await payment_repo.get_by_client_id(client_id)
+    payments.sort(key=lambda pmt: pmt.payment_date, reverse=True)
+
+    # Communications sorted by created_at desc (explicit sort!)
+    communications = await communication_repo.get_by_client_id(client_id)
+    communications.sort(key=lambda c: c.created_at, reverse=True)
+
+    # Score — filter from scenario scores
+    scores = await score_repo.get_by_scenario(scenario_id)
+    client_score = next((sc for sc in scores if sc.client_id == client_id), None)
+
+    return CaseAggregate(
+        client=client,
+        invoices=invoices,
+        payments=payments,
+        communications=communications,
+        score=client_score,
+    )
+```
+
+**Router consumption** (catches domain exception → HTTPException):
+
+```python
+from app.application.services.case_aggregate_service import fetch_case_aggregate
+from app.domain.exceptions import EntityNotFoundError
+
+@router.get("/{scenario_id}/clients/{client_id}", response_model=CaseDetailResponse)
+async def get_case_detail(...):
+    try:
+        aggregate = await fetch_case_aggregate(
+            scenario_id=scenario_id, client_id=client_id,
+            scenario_repo=scenario_repo, client_repo=client_repo,
+            invoice_repo=invoice_repo, payment_repo=payment_repo,
+            score_repo=score_repo, communication_repo=communication_repo,
+        )
+    except EntityNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    # Convert domain entities → response models
+    client_profile = ClientProfileResponse(...)
+    invoice_summaries = [_invoice_to_summary(inv) for inv in aggregate.invoices]
+    # ...
+    return CaseDetailResponse(...)
+```
+
+**Use case consumption** (lets exception propagate for tests to catch):
+
+```python
+from app.application.services.case_aggregate_service import fetch_case_aggregate
+
+class GenerateCommunicationDraft:
+    async def execute(self, request):
+        aggregate = await fetch_case_aggregate(
+            scenario_id=request.scenario_id, client_id=request.client_id,
+            scenario_repo=self._scenario_repo, client_repo=self._client_repo,
+            invoice_repo=self._invoice_repo, payment_repo=self._payment_repo,
+            score_repo=self._score_repo, communication_repo=self._communication_repo,
+        )
+        # Build internal CaseDetail from aggregate for prompt...
+```
+
+**Key rules:**
+- **Raw domain entities in aggregate** — no serialization; converter functions handle that per-consumer
+- **Explicit sorting** — all lists sorted in service (due_date desc, payment_date desc, created_at desc)
+- **Domain exception** — `EntityNotFoundError` raised by service; router converts to `HTTPException(404)`
+- **Single source of truth** — eliminates duplicate fetch/sort logic between router and use cases
+- **Testable** — unit tests verify repos called in correct order; integration tests verify 404s
