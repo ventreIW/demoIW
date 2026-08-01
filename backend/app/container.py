@@ -25,7 +25,6 @@ from app.adapters.persistence.sqlalchemy_scenario_repo import (
 from app.adapters.persistence.sqlalchemy_score_repo import (
     SQLAlchemyScoreRepository,
 )
-from app.application.services.case_aggregate_service import fetch_case_aggregate
 from app.application.services.communication_draft_service import (
     CommunicationDraftService,
 )

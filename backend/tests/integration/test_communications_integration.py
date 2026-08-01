@@ -5,21 +5,25 @@ Note: OpenRouterAdapter retries 3 times on 5xx/timeout (MAX_RETRIES=3).
 So failure cases need 4 responses (1 initial + 3 retries).
 
 Note on timeout/malformed JSON tests:
-- Timeout: respx wraps TimeoutException in SideEffectError which bypasses adapter's retry logic
-- Malformed JSON: JSONDecodeError is not caught by OpenRouterAdapter (only catches HTTPStatusError, TimeoutException)
+- Timeout: respx wraps TimeoutException in SideEffectError which bypasses
+  adapter's retry logic
+- Malformed JSON: JSONDecodeError is not caught by OpenRouterAdapter (only
+  catches HTTPStatusError, TimeoutException)
   and propagates as unhandled exception (500 with traceback)
 These are documented limitations of the test setup, not bugs in the code.
 """
 
 import json
+
+import httpx
 import pytest
 import respx
-import httpx
 from httpx import AsyncClient
 
 
 async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
-    """Helper to create a scenario with enough clients for scoring and return (scenario_id, client_id)."""
+    """Helper to create a scenario with enough clients for scoring and return
+    (scenario_id, client_id)."""
     gen = await client.post(
         "/api/v1/scenarios/generate",
         json={
@@ -50,7 +54,9 @@ async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
     return scenario_id, client_id
 
 
-def _llm_mock_response(content: str = "Estimado cliente, le recordamos su pago pendiente.") -> httpx.Response:
+def _llm_mock_response(
+    content: str = "Estimado cliente, le recordamos su pago pendiente.",
+) -> httpx.Response:
     return httpx.Response(
         200,
         json={
@@ -61,7 +67,6 @@ def _llm_mock_response(content: str = "Estimado cliente, le recordamos su pago p
 
 
 def _enrichment_mock_response(count: int) -> httpx.Response:
-    import json
     enriched = [
         {"name": f"Cliente Enriquecido {i}", "sector_description": "Empresa del sector retail."}
         for i in range(count)
@@ -74,14 +79,19 @@ def _enrichment_mock_response(count: int) -> httpx.Response:
 
 @respx.mock
 @pytest.mark.anyio
-async def test_generate_communication_integration_persists_draft(client: AsyncClient) -> None:
-    """Full integration test: generate -> score -> prioritized -> communication -> verify in DB."""
+async def test_generate_communication_integration_persists_draft(
+    client: AsyncClient,
+) -> None:
+    """Full integration test: generate -> score -> prioritized -> communication
+    -> verify in DB."""
     mock_route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
         side_effect=[
             _enrichment_mock_response(20),
             _enrichment_mock_response(20),
             _enrichment_mock_response(20),
-            _llm_mock_response("Estimado cliente, le recordamos su pago pendiente de $50,000."),
+            _llm_mock_response(
+                "Estimado cliente, le recordamos su pago pendiente de $50,000."
+            ),
         ]
     )
 
@@ -124,7 +134,9 @@ async def test_generate_communication_integration_persists_draft(client: AsyncCl
 
 @respx.mock
 @pytest.mark.anyio
-async def test_generate_communication_llm_500_returns_502(client: AsyncClient) -> None:
+async def test_generate_communication_llm_500_returns_502(
+    client: AsyncClient,
+) -> None:
     """When OpenRouter returns 500, adapter retries 3x then returns 502."""
     respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
         side_effect=[
@@ -152,8 +164,11 @@ async def test_generate_communication_llm_500_returns_502(client: AsyncClient) -
 
 @respx.mock
 @pytest.mark.anyio
-async def test_generate_communication_multiple_calls_independent(client: AsyncClient) -> None:
-    """Multiple communication generations for same client should create separate records."""
+async def test_generate_communication_multiple_calls_independent(
+    client: AsyncClient,
+) -> None:
+    """Multiple communication generations for same client should create
+    separate records."""
     respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
         side_effect=[
             _enrichment_mock_response(20),
@@ -187,56 +202,3 @@ async def test_generate_communication_multiple_calls_independent(client: AsyncCl
     draft_texts = [c["draft_text"] for c in comms]
     assert draft1 in draft_texts
     assert draft2 in draft_texts
-
-
-def _llm_mock_response(content: str = "Estimado cliente, le recordamos su pago pendiente.") -> httpx.Response:
-    return httpx.Response(
-        200,
-        json={
-            "choices": [{"message": {"content": content}}],
-            "usage": {"prompt_tokens": 50, "completion_tokens": 20},
-        },
-    )
-
-
-def _enrichment_mock_response(count: int) -> httpx.Response:
-    import json
-    enriched = [
-        {"name": f"Cliente Enriquecido {i}", "sector_description": "Empresa del sector retail."}
-        for i in range(count)
-    ]
-    return httpx.Response(
-        200,
-        json={"choices": [{"message": {"content": json.dumps(enriched)}}]},
-    )
-
-
-async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
-    gen = await client.post(
-        "/api/v1/scenarios/generate",
-        json={
-            "seed": 42,
-            "sector": "retail",
-            "client_count": 60,
-            "invoice_volume": 3.0,
-            "amount_mean": 10000.0,
-            "amount_std": 3000.0,
-            "reference_date": None,
-        },
-    )
-    assert gen.status_code == 201, gen.text
-
-    active = await client.get("/api/v1/scenarios/active")
-    assert active.status_code == 200
-    scenario_id = active.json()["id"]
-
-    score = await client.post(f"/api/v1/scenarios/{scenario_id}/score")
-    assert score.status_code == 201, score.text
-
-    pri = await client.get(f"/api/v1/scenarios/{scenario_id}/prioritized")
-    assert pri.status_code == 200, pri.text
-    cases = pri.json()["cases"]
-    assert len(cases) > 0
-    client_id = cases[0]["client_id"]
-
-    return scenario_id, client_id

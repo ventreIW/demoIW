@@ -1,9 +1,11 @@
-"""Router/contract tests for POST /api/v1/scenarios/{scenario_id}/clients/{client_id}/communications"""
+"""Router/contract tests for POST /api/v1/scenarios/{scenario_id}/
+clients/{client_id}/communications"""
 
 import uuid
+
+import httpx
 import pytest
 import respx
-import httpx
 from httpx import AsyncClient
 
 from app.container import get_llm_port
@@ -53,8 +55,10 @@ def mock_llm():
 
 
 async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
-    """Helper to create a scenario with enough clients for scoring and return (scenario_id, client_id)."""
-    # 1. Generate a scenario with enough clients for scoring (need >= 20 with outstanding)
+    """Helper to create a scenario with enough clients for scoring and return
+    (scenario_id, client_id)."""
+    # 1. Generate a scenario with enough clients for scoring (need >= 20 with
+    # outstanding)
     gen = await client.post(
         "/api/v1/scenarios/generate",
         json={
@@ -93,7 +97,8 @@ async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
 async def test_generate_communication_201_valid_input(
     client: AsyncClient, mock_llm: _MockLLM
 ) -> None:
-    """POST with valid channel/tone returns 201 with CommunicationSummaryResponse shape."""
+    """POST with valid channel/tone returns 201 with CommunicationSummaryResponse
+    shape."""
     # Setup
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
