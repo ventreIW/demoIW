@@ -128,6 +128,44 @@ Key principles:
 - Verify mock was called (`assert mock_route.called`)
 - Test both success and failure paths
 
+**`side_effect` with sequential responses**: For tests that make multiple sequential calls (e.g., enrichment + communication), use `side_effect` with a list:
+
+```python
+respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+    side_effect=[
+        _enrichment_mock_response(20),  # batch 1
+        _enrichment_mock_response(20),  # batch 2
+        _enrichment_mock_response(20),  # batch 3
+        _llm_mock_response("Generated draft"),  # communication call
+    ]
+)
+```
+
+**OpenRouterAdapter retry behavior**: The adapter retries 3 times (`MAX_RETRIES=3`) on 5xx status codes (500, 502, 503, 504) and `httpx.TimeoutException`, with exponential backoff (`2**attempt` seconds). It does NOT retry on 4xx or `json.JSONDecodeError` — malformed JSON propagates as unhandled exception (500 with traceback).
+
+**Timeout/malformed JSON limitations in tests**: `respx` wraps `TimeoutException` in `SideEffectError` which bypasses the adapter's retry logic. For timeout tests, the exception propagates immediately rather than after retries. Document these as test setup limitations, not code bugs.
+
+## Integration Test Setup Boilerplate
+
+Common pattern for setting up a scenario with scored clients for communication tests:
+
+```python
+async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
+    # 1. Generate scenario with enough clients for scoring (need >= 20 with outstanding)
+    gen = await client.post("/api/v1/scenarios/generate", json={...})
+    # 2. Get active scenario
+    active = await client.get("/api/v1/scenarios/active")
+    scenario_id = active.json()["id"]
+    # 3. Score the scenario
+    score = await client.post(f"/api/v1/scenarios/{scenario_id}/score")
+    # 4. Get prioritized list to extract a client_id
+    pri = await client.get(f"/api/v1/scenarios/{scenario_id}/prioritized")
+    client_id = pri.json()["cases"][0]["client_id"]
+    return scenario_id, client_id
+```
+
+This pattern (generate → active → score → prioritized) is the standard test setup for any endpoint requiring a scored client.
+
 ## Bug Detection Through Integration Tests
 
 Integration tests with real persistence catch bugs that unit tests miss. Ensure test mock data matches the **actual producer's output** (procedural generator, external API), not what the consumer expects. When producer and consumer are owned by different developers/stories, this mismatch is a common source of bugs.
@@ -206,3 +244,50 @@ Commit after each completed task, not just story end. Enables recovery, shows pr
 ## Full Skill Cycle
 
 Use skills even for small stories. Structure helps; overhead is minimal.
+
+## Integration Test Setup Boilerplate
+
+Common pattern for setting up a scenario with scored clients for communication tests:
+
+```python
+async def _setup_scenario_with_client(client: AsyncClient) -> tuple[str, str]:
+    # 1. Generate scenario with enough clients for scoring (need >= 20 with outstanding)
+    gen = await client.post("/api/v1/scenarios/generate", json={...})
+    # 2. Get active scenario
+    active = await client.get("/api/v1/scenarios/active")
+    scenario_id = active.json()["id"]
+    # 3. Score the scenario
+    score = await client.post(f"/api/v1/scenarios/{scenario_id}/score")
+    # 4. Get prioritized list to extract a client_id
+    pri = await client.get(f"/api/v1/scenarios/{scenario_id}/prioritized")
+    client_id = pri.json()["cases"][0]["client_id"]
+    return scenario_id, client_id
+```
+
+This pattern (generate → active → score → prioritized) is the standard test setup for any endpoint requiring a scored client.
+
+## Full Test Suite After Refactoring
+
+After any refactoring that touches shared logic (services, utilities, base classes), **run the full test suite** (`pytest -q`), not just scoped tests. Scoped tests catch regressions in the changed module; full suite catches breakage in downstream consumers.
+
+In this session, after extracting `fetch_case_aggregate()`, running the full 405-test suite caught 2 integration test failures where the router's 404 handling changed from `HTTPException` to `EntityNotFoundError` → `HTTPException` wrapper. Fixed by adding try/except in router.
+
+## Git Identity Confirmation (Mandatory)
+
+Before ANY commit in this project, **confirm git identity matches the repo's required author**:
+
+```bash
+git config user.name && git config user.email
+```
+
+Must output:
+```
+bernardo-525
+bernardojgm05@gmail.com
+```
+
+If it shows any other identity (especially `ventreIW`), **STOP** — do not commit. The user must fix the config. This prevents commits with wrong authorship on shared branches.
+
+## Frontend Gate Failures (Pre-existing)
+
+When running full gate checks, frontend tests may fail due to missing dependencies (`next-intl`, `sonner`, `lucide-react`). These are pre-existing infrastructure issues, not related to backend story work. Backend gates (lint, typecheck, pytest) should pass independently.
