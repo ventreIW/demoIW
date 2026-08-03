@@ -48,6 +48,7 @@ export const caseDetailFixture: CaseDetail = {
   ],
   communications: [
     {
+      id: 'comm-001',
       channel: 'email',
       tone: 'formal',
       draft_text: 'Estimado cliente, le recordamos su saldo pendiente.',

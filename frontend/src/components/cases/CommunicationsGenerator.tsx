@@ -88,7 +88,9 @@ export default function CommunicationsGenerator({
           <label className="text-sm font-medium text-slate-700">{t('channel')}</label>
           <Select
             value={channel}
-            onValueChange={setChannel}
+            onValueChange={(value: string | null) => {
+              if (value) setChannel(value)
+            }}
             disabled={generating || sending}
           >
             <SelectTrigger className="w-full">
@@ -109,7 +111,9 @@ export default function CommunicationsGenerator({
           <label className="text-sm font-medium text-slate-700">{t('tone')}</label>
           <Select
             value={tone}
-            onValueChange={setTone}
+            onValueChange={(value: string | null) => {
+              if (value) setTone(value)
+            }}
             disabled={generating || sending}
           >
             <SelectTrigger className="w-full">
