@@ -29,7 +29,7 @@ from app.domain.entities.communication import Communication
 from app.domain.entities.invoice import Invoice
 from app.domain.entities.payment import Payment
 from app.domain.entities.score import Score
-from app.domain.enums import Channel, Tone
+from app.domain.enums import Channel, CommunicationStatus, Tone
 from app.domain.exceptions import EntityNotFoundError, ExternalServiceError
 from app.ports.repositories import (
     IClientRepository,
@@ -74,6 +74,7 @@ class PaymentSummaryResponse(BaseModel):
 class CommunicationSummaryResponse(BaseModel):
     """Communication summary in case detail."""
 
+    id: str
     channel: str
     tone: str
     draft_text: str
@@ -127,6 +128,7 @@ def _payment_to_summary(pmt: Payment) -> PaymentSummaryResponse:
 
 def _communication_to_summary(comm: Communication) -> CommunicationSummaryResponse:
     return CommunicationSummaryResponse(
+        id=str(comm.id),
         channel=comm.channel.value if hasattr(comm.channel, "value") else str(comm.channel),
         tone=comm.tone.value if hasattr(comm.tone, "value") else str(comm.tone),
         draft_text=comm.draft_text,
@@ -254,3 +256,40 @@ async def generate_communication(
     except ExternalServiceError as e:
         raise HTTPException(status_code=502, detail=str(e))
     return _communication_to_summary(response.communication)
+
+
+@router.patch(
+    "/{scenario_id}/clients/{client_id}/communications/{comm_id}/send",
+    response_model=CommunicationSummaryResponse,
+)
+async def send_communication(
+    scenario_id: UUID,
+    client_id: UUID,
+    comm_id: UUID,
+    communication_repo: ICommunicationRepository = Depends(get_communication_repo),
+) -> CommunicationSummaryResponse:
+    """Send a communication draft (s5.5).
+
+    Transitions a draft communication to SENT status. No external
+    transport — demo only. Returns the updated communication summary.
+    """
+    comm = await communication_repo.get_by_id(comm_id)
+    if comm is None:
+        raise HTTPException(status_code=404, detail="Communication not found")
+    if comm.scenario_id != scenario_id or comm.client_id != client_id:
+        raise HTTPException(status_code=404, detail="Communication not found")
+    if comm.status != CommunicationStatus.DRAFT:
+        raise HTTPException(status_code=409, detail="Communication is not in draft status")
+
+    sent_comm = Communication(
+        id=comm.id,
+        client_id=comm.client_id,
+        scenario_id=comm.scenario_id,
+        channel=comm.channel,
+        tone=comm.tone,
+        draft_text=comm.draft_text,
+        status=CommunicationStatus.SENT,
+        created_at=comm.created_at,
+    )
+    updated = await communication_repo.update(sent_comm)
+    return _communication_to_summary(updated)

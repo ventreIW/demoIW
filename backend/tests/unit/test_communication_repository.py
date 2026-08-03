@@ -35,6 +35,8 @@ def test_sqlalchemy_communication_repository_is_subclass_of_icommunication_repos
 def test_sqlalchemy_communication_repository_has_required_methods():
     assert hasattr(SQLAlchemyCommunicationRepository, "add")
     assert hasattr(SQLAlchemyCommunicationRepository, "get_by_client_id")
+    assert hasattr(SQLAlchemyCommunicationRepository, "get_by_id")
+    assert hasattr(SQLAlchemyCommunicationRepository, "update")
 
 
 @pytest.mark.asyncio
@@ -104,6 +106,154 @@ async def test_add_returns_communication(async_session):
     orm = result.scalar_one_or_none()
     assert orm is not None
     assert orm.channel == "email"
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_returns_communication(async_session):
+    repo = SQLAlchemyCommunicationRepository(async_session)
+    scenario_id = uuid4()
+    client_id = uuid4()
+    from datetime import UTC, datetime, timedelta
+    from sqlalchemy import insert
+
+    # Create scenario and client
+    await async_session.execute(
+        insert(ScenarioORM).values(
+            {
+                "id": str(scenario_id),
+                "name": "GetById Scenario",
+                "sector": "TEST",
+                "seed": None,
+                "parameters": {},
+                "source": "manual",
+                "status": "active",
+                "created_at": datetime.now(UTC),
+            }
+        )
+    )
+    await async_session.execute(
+        insert(ClientORM).values(
+            {
+                "id": str(client_id),
+                "scenario_id": str(scenario_id),
+                "name": "GetById Client",
+                "sector_description": None,
+                "payment_history_pattern": "ON_TIME",
+            }
+        )
+    )
+    # Insert a communication
+    comm_id = uuid4()
+    await async_session.execute(
+        insert(CommunicationORM).values(
+            {
+                "id": str(comm_id),
+                "client_id": str(client_id),
+                "scenario_id": str(scenario_id),
+                "channel": "email",
+                "tone": "formal",
+                "draft_text": "Test communication",
+                "status": "draft",
+                "created_at": datetime.now(UTC),
+            }
+        )
+    )
+    await async_session.commit()
+
+    # Call the method
+    result = await repo.get_by_id(comm_id)
+    assert result is not None
+    assert isinstance(result, Communication)
+    assert result.id == comm_id
+    assert result.channel == Channel.EMAIL
+    assert result.status == CommunicationStatus.DRAFT
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_returns_none_for_missing(async_session):
+    repo = SQLAlchemyCommunicationRepository(async_session)
+    result = await repo.get_by_id(uuid4())
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_update_communication_status(async_session):
+    repo = SQLAlchemyCommunicationRepository(async_session)
+    scenario_id = uuid4()
+    client_id = uuid4()
+    from datetime import UTC, datetime
+    from sqlalchemy import insert
+
+    # Create scenario and client
+    await async_session.execute(
+        insert(ScenarioORM).values(
+            {
+                "id": str(scenario_id),
+                "name": "Update Scenario",
+                "sector": "TEST",
+                "seed": None,
+                "parameters": {},
+                "source": "manual",
+                "status": "active",
+                "created_at": datetime.now(UTC),
+            }
+        )
+    )
+    await async_session.execute(
+        insert(ClientORM).values(
+            {
+                "id": str(client_id),
+                "scenario_id": str(scenario_id),
+                "name": "Update Client",
+                "sector_description": None,
+                "payment_history_pattern": "ON_TIME",
+            }
+        )
+    )
+    # Insert a communication in draft status
+    comm_id = uuid4()
+    await async_session.execute(
+        insert(CommunicationORM).values(
+            {
+                "id": str(comm_id),
+                "client_id": str(client_id),
+                "scenario_id": str(scenario_id),
+                "channel": "whatsapp",
+                "tone": "urgent",
+                "draft_text": "Urgent reminder",
+                "status": "draft",
+                "created_at": datetime.now(UTC),
+            }
+        )
+    )
+    await async_session.commit()
+
+    # Create updated communication with SENT status
+    updated = Communication(
+        id=comm_id,
+        client_id=client_id,
+        scenario_id=scenario_id,
+        channel=Channel.WHATSAPP,
+        tone=Tone.URGENT,
+        draft_text="Urgent reminder",
+        status=CommunicationStatus.SENT,
+        created_at=datetime.now(UTC),
+    )
+    result = await repo.update(updated)
+    assert isinstance(result, Communication)
+    assert result.id == comm_id
+    assert result.status == CommunicationStatus.SENT
+    assert result.channel == Channel.WHATSAPP
+
+    # Verify in DB
+    from sqlalchemy import select
+
+    row = await async_session.execute(
+        select(CommunicationORM).where(CommunicationORM.id == str(comm_id))
+    )
+    orm = row.scalar_one_or_none()
+    assert orm is not None
+    assert orm.status == "sent"
 
 
 @pytest.mark.asyncio

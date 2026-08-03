@@ -160,8 +160,18 @@ class ICommunicationRepository(ABC):
         ...
 
     @abstractmethod
+    async def get_by_id(self, communication_id: UUID) -> Communication | None:
+        """Return a single communication by ID, or None if not found."""
+        ...
+
+    @abstractmethod
     async def get_by_client_id(self, client_id: UUID) -> list[Communication]:
         """Return all communications for a client ordered by created_at desc."""
+        ...
+
+    @abstractmethod
+    async def update(self, communication: Communication) -> Communication:
+        """Update an existing communication and return it."""
         ...
 
 

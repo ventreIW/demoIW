@@ -140,6 +140,6 @@ class GenerateCommunicationDraft:
             status=CommunicationStatus.DRAFT,
             created_at=datetime.now(UTC),
         )
-        await self._communication_repo.add(communication)
+        persisted = await self._communication_repo.add(communication)
 
-        return GenerateCommunicationDraftResponse(communication=communication)
+        return GenerateCommunicationDraftResponse(communication=persisted)

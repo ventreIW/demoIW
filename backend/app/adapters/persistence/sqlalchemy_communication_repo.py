@@ -26,6 +26,21 @@ class SQLAlchemyCommunicationRepository(ICommunicationRepository):
         await self._session.commit()
         return communication_orm_to_domain(orm)
 
+    async def get_by_id(self, communication_id: UUID) -> Communication | None:
+        """Return a single communication by ID, or None if not found."""
+        result = await self._session.execute(
+            select(CommunicationORM).where(CommunicationORM.id == str(communication_id))
+        )
+        orm = result.scalar_one_or_none()
+        return communication_orm_to_domain(orm) if orm else None
+
+    async def update(self, communication: Communication) -> Communication:
+        """Update an existing communication and return it."""
+        orm = communication_domain_to_orm(communication)
+        merged = await self._session.merge(orm)
+        await self._session.commit()
+        return communication_orm_to_domain(merged)
+
     async def get_by_client_id(self, client_id: UUID) -> list[Communication]:
         """Return all communications for a client ordered by created_at desc."""
         result = await self._session.execute(
