@@ -1,7 +1,11 @@
 import { screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderWithIntl } from '@/test-utils/i18n'
-import { caseDetailFixture, caseDetailNoScoreFixture, caseDetailNoCommsFixture } from '@/test-utils/case-detail-fixture'
+import {
+  caseDetailFixture,
+  caseDetailNoScoreFixture,
+  caseDetailNoCommsFixture,
+} from '@/test-utils/case-detail-fixture'
 import CaseDetailView from '@/components/cases/CaseDetail'
 
 // useFormatter and useLocale are provided by NextIntlClientProvider in renderWithIntl
@@ -32,9 +36,7 @@ describe('CaseDetailView', () => {
 
   it('renders communications log', () => {
     renderWithIntl(<CaseDetailView detail={caseDetailFixture} />)
-    expect(
-      screen.getByText('Estimado cliente, le recordamos su saldo pendiente.'),
-    ).toBeDefined()
+    expect(screen.getByText('Estimado cliente, le recordamos su saldo pendiente.')).toBeDefined()
   })
 
   it('renders the score section', () => {

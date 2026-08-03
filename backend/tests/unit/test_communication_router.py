@@ -157,9 +157,7 @@ async def test_generate_communication_422_invalid_channel(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_422_invalid_tone(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_generate_communication_422_invalid_tone(client: AsyncClient, no_llm: None) -> None:
     """POST with invalid tone returns 422."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -197,9 +195,7 @@ async def test_generate_communication_422_missing_channel(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_422_missing_tone(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_generate_communication_422_missing_tone(client: AsyncClient, no_llm: None) -> None:
     """POST with missing tone returns 422."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -238,9 +234,7 @@ async def test_generate_communication_404_unknown_scenario(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_404_unknown_client(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_generate_communication_404_unknown_client(client: AsyncClient, no_llm: None) -> None:
     """POST with unknown client_id in valid scenario returns 404."""
     scenario_id, _ = await _setup_scenario_with_client(client)
     fake_cid = str(uuid.uuid4())
@@ -259,9 +253,7 @@ async def test_generate_communication_404_unknown_client(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_all_channels(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_generate_communication_all_channels(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """Test all valid channels work."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -286,9 +278,7 @@ async def test_generate_communication_all_channels(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_all_tones(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_generate_communication_all_tones(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """Test all valid tones work."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -309,3 +299,133 @@ async def test_generate_communication_all_tones(
         )
         assert response.status_code == 201, f"Tone {tone} failed"
         assert response.json()["tone"] == tone
+
+
+# --- Send communication endpoint tests ---
+
+
+@pytest.mark.anyio
+@respx.mock
+async def test_send_communication_200_valid_draft(client: AsyncClient, mock_llm: _MockLLM) -> None:
+    """PATCH with valid draft returns 200 with status=sent."""
+    scenario_id, client_id = await _setup_scenario_with_client(client)
+
+    # Mock OpenRouter for the generate call
+    respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "Estimado cliente, le recordamos su pago."}}],
+                "usage": {"prompt_tokens": 50, "completion_tokens": 20},
+            },
+        )
+    )
+
+    # First create a draft — the generate response now includes the comm id
+    gen = await client.post(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications",
+        json={"channel": "email", "tone": "formal"},
+    )
+    assert gen.status_code == 201
+    comm_id = gen.json()["id"]
+    assert gen.json()["status"] == "draft"
+
+    # Send it
+    response = await client.patch(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications/{comm_id}/send",
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == comm_id
+    assert body["status"] == "sent"
+    assert body["channel"] == "email"
+    assert body["tone"] == "formal"
+    assert "draft_text" in body
+    assert "created_at" in body
+
+    # Verify persistence — case detail shows the comm as sent
+    detail = await client.get(f"/api/v1/scenarios/{scenario_id}/clients/{client_id}")
+    assert detail.status_code == 200
+    comms = detail.json()["communications"]
+    assert any(c["id"] == comm_id and c["status"] == "sent" for c in comms)
+
+
+@pytest.mark.anyio
+@respx.mock
+async def test_send_communication_404_not_found(client: AsyncClient, no_llm: None) -> None:
+    """PATCH with unknown comm_id returns 404."""
+    scenario_id, client_id = await _setup_scenario_with_client(client)
+    fake_comm_id = str(uuid.uuid4())
+
+    response = await client.patch(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications/{fake_comm_id}/send",
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.anyio
+@respx.mock
+async def test_send_communication_404_wrong_client(client: AsyncClient, mock_llm: _MockLLM) -> None:
+    """PATCH with a comm_id that belongs to another client returns 404."""
+    scenario_id, client_id = await _setup_scenario_with_client(client)
+
+    # Mock OpenRouter to create a draft for this client
+    respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "Draft message"}}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+            },
+        )
+    )
+    gen = await client.post(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications",
+        json={"channel": "email", "tone": "formal"},
+    )
+    assert gen.status_code == 201
+    comm_id = gen.json()["id"]
+
+    # Try to send with a different (fake) client id
+    fake_cid = str(uuid.uuid4())
+    response = await client.patch(
+        f"/api/v1/scenarios/{scenario_id}/clients/{fake_cid}/communications/{comm_id}/send",
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.anyio
+@respx.mock
+async def test_send_communication_409_already_sent(client: AsyncClient, mock_llm: _MockLLM) -> None:
+    """PATCH on already-sent communication returns 409."""
+    scenario_id, client_id = await _setup_scenario_with_client(client)
+
+    respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "Draft message"}}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+            },
+        )
+    )
+
+    # Create a draft
+    gen = await client.post(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications",
+        json={"channel": "email", "tone": "formal"},
+    )
+    assert gen.status_code == 201
+    comm_id = gen.json()["id"]
+
+    # Send it once
+    first = await client.patch(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications/{comm_id}/send",
+    )
+    assert first.status_code == 200
+
+    # Send it again — should be 409
+    second = await client.patch(
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications/{comm_id}/send",
+    )
+    assert second.status_code == 409

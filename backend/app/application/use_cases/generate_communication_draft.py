@@ -108,14 +108,10 @@ class GenerateCommunicationDraft:
             else (aggregate.score.category if aggregate.score else None),
             communications=[
                 {
-                    "channel": c.channel.value
-                    if hasattr(c.channel, "value")
-                    else str(c.channel),
+                    "channel": c.channel.value if hasattr(c.channel, "value") else str(c.channel),
                     "tone": c.tone.value if hasattr(c.tone, "value") else str(c.tone),
                     "draft_text": c.draft_text,
-                    "status": c.status.value
-                    if hasattr(c.status, "value")
-                    else str(c.status),
+                    "status": c.status.value if hasattr(c.status, "value") else str(c.status),
                     "created_at": c.created_at.isoformat(),
                 }
                 for c in aggregate.communications
@@ -140,6 +136,6 @@ class GenerateCommunicationDraft:
             status=CommunicationStatus.DRAFT,
             created_at=datetime.now(UTC),
         )
-        await self._communication_repo.add(communication)
+        persisted = await self._communication_repo.add(communication)
 
-        return GenerateCommunicationDraftResponse(communication=communication)
+        return GenerateCommunicationDraftResponse(communication=persisted)

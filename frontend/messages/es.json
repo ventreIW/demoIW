@@ -144,5 +144,32 @@
       "disputed": "Disputado",
       "paid": "Pagado"
     }
+  },
+  "communications": {
+    "sectionTitle": "Generar comunicación",
+    "channel": "Canal",
+    "tone": "Tono",
+    "channels": {
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "whatsapp": "WhatsApp"
+    },
+    "tones": {
+      "formal": "Formal",
+      "firm": "Firme",
+      "urgent": "Urgente"
+    },
+    "generateButton": "Generar borrador",
+    "generating": "Generando...",
+    "draftLabel": "Borrador",
+    "draftPlaceholder": "El borrador aparecerá aquí",
+    "sendButton": "Enviar",
+    "sending": "Enviando...",
+    "sendConfirm": "¿Está seguro de enviar esta comunicación?",
+    "sendSuccess": "Comunicación enviada exitosamente",
+    "sendError": "Error al enviar la comunicación",
+    "generateError": "Error al generar el borrador",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
   }
 }

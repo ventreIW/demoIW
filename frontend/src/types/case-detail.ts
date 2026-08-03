@@ -23,6 +23,7 @@ export interface PaymentSummary {
 }
 
 export interface CommunicationSummary {
+  id: string
   channel: string
   tone: string
   draft_text: string
@@ -71,4 +72,10 @@ export interface RecordContactResultResponse {
   portfolio: {
     scores: ClientScoreEntry[]
   }
+}
+
+/** Request body for POST /communications (generate draft). */
+export interface CommunicationRequest {
+  channel: string
+  tone: string
 }

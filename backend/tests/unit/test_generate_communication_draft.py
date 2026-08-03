@@ -79,7 +79,8 @@ def mock_score_repo() -> MagicMock:
 @pytest.fixture
 def mock_communication_repo() -> MagicMock:
     repo = AsyncMock(spec=ICommunicationRepository)
-    repo.add = AsyncMock()
+    # add() now returns the persisted communication — passthrough the argument
+    repo.add = AsyncMock(side_effect=lambda comm: comm)
     repo.get_by_client_id = AsyncMock()
     return repo
 
