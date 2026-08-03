@@ -53,7 +53,7 @@ Execution: `s5.1 → s5.2 → {s5.3, s5.4 → s5.5}`. Case detail (s5.2) is the 
 
 ## Done when
 - [x] Case list shows client, amount, days overdue, score, category per row (RF-05.1) — s5.1
-- [ ] Case detail shows profile + invoices + payment history + comms log (RF-05.2)
+- [x] Case detail shows profile + invoices + payment history + comms log (RF-05.2) — s5.2
 - [x] Operator can record a contact result and update status (RF-05.3–4) — s5.3
 - [x] Recording a result calls the E4 rescore endpoint and the score updates (RF-02.5) — s5.3
 - [x] Draft produced via OpenRouter from case + channel + tone (RF-04.1–2)
@@ -105,29 +105,29 @@ After s5.2, s5.3 (contact/rescore) and s5.4 (comms backend) are independent and 
 **Stories:** s5.1, s5.2
 - [x] Case list renders real `/prioritized` rows (client, amount, days overdue, score, category) — s5.1, verified against the running app
 - [x] Opening a case shows profile + invoices + payment history + comms log (read-only) — s5.2, verified by 444 tests
-- [ ] Frontend↔backend payload seam verified (client-contract test)
+- [x] Frontend↔backend payload seam verified (client-contract test)
 **Demo:** log in → prioritized list → open a case.
 
 ### M2 — Core MVP: the operator can act
 **Stories:** + s5.3, s5.4
-- [ ] Recording a contact result persists it, updates status, and the score changes (rescore)
-- [ ] `POST …/communications` returns an OpenRouter draft from case+channel+tone; draft persisted + audited
-- [ ] Prompt templates live in config, not code
+- [x] Recording a contact result persists it, updates status, and the score changes (rescore)
+- [x] `POST …/communications` returns an OpenRouter draft from case+channel+tone; draft persisted + audited
+- [x] Prompt templates live in config, not code
 **Demo:** open a case → record "promise to pay" → score updates → generate a draft (API).
 
 ### M3 — Feature complete: end-to-end operator workflow
 **Stories:** + s5.5
-- [ ] Draft is editable; channel/tone selector; send requires explicit confirmation
-- [ ] Comms launched from within case detail; send transitions status → `sent` + audit row
-- [ ] `es.json`/`en.json` key parity maintained
+- [x] Draft is editable; channel/tone selector; send requires explicit confirmation
+- [x] Comms launched from within case detail; send transitions status → `sent` + audit row
+- [x] `es.json`/`en.json` key parity maintained
 **Demo:** the full P-01 loop, list → detail → contact → draft → edit → send.
 
 ### M4 — E2E integration checkpoint + epic close
 **Stories:** none new — verification only. **(Mandatory per E4's M4 lesson — mocked unit tests miss seams.)**
-- [ ] Full path works E2E against real infrastructure: list → detail → contact result → rescore → generate → send
-- [ ] Frontend consumes each new API with real payloads (contract seams verified)
-- [ ] Every acceptance-gate item verified against observable state
-- [ ] All retrospectives written; parking-lot follow-ups filed
+- [x] Full path works E2E against real infrastructure: list → detail → contact result → rescore → generate → send
+- [x] Frontend consumes each new API with real payloads (contract seams verified)
+- [x] Every acceptance-gate item verified against observable state
+- [x] All retrospectives written; parking-lot follow-ups filed
 
 ## Progress tracking
 | Story | Owner | Status | Started | Merged | Notes |
