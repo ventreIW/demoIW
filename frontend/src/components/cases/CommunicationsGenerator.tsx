@@ -78,9 +78,7 @@ export default function CommunicationsGenerator({
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="mb-3 text-sm font-semibold text-slate-900">
-        {t('sectionTitle')}
-      </h3>
+      <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('sectionTitle')}</h3>
 
       <div className="space-y-3">
         {/* Channel selector */}
@@ -130,11 +128,7 @@ export default function CommunicationsGenerator({
         </div>
 
         {/* Generate button */}
-        <Button
-          onClick={handleGenerate}
-          disabled={generating || sending}
-          className="w-full"
-        >
+        <Button onClick={handleGenerate} disabled={generating || sending} className="w-full">
           {generating ? (
             <span className="flex items-center gap-2">
               <Spinner />
@@ -148,16 +142,12 @@ export default function CommunicationsGenerator({
         {/* Draft area */}
         {draft && (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
-              {t('draftLabel')}
-            </label>
+            <label className="text-sm font-medium text-slate-700">{t('draftLabel')}</label>
             <div className="flex flex-wrap gap-2 text-xs text-slate-500">
               <span className="rounded bg-slate-100 px-1.5 py-0.5">
                 {t(`channels.${draft.channel}`)}
               </span>
-              <span className="rounded bg-slate-100 px-1.5 py-0.5">
-                {t(`tones.${draft.tone}`)}
-              </span>
+              <span className="rounded bg-slate-100 px-1.5 py-0.5">{t(`tones.${draft.tone}`)}</span>
             </div>
             <textarea
               value={draftText}

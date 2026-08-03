@@ -35,7 +35,10 @@ beforeEach(() => {
   mockGenerate.mockReset()
   mockSend.mockReset()
   // Mock window.confirm to return true by default
-  vi.stubGlobal('confirm', vi.fn(() => true))
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  )
 })
 
 describe('CommunicationsGenerator', () => {
@@ -59,11 +62,10 @@ describe('CommunicationsGenerator', () => {
       expect(mockGenerate).toHaveBeenCalledOnce()
     })
 
-    expect(mockGenerate).toHaveBeenCalledWith(
-      defaultProps.scenarioId,
-      defaultProps.clientId,
-      { channel: 'email', tone: 'formal' },
-    )
+    expect(mockGenerate).toHaveBeenCalledWith(defaultProps.scenarioId, defaultProps.clientId, {
+      channel: 'email',
+      tone: 'formal',
+    })
 
     // Draft text should appear in the textarea
     await vi.waitFor(() => {
@@ -157,7 +159,10 @@ describe('CommunicationsGenerator', () => {
 
   it('does not send when user cancels confirmation', async () => {
     mockGenerate.mockResolvedValue(mockDraftResponse)
-    vi.stubGlobal('confirm', vi.fn(() => false))
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    )
 
     renderWithIntl(<CommunicationsGenerator {...defaultProps} />)
 

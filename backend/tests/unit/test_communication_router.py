@@ -157,9 +157,7 @@ async def test_generate_communication_422_invalid_channel(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_422_invalid_tone(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_generate_communication_422_invalid_tone(client: AsyncClient, no_llm: None) -> None:
     """POST with invalid tone returns 422."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -197,9 +195,7 @@ async def test_generate_communication_422_missing_channel(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_422_missing_tone(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_generate_communication_422_missing_tone(client: AsyncClient, no_llm: None) -> None:
     """POST with missing tone returns 422."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -238,9 +234,7 @@ async def test_generate_communication_404_unknown_scenario(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_404_unknown_client(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_generate_communication_404_unknown_client(client: AsyncClient, no_llm: None) -> None:
     """POST with unknown client_id in valid scenario returns 404."""
     scenario_id, _ = await _setup_scenario_with_client(client)
     fake_cid = str(uuid.uuid4())
@@ -259,9 +253,7 @@ async def test_generate_communication_404_unknown_client(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_all_channels(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_generate_communication_all_channels(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """Test all valid channels work."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -286,9 +278,7 @@ async def test_generate_communication_all_channels(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_generate_communication_all_tones(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_generate_communication_all_tones(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """Test all valid tones work."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -316,9 +306,7 @@ async def test_generate_communication_all_tones(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_send_communication_200_valid_draft(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_send_communication_200_valid_draft(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """PATCH with valid draft returns 200 with status=sent."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -356,9 +344,7 @@ async def test_send_communication_200_valid_draft(
     assert "created_at" in body
 
     # Verify persistence — case detail shows the comm as sent
-    detail = await client.get(
-        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}"
-    )
+    detail = await client.get(f"/api/v1/scenarios/{scenario_id}/clients/{client_id}")
     assert detail.status_code == 200
     comms = detail.json()["communications"]
     assert any(c["id"] == comm_id and c["status"] == "sent" for c in comms)
@@ -366,9 +352,7 @@ async def test_send_communication_200_valid_draft(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_send_communication_404_not_found(
-    client: AsyncClient, no_llm: None
-) -> None:
+async def test_send_communication_404_not_found(client: AsyncClient, no_llm: None) -> None:
     """PATCH with unknown comm_id returns 404."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
     fake_comm_id = str(uuid.uuid4())
@@ -381,9 +365,7 @@ async def test_send_communication_404_not_found(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_send_communication_404_wrong_client(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_send_communication_404_wrong_client(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """PATCH with a comm_id that belongs to another client returns 404."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 
@@ -414,9 +396,7 @@ async def test_send_communication_404_wrong_client(
 
 @pytest.mark.anyio
 @respx.mock
-async def test_send_communication_409_already_sent(
-    client: AsyncClient, mock_llm: _MockLLM
-) -> None:
+async def test_send_communication_409_already_sent(client: AsyncClient, mock_llm: _MockLLM) -> None:
     """PATCH on already-sent communication returns 409."""
     scenario_id, client_id = await _setup_scenario_with_client(client)
 

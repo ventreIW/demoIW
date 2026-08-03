@@ -82,7 +82,9 @@ describe('recordContactResult', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
-      recordContactResult('scenario-id', 'client-id', { contact_result: 'promise_to_pay' as const }),
+      recordContactResult('scenario-id', 'client-id', {
+        contact_result: 'promise_to_pay' as const,
+      }),
     ).rejects.toThrow('Invalid contact_result: not_a_valid_type')
   })
 
@@ -95,7 +97,9 @@ describe('recordContactResult', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
-      recordContactResult('scenario-id', 'client-id', { contact_result: 'promise_to_pay' as const }),
+      recordContactResult('scenario-id', 'client-id', {
+        contact_result: 'promise_to_pay' as const,
+      }),
     ).rejects.toThrow('Failed to record contact result: 500')
   })
 })
@@ -146,7 +150,7 @@ describe('generateCommunication', () => {
 
     await expect(
       generateCommunication('scenario-1', 'client-1', {
-        channel: 'email' as any,
+        channel: 'not_a_valid_channel' as 'email' | 'sms' | 'whatsapp',
         tone: 'formal',
       }),
     ).rejects.toThrow('Invalid channel: not_a_valid_channel')
@@ -193,8 +197,8 @@ describe('sendCommunication', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(
-      sendCommunication('scenario-1', 'client-1', 'comm-001'),
-    ).rejects.toThrow('Communication is not in draft status')
+    await expect(sendCommunication('scenario-1', 'client-1', 'comm-001')).rejects.toThrow(
+      'Communication is not in draft status',
+    )
   })
 })

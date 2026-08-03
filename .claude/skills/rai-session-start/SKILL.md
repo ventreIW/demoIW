@@ -277,6 +277,8 @@ If no mission is active, show:
 
 Omit the **MCP:** line entirely if no servers are registered.
 
+Note: For this user, prefer terse output (minimum necessary information) unless they ask for details.
+
 ## Output
 
 | Item | Destination |

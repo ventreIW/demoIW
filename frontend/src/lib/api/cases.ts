@@ -1,4 +1,10 @@
-import type { CaseDetail, RecordContactResultRequest, RecordContactResultResponse, CommunicationRequest, CommunicationSummary } from '@/types/case-detail'
+import type {
+  CaseDetail,
+  RecordContactResultRequest,
+  RecordContactResultResponse,
+  CommunicationRequest,
+  CommunicationSummary,
+} from '@/types/case-detail'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -28,7 +34,10 @@ export async function recordContactResult(
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     const detail = body?.detail
-    const message = Array.isArray(detail) && detail[0]?.msg ? detail[0].msg : `Failed to record contact result: ${res.status}`
+    const message =
+      Array.isArray(detail) && detail[0]?.msg
+        ? detail[0].msg
+        : `Failed to record contact result: ${res.status}`
     throw new Error(message)
   }
   return res.json()
@@ -50,7 +59,10 @@ export async function generateCommunication(
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     const detail = body?.detail
-    const message = Array.isArray(detail) && detail[0]?.msg ? detail[0].msg : `Failed to generate communication: ${res.status}`
+    const message =
+      Array.isArray(detail) && detail[0]?.msg
+        ? detail[0].msg
+        : `Failed to generate communication: ${res.status}`
     throw new Error(message)
   }
   return res.json()
@@ -71,7 +83,8 @@ export async function sendCommunication(
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     const detail = body?.detail
-    const message = typeof detail === 'string' ? detail : `Failed to send communication: ${res.status}`
+    const message =
+      typeof detail === 'string' ? detail : `Failed to send communication: ${res.status}`
     throw new Error(message)
   }
   return res.json()
