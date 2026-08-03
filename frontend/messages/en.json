@@ -144,5 +144,32 @@
       "disputed": "Disputed",
       "paid": "Paid"
     }
+  },
+  "communications": {
+    "sectionTitle": "Generate Communication",
+    "channel": "Channel",
+    "tone": "Tone",
+    "channels": {
+      "email": "Email",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp"
+    },
+    "tones": {
+      "formal": "Formal",
+      "firm": "Firm",
+      "urgent": "Urgent"
+    },
+    "generateButton": "Generate Draft",
+    "generating": "Generating...",
+    "draftLabel": "Draft",
+    "draftPlaceholder": "The draft will appear here",
+    "sendButton": "Send",
+    "sending": "Sending...",
+    "sendConfirm": "Are you sure you want to send this communication?",
+    "sendSuccess": "Communication sent successfully",
+    "sendError": "Failed to send communication",
+    "generateError": "Failed to generate draft",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   }
 }

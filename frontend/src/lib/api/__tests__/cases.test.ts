@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { recordContactResult } from '../cases'
+import { recordContactResult, generateCommunication, sendCommunication } from '../cases'
 
 const API_BASE = 'http://localhost:8000'
 
@@ -97,5 +97,104 @@ describe('recordContactResult', () => {
     await expect(
       recordContactResult('scenario-id', 'client-id', { contact_result: 'promise_to_pay' as const }),
     ).rejects.toThrow('Failed to record contact result: 500')
+  })
+})
+
+describe('generateCommunication', () => {
+  it('sends a POST request to the communications endpoint with channel and tone', async () => {
+    const mockDraft = {
+      id: 'comm-001',
+      channel: 'email',
+      tone: 'formal',
+      draft_text: 'Estimado cliente, le recordamos su saldo pendiente.',
+      status: 'draft',
+      created_at: '2026-08-02T10:00:00Z',
+    }
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockDraft),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await generateCommunication('scenario-1', 'client-1', {
+      channel: 'email',
+      tone: 'formal',
+    })
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_BASE}/api/v1/scenarios/scenario-1/clients/client-1/communications`,
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: 'email', tone: 'formal' }),
+      }),
+    )
+    expect(result).toEqual(mockDraft)
+  })
+
+  it('throws an error on 422 response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: () =>
+        Promise.resolve({
+          detail: [{ msg: 'Invalid channel: not_a_valid_channel' }],
+        }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateCommunication('scenario-1', 'client-1', {
+        channel: 'email' as any,
+        tone: 'formal',
+      }),
+    ).rejects.toThrow('Invalid channel: not_a_valid_channel')
+  })
+})
+
+describe('sendCommunication', () => {
+  it('sends a PATCH request to the send endpoint', async () => {
+    const mockSent = {
+      id: 'comm-001',
+      channel: 'email',
+      tone: 'formal',
+      draft_text: 'Estimado cliente, le recordamos su saldo pendiente.',
+      status: 'sent',
+      created_at: '2026-08-02T10:00:00Z',
+    }
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockSent),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await sendCommunication('scenario-1', 'client-1', 'comm-001')
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_BASE}/api/v1/scenarios/scenario-1/clients/client-1/communications/comm-001/send`,
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    expect(result).toEqual(mockSent)
+  })
+
+  it('throws an error on 409 conflict', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: () =>
+        Promise.resolve({
+          detail: 'Communication is not in draft status',
+        }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      sendCommunication('scenario-1', 'client-1', 'comm-001'),
+    ).rejects.toThrow('Communication is not in draft status')
   })
 })
