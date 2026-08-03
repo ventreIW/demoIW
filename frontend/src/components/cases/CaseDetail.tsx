@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslations, useFormatter, useLocale } from 'next-intl'
 import type { CaseDetail, RecordContactResultResponse } from '@/types/case-detail'
 import ContactResultForm from '@/components/cases/ContactResultForm'
+import CommunicationsGenerator from '@/components/cases/CommunicationsGenerator'
 
 interface CaseDetailViewProps {
   detail: CaseDetail
@@ -216,6 +217,16 @@ export default function CaseDetailView({ detail, scenarioId, clientId }: CaseDet
             scenarioId={scenarioId}
             clientId={clientId}
             onSuccess={handleContactSuccess}
+          />
+        </section>
+      )}
+
+      {/* Communications Generator */}
+      {scenarioId && clientId && (
+        <section>
+          <CommunicationsGenerator
+            scenarioId={scenarioId}
+            clientId={clientId}
           />
         </section>
       )}
