@@ -8,6 +8,7 @@ from app.config import settings
 from app.infrastructure.database import engine
 from app.infrastructure.logging import setup_logging
 from app.routers.cases import router as cases_router
+from app.routers.executive import router as executive_router
 from app.routers.health import router as health_router
 from app.routers.scenarios import router as scenarios_router
 
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(scenarios_router)
     app.include_router(cases_router)
+    app.include_router(executive_router)
     return app
 
 

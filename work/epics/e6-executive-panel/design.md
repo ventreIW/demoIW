@@ -113,12 +113,17 @@ Sector is excluded (G2). The three shipped dimensions all vary within a scenario
 
 | Dimension | Buckets |
 |---|---|
-| `days_overdue_bucket` | 1–30, 31–60, 61–90, 90+ (max over open invoices, matching s5.1's per-case rule) |
+| `days_overdue_bucket` | 0–30, 31–60, 61–90, 90+ (max over open invoices, matching s5.1's per-case rule) |
 | `amount_range` | quartiles of client outstanding, computed per scenario |
 | `score_category` | high / medium / low, from `ScoreCategory` directly (never the G6 string comparison) |
 
 Each bucket carries `client_count`, `outstanding`, and `expected_recoverable` so one chart component
 serves every dimension and every NL `group_by`.
+
+The lowest bucket starts at **0**, not 1: a scored client with no open invoices has a max days
+overdue of 0, and a bucket set starting at 1 would drop it from the breakdown entirely, so the
+per-dimension counts would not sum to `client_count`. Silent row loss in a total is the defect
+species this epic is trying not to repeat.
 
 `days_overdue_bucket` uses **max** days overdue over a client's open invoices, not mean — the same
 rule s5.1 established, for the same reason (a mean flatters an aged account by averaging it against
