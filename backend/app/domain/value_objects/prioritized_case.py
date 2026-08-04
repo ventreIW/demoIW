@@ -50,6 +50,18 @@ def categorize(score: float) -> ScoreCategory:
     return ScoreCategory.MEDIUM
 
 
+def expected_recoverable(outstanding: float, score: float) -> float:
+    """Outstanding balance weighted by probability of collection, in pesos.
+
+    Module-level rather than only a property because the executive KPI aggregate
+    (s6.1) needs the same figure without a rank or a client name to hang it on.
+    Two inlined copies of ``outstanding * score / 100`` would be two expressions
+    that merely happen to agree, and the queue's money and the dashboard's money
+    are shown to two people who talk to each other.
+    """
+    return outstanding * score / 100.0
+
+
 @dataclass(frozen=True)
 class PrioritizedCase:
     """One account in the collections queue.
@@ -77,7 +89,7 @@ class PrioritizedCase:
     @property
     def expected_recoverable(self) -> float:
         """Outstanding balance weighted by probability of collection, in pesos."""
-        return self.outstanding * self.score / 100.0
+        return expected_recoverable(self.outstanding, self.score)
 
 
 @dataclass(frozen=True)
