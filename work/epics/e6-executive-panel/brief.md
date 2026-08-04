@@ -1,9 +1,15 @@
 # E6 Brief — Executive Panel (KPI Dashboard + NL Query)
 
 **Backlog source:** B-12, B-13
-**Status:** Proposed — not yet authorized
+**Status:** Designed 2026-08-04 — see `scope.md` and `design.md` (this brief is superseded by them)
 **Estimated size:** L (~7–10 days)
 **Branch model:** logical container; stories branch from `main` after E5 merges
+
+> **Design revised two items in this brief.** (1) The story list gained **s6.0** — OpenRouter
+> adapter hardening — as a hard prerequisite of s6.3. (2) **Sector is not a usable segmentation
+> dimension**: it is an attribute of `Scenario`, not `Client`, so it is constant within a scenario
+> and the example question "¿Cuánto está vencido en retail?" below is unanswerable as written.
+> See `design.md` §Gemba G2 and `scope.md` §Open questions.
 
 ---
 
