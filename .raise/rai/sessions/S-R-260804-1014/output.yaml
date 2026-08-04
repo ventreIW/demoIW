@@ -1,0 +1,167 @@
+session_id: "S-R-260804-1014"
+summary: "SES-S-R-260804-1014: E6 Executive Panel diseñado y planificado (ADR-008/009) + s6.1 KPI Aggregation completa, mergeada y pusheada"
+type: feature
+
+outcomes:
+  - "E6 Executive Panel diseñado: scope.md + design.md, con dos correcciones al brief encontradas en el gemba (sector no puede segmentar; /prioritized reentrena por request)"
+  - "ADR-008 — NL query traduce a un QueryIntent restringido sobre vocabulario allow-listed; el LLM nunca emite SQL y ninguna cadena del modelo llega a la base"
+  - "ADR-009 — los KPIs leen Scores persistidos, 409 cuando no hay puntuación, y el dinero reutiliza outstanding_by_client()"
+  - "E6 planificado: s6.0–s6.4 secuenciadas, cuatro milestones, pull-board creado. M3 declarada como línea de corte"
+  - "s6.1 completa: GET /api/v1/scenarios/{id}/kpis con seis figuras RF-06.1 y tres dimensiones de segmentación"
+  - "450 tests backend en verde (412 base + 38 nuevos); ruff, ruff-format y mypy limpios sobre lo tocado"
+  - "Verificación manual contra la app corriendo: 200 en 149 ms sobre 120 clientes, sumas comprobadas a mano; 409 y 404 confirmados en vivo"
+  - "Payload real capturado y commiteado como s6.1-payload.json para que s6.2 tipe contra una respuesta observada"
+  - "main pusheado a origin (87b1b85..645329e, 13 commits) — s6.2 y s6.0 desbloqueadas para Nano y Renata"
+
+patterns:
+  - description: "Extraer una fórmula compartida a función de módulo en cuanto un segundo consumidor la necesita sin el objeto que la contiene. s6.1 sacó expected_recoverable() de PrioritizedCase para que la cola del cobrador y el panel del director calculen dinero con una sola expresión, no con dos que coinciden por casualidad"
+    context: "dry,formula,domain,kpi"
+    type: technical
+  - description: "Afirmar que los conteos por bucket suman al total, no que el contenido de cada bucket cumple un predicado. Un predicado dentro de un bucle sobre un resultado vacío pasa de forma vacua — así sobrevivieron tres filtros muertos en este repo"
+    context: "testing,vacuous,assertions,segmentation"
+    type: process
+  - description: "Preferir comparación contra límites de numpy.percentile antes que pandas.qcut para bucketing por cuantiles. qcut revienta con bordes duplicados, que cualquier cartera con valores iguales o cero produce"
+    context: "pandas,numpy,bucketing,quantiles"
+    type: technical
+  - description: "Dar a los tests de integración un fixture que exponga un session maker sobre la misma base de test, para sembrar con inserts ORM directos en vez de manejar un endpoint respaldado por LLM. Si no, el camino de composición queda sin probar y cada corrida gasta cuota del free tier"
+    context: "testing,fixtures,integration,seeding"
+    type: process
+  - description: "Rechazar en vez de rellenar con ceros cuando falta una precondición. Una cartera de $0 esperados es una respuesta legítima para un libro liquidado e ilegítima para uno sin puntuar; los ceros vuelven ambos indistinguibles para quien lee"
+    context: "api,error-handling,semantics"
+    type: architecture
+
+corrections:
+  - what: "Un fallo RED en T2 fue defecto del helper de test, no de la implementación: _fetch(dataset=None) caía al default, así que el caso sin datos nunca llegaba al servicio"
+    lesson: "Escribir los helpers de test con la misma sospecha que las aserciones. Cuando un argumento tiene un None con significado, usar un centinela desde el principio, no después del fallo confuso"
+  - what: "dict.fromkeys(ScoreCategory, 0) tipa como dict[str, int] porque los miembros de StrEnum se ensanchan a str"
+    lesson: "Para agregados con clave de enum, usar comprensión explícita; mypy lo detecta pero el error no es obvio de leer"
+  - what: "conftest.py necesitó una refactorización que la historia no planificó, para poder sembrar datos"
+    lesson: "Tocar un fixture compartido dentro de una historia de tamaño S es un riesgo de alcance que el plan debió nombrar"
+
+coaching:
+  trust_level: "established"
+  strengths: ["gemba antes de diseñar", "aserciones que no pueden pasar de forma vacua"]
+  growth_edge: "nombrar en el plan los archivos compartidos que una historia va a tocar"
+  autonomy: "high within defined scope"
+  relationship:
+    quality: "productive"
+    trajectory: "stable"
+
+current_work:
+  epic: E6
+  story: S6.1
+  phase: closed
+  branch: main
+
+pending:
+  decisions:
+    - "RF-06.2 nombra 'sector' como dimensión de segmentación pero el modelo no puede expresarlo: Sector es atributo de Scenario, no de Client. E6 envía tres dimensiones que sí varían. Confirmar con Gustavo que la lectura se acepta, o el sector por cliente vuelve un cambio al generador de E3 con impacto en fixtures seed-42"
+    - "'Recovery rate (actual vs. expected)' no tiene un 'actual' denominado en dinero: ContactResult no lleva monto y los Payment son historia del generador. s6.1 entrega dos tasas etiquetadas por separado sobre denominadores distintos. Necesita confirmación de Gustavo — es una definición de reporte"
+    - "Heredadas de E4: maximizar recuperación vs. prevenir castigos en el orden de la cola; y nadie que haga cobranza ha leído todavía el español. Ahora aplican también al texto narrativo que generará s6.3"
+  blockers:
+    - "Sin PostgreSQL ni Docker: la verificación manual de s6.1 corrió sobre SQLite con DATABASE_URL sobrescrito. Tercera historia seguida. E4 lo difirió, E5 cerró con el gate abierto y lo pasó a E7"
+    - "rai graph query y rai drift check fallan con OperationalError: no such column: data_json. La mitad de recuperación de PRIME lleva dos épicas sin funcionar mientras rai pattern add sigue acumulando"
+    - "ruff format --check está rojo a nivel proyecto por dos archivos de s5.4 que no toqué — cualquiera que corra el gate sin scope ve un fallo ajeno a su historia"
+  next_actions:
+    - "s6.2 (dashboard ejecutivo, frontend) — desbloqueada. Tipar contra work/epics/e6-executive-panel/stories/s6.1-payload.json, no contra las clases de dominio"
+    - "s6.0 (hardening del adaptador OpenRouter) — independiente, puede arrancar ya; es lo único que bloquea s6.3"
+    - "Barrer los dos archivos de s5.4 con ruff format antes de que empiece la próxima historia"
+
+narrative: |
+  ## Decisions
+  - **ADR-008** — la consulta en lenguaje natural traduce a un `QueryIntent` restringido
+    (Pydantic sobre vocabulario allow-listed de métricas/dimensiones/filtros), no a SQL. Se
+    rechazó SQL generado tras un rol de solo lectura más un validador: SQL es una gramática
+    grande y validarla por lista negra es una posición perdida conocida. Además falla por
+    corrección con independencia de la seguridad — una consulta sintácticamente válida que
+    olvida `WHERE scenario_id` devuelve un número que parece correcto y no lo es. La narrativa
+    es una segunda llamada sobre los números ya calculados, así que la frase y el gráfico no
+    pueden discrepar.
+  - **ADR-009** — los KPIs leen `Score` persistidos y no entrenan modelo. 409 en un escenario
+    sin puntuar en vez de un tablero de ceros. `/prioritized` NO se toca: converger es el
+    estado final correcto pero es la espina del flujo del operador a diez días del demo, así
+    que E6 documenta la divergencia y expone `scored_at` para que el desfase sea legible.
+  - **Sector queda fuera de la segmentación.** Es atributo de `Scenario`, constante dentro de
+    un escenario, así que un desglose por sector sería una sola barra y la pregunta estrella
+    del brief ("¿Cuánto está vencido en retail?") no tiene respuesta útil. RF-06.2 dice "e.g.",
+    así que tres dimensiones que sí varían lo satisfacen.
+  - **s6.1 compone dos puertos, no cinco.** El diseño de la épica esbozaba cinco repos; el
+    gemba mostró que `get_raw_dataset()` ya devuelve los DataFrames que consume
+    `outstanding_by_client()`. Pasar por los repos de entidades habría exigido una segunda
+    cuenta del dinero — justo lo que ADR-009 prohíbe.
+  - **Gráficos a mano, sin librería.** Todo lo que E6 necesita son barras horizontales sobre
+    3–4 buckets. Recharts añade una dependencia sensible a la versión de React 19 y un
+    `ResponsiveContainer` que exige mockear tamaños para renderizar en JSDOM, después de que
+    E5 ya pagara fricción con portales de Base UI en el mismo entorno.
+  - **M3 declarada como línea de corte** en el plan, no como esperanza. Si M2 no aterriza el
+    2026-08-09, s6.3/s6.4 se cortan y arranca E7.
+
+  ## Research
+  - Gemba sobre `routers/scenarios.py` confirmó que `?category=High` sigue muerto: el router
+    valida contra `{"High","Medium","Low"}` y compara contra valores de `ScoreCategory` en
+    minúscula. Misma especie que el filtro que reparó s5.1.
+  - `Client` sólo lleva `sector_description: str | None` (texto libre del LLM). No hay campo de
+    sector. Confirma la nota de s4.2 en el parking lot.
+  - `ContactResult` no lleva monto y `record_contact_result` no crea `Payment`, así que no
+    existe registro en dinero de la actividad de cobranza — de ahí las dos tasas separadas.
+  - `payments_df` es `pd.DataFrame([])` **sin columnas** cuando un escenario no tiene pagos;
+    cualquier acceso a columna sin guarda revienta con KeyError.
+  - Medido en vivo sobre 120 clientes: 200 en 149 ms, conteos por bucket sumando 120 en las
+    tres dimensiones y dinero por bucket sumando 1,835,177.64 en las tres.
+
+  ## Artifacts
+  - `dev/decisions/adr-008-nl-query-constrained-intent.md`, `adr-009-kpi-reads-persisted-scores.md`
+  - `work/epics/e6-executive-panel/`: `scope.md`, `design.md`, `pull-board.md`, `brief.md` (anotado)
+  - `work/epics/e6-executive-panel/stories/s6.1-{story,scope,design,plan,retrospective}.md`
+    y `s6.1-payload.json`
+  - backend: `domain/value_objects/portfolio_kpis.py`, `application/services/kpi_aggregate_service.py`,
+    `routers/executive.py`, `domain/exceptions.py`, `domain/value_objects/prioritized_case.py`,
+    `main.py`, `tests/conftest.py`, tres archivos de test nuevos
+  - `dev/parking-lot.md` — cuatro entradas nuevas
+  - Commits `3c9806d` → `ee81ac4`; merge `c104043`; push `87b1b85..645329e`
+
+  ## Branch State
+  - `main`, sincronizado con `origin/main` en `ee81ac4` tras el push. Rama
+    `story/s6.1/kpi-aggregation-backend` borrada tras merge `--no-ff`. Árbol limpio, sin ramas
+    ni PRs pendientes.
+
+next_session_prompt: |
+  s6.1 está cerrada, mergeada y pusheada. main == origin/main, árbol limpio. E6 va 1 de 5.
+
+  DOS FRENTES ABIERTOS EN PARALELO, y ninguno se bloquea con el otro:
+
+  1. **s6.2 — dashboard ejecutivo (frontend).** Desbloqueada. Lo único que hay que repetirle a
+     quien la tome: el tipo TypeScript se construye desde
+     `work/epics/e6-executive-panel/stories/s6.1-payload.json`, que es una respuesta real
+     capturada con curl — no desde los ejemplos del diseño ni desde las clases de dominio. Ese
+     es exactamente el camino por el que s5.1 envió 'High' contra una API que manda 'high', y
+     `?category=High` sigue roto en este repo por lo mismo. La UI tiene que manejar dos cosas
+     que no son el camino feliz: el **409** de escenario sin puntuar (estado vacío con acción
+     "puntuar este escenario", no un toast de error) y mostrar **`scored_at`**, porque
+     `/prioritized` todavía reentrena por request y el desfase tiene que ser visible.
+
+  2. **s6.0 — hardening del adaptador OpenRouter.** Independiente, toca sólo `adapters/llm/`.
+     Es lo único que bloquea s6.3, y lleva diferida dos cierres de épica. Hacerla dentro de
+     s6.3 significa depurar comportamiento del adaptador y del prompt a la vez, bajo el tope de
+     50 req/día.
+
+  ANTES DE EMPEZAR CUALQUIERA — dos barridos de un minuto:
+  - `ruff format` sobre `backend/tests/unit/test_communication_draft_service.py` y
+    `backend/tests/integration/test_communications_integration.py`. El gate de formato está rojo
+    a nivel proyecto por esos dos archivos de s5.4, y un gate rojo que no causaste es un gate
+    que la gente deja de mirar.
+  - Revisar el pull-board: la línea de corte dice que si M2 no aterriza el **2026-08-09**,
+    s6.3/s6.4 se cortan y arranca E7. Faltan 10 días para el demo del 2026-08-14 y E7 no ha
+    empezado. Esa decisión hay que tomarla el 9, no el 12.
+
+  DOS PREGUNTAS PARA GUSTAVO que tocan s6.1 y no bloquean nada (ambas son una función en un
+  servicio si la respuesta difiere): si acepta que el sector quede fuera de la segmentación
+  —no puede expresarse, es atributo de Scenario— y si acepta la definición de las dos tasas de
+  recuperación, que están sobre denominadores distintos y por eso ninguna se llama "tasa de
+  recuperación" a secas.
+
+  ESTADO DEL TOOLING, para que no se pierda tiempo: `rai graph query` y `rai drift check`
+  fallan con `OperationalError: no such column: data_json`. La mitad de recuperación de PRIME
+  lleva dos épicas devolviendo cero mientras `rai pattern add` sigue acumulando — el pattern
+  store es de sólo escritura en la práctica. Y `.raise/rai/learnings/` sigue sin existir, así
+  que el chain-read de story-review no tiene nada que agregar. Los tres están en el parking lot.
