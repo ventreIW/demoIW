@@ -18,14 +18,10 @@ TEST_DATABASE_URL = "sqlite+aiosqlite://"
 BAD_DATABASE_URL = "sqlite+aiosqlite:///nonexistent/path/to/db.sqlite"
 
 
-@pytest.fixture
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Create an async test client with SQLite in-memory database.
-
-    Tables are created before the client is yielded so integration tests
-    can query domain tables. Seed data is NOT inserted — each test seeds
-    what it needs.
-    """
+async def _test_client_with_session_maker() -> (
+    AsyncGenerator[tuple[AsyncClient, async_sessionmaker[AsyncSession]], None]
+):
+    """Shared setup behind the ``client`` and ``client_with_db`` fixtures."""
     # Import models so they register with Base.metadata before create_all
     from app.adapters.persistence import models as _  # noqa: F401
 
@@ -47,10 +43,37 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
+        yield ac, test_session_maker
 
     await test_engine.dispose()
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def client() -> AsyncGenerator[AsyncClient, None]:
+    """Create an async test client with SQLite in-memory database.
+
+    Tables are created before the client is yielded so integration tests
+    can query domain tables. Seed data is NOT inserted — each test seeds
+    what it needs.
+    """
+    async for ac, _session_maker in _test_client_with_session_maker():
+        yield ac
+
+
+@pytest.fixture
+async def client_with_db() -> (
+    AsyncGenerator[tuple[AsyncClient, async_sessionmaker[AsyncSession]], None]
+):
+    """Test client **plus** a session maker onto the same in-memory database.
+
+    Exists so integration tests can seed domain rows with direct SQLAlchemy
+    inserts instead of driving the generate endpoint, which needs an OpenRouter
+    key and spends free-tier quota (PAT-R-10). ``test_case_detail_endpoint.py``
+    says in its own docstring that it could only assert 404s for want of this.
+    """
+    async for pair in _test_client_with_session_maker():
+        yield pair
 
 
 @pytest.fixture
