@@ -113,3 +113,97 @@ backend/frontend split that worked in E5.
 3. Standing from E4: maximise-recovery vs. prevent-write-offs in queue ordering, and nobody in
    collections has read the Spanish copy. Both now also apply to the director-facing narrative
    text s6.3 generates.
+
+---
+
+## Story sequence
+
+> Added by `/rai-epic-plan` — 2026-08-04
+
+| # | Story | Size | Depends on | Rationale | Unblocks |
+|---|---|---|---|---|---|
+| 1 | s6.0 OpenRouter adapter hardening | XS | — | **Risk-first.** Deferred past two epic closes; the only story protecting the demo's headline moment from a free-tier hiccup. Doing it inside s6.3 means debugging adapter and prompt behaviour simultaneously on a 50-request daily budget | s6.3 |
+| 1 | s6.1 KPI aggregation — backend | S | E4 s4.10 persisted scores (done) | **The hub.** Both s6.2 and s6.3 consume this aggregate (ADR-008), which is what makes the dashboard and the NL answer incapable of disagreeing. Parallel with s6.0 — different files, no shared surface | s6.2, s6.3 |
+| 2 | s6.2 Executive dashboard — frontend | M | s6.1 | Completes RF-06.1 + RF-06.2 on its own. After this the epic has a demonstrable executive panel even if nothing else lands | s6.4 |
+| 3 | s6.3 NL query — backend | M | s6.1, s6.0 | **Highest-risk story** (translation quality on a free-tier model + safety surface). Sequenced after the panel is demonstrable so its risk cannot take the epic down with it | s6.4 |
+| 4 | s6.4 NL query — frontend | S | s6.2, s6.3 | Reuses s6.2's chart component; adds question box, narrative, citation | — |
+
+**Critical path:** s6.1 → s6.2 → s6.4, with s6.3 joining before s6.4. s6.0 runs beside s6.1 and only gates s6.3.
+
+**Sequencing strategy:** risk-first for s6.0, dependency-driven for s6.1, then *cut-line-first* for the rest — see M3 below. This is not the usual "hardest thing first": with 10 days to the demo the ordering optimises for **what survives a schedule cut**, and a complete RF-06.1/06.2 panel is worth more than a half-built RF-06.3.
+
+## Parallel work streams
+
+```
+Backend-led    s6.1 ──┬────────────────▶ s6.3 ─────┐
+                      │                            ├─▶ s6.4
+Frontend-led          └─▶ s6.2 ──────────────────  ┘
+
+Independent    s6.0 ──────────────────▶ (gates s6.3)
+```
+
+s6.0 and s6.1 start together — separate files (`adapters/llm/` vs `application/services/`), no shared
+surface. After s6.1 merges, s6.2 (frontend) and s6.3 (backend) are the E5 split that worked.
+
+**Merge points:** s6.1 lands the aggregate contract both tracks build on. s6.3's response contract
+must be agreed with s6.4's author *at s6.3 design time*, not at integration — E5's s5.4→s5.5 ID
+propagation bug is what that costs when it slips.
+
+## Milestones
+
+### M1 — Aggregate + hardened adapter
+**Stories:** s6.0, s6.1 · **Target:** 2026-08-06
+- [ ] `GET /{id}/kpis` returns every RF-06.1 figure plus three segmentation dimensions
+- [ ] Unscored scenario returns 409 naming `POST /{id}/score` — not a dashboard of zeros (ADR-009)
+- [ ] Money figures come from `outstanding_by_client()`, not a second definition
+- [ ] Adapter returns `ExternalServiceError` → 502 on missing `choices` and on `ReadTimeout`; neither raises `KeyError` nor 500
+- [ ] Real payload captured with `curl` and committed as the frontend fixture source
+**Demo:** `curl` the KPI endpoint against a scored scenario.
+
+### M2 — Executive panel is demonstrable
+**Stories:** + s6.2 · **Target:** 2026-08-09
+- [ ] KPI cards render total overdue, expected recoverable, counts by category, both recovery rates
+- [ ] Segmentation charts for days-overdue bucket, amount range, score category
+- [ ] `scored_at` visible, so a stale dashboard is legible rather than silently wrong
+- [ ] Unscored scenario shows an actionable empty state with a "score this scenario" action
+- [ ] Sidebar `executive` link goes to the page instead of `#`; `es.json`/`en.json` key parity held
+**Demo:** RF-06.1 + RF-06.2 complete. **This is the point after which E6 is worth showing.**
+
+### M3 — NL query (the cut line)
+**Stories:** + s6.3, s6.4 · **Target:** 2026-08-12
+- [ ] A Spanish question is translated into a validated `QueryIntent` and executed against the s6.1 aggregate
+- [ ] Answer returns a chart and a narrative computed from the same numbers
+- [ ] Every response cites the active scenario by name and id (RF-06.4)
+- [ ] Out-of-vocabulary questions return an honest "cannot answer" listing what is supported — never a fabricated number, never a raw query
+- [ ] Translation failure degrades to a working KPI view, not a blank page
+**Demo:** the full P-02 loop — dashboard → ask a question → chart + narrative + citation.
+
+**If the schedule slips, this milestone is what gets cut**, and M2 is what ships. That decision is
+cheaper made now than on 2026-08-12.
+
+### M4 — E2E integration checkpoint + epic close
+**Stories:** none new — verification only. **(Mandatory: E4's M4 caught a generation-layer bug no unit test saw, and E5's M4 repeated the lesson.)** · **Target:** 2026-08-13
+- [ ] Full path verified against a running app: generate/load scenario → score → dashboard → NL question → answer
+- [ ] Frontend consumes each new API with **real** payloads, not hand-written fixtures
+- [ ] NFR-02 measured, not assumed, at 500 clients / 2,000 invoices
+- [ ] All story retrospectives written; parking-lot follow-ups filed; epic retrospective written
+
+## Progress tracking
+
+| Story | Owner | Status | Started | Merged | Notes |
+|---|---|---|---|---|---|
+| s6.0 | — | backlog | — | — | |
+| s6.1 | — | backlog | — | — | |
+| s6.2 | — | backlog | — | — | |
+| s6.3 | — | backlog | — | — | |
+| s6.4 | — | backlog | — | — | |
+
+## Sequencing risks
+
+| Risk | L/I | Mitigation |
+|---|---|---|
+| **10 days to demo and E7 has not started.** This plan consumes 9 of them; E7 (English pass, PWA, accessibility, real-Postgres E2E) has effectively no room | H/H | M3 is a declared cut line, not a hope. If M2 lands by 2026-08-09, decide there whether E6 finishes or E7 starts — do not discover it on the 12th |
+| s6.3 translation quality is unknown until an LLM is in the loop; a free-tier model may map plausible Spanish questions to wrong intents | M/H | The intent surface is a small enum, so wrong ≠ unsafe. s6.3's design pins a fixture set of questions with expected intents as tests against a **stubbed** port — no test spends quota. s6.4 shows example questions so the director stays inside the vocabulary |
+| Two open questions (sector segmentation, recovery-rate definition) are unanswered by Gustavo and both touch s6.1 | M/M | Both are stated as assumptions in §Open questions with the reasoning written down. Each is one formula or one dimension list in a single service — reversible in an hour if the answer differs. Not blocking |
+| s6.1 balloons — six KPIs, three dimensions, a new service | M/M | It composes existing repos and reuses `outstanding_by_client()`; no new persistence, no model fitting. Sized S deliberately. If it exceeds that, the segmentation dimensions are the part to defer, not the KPIs |
+| Plans are hypotheses | — | Re-sequence at M1 if the aggregate proves harder than sized, or if s6.0 uncovers more adapter damage than the two known defects |
