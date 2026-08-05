@@ -241,6 +241,10 @@ Integration tests that exercise real persistence (not mocked repositories) can c
 
 Lesson: Ensure integration test mock data matches the **actual producer's output** (procedural generator, external API, etc.), not what the consumer expects. When producer and consumer are owned by different developers/stories, this mismatch is a common source of bugs.
 
+#### Skip redundant manual integration tests for XS adapter stories
+
+For XS stories hardening isolated adapters (like OpenRouter, payment gateways), **skip the manual curl-against-running-app integration test task** if existing integration tests already cover the error path. In S6.0, `test_communications_integration.py::test_generate_communication_llm_500_returns_502` already validated the router→adapter→502 contract — the manual test added no new confidence but consumed time. Unit tests + existing integration coverage are sufficient for adapter hardening stories.
+
 #### Following existing router patterns exactly
 
 When adding new endpoints to an existing router, replicate the exact pattern of existing endpoints:

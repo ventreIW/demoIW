@@ -145,6 +145,26 @@ uvx --from raise-cli rai --help
 
 If this fails, install the CLI: `uv pip install raise-cli` (then use `rai` directly).
 
+### Step 0.7: Story Branch Verification (non-blocking)
+
+Verify the current branch follows the story branch convention. This prevents committing directly to `main`/`develop` without a story branch — a common mistake when `rai story start` is skipped.
+
+```bash
+git branch --show-current
+```
+
+| Condition | Action |
+|-----------|--------|
+| Branch matches `story/s{N}.{M}/{slug}` or `bugfix/s{N}.{M}/{slug}` | Continue — story branch detected |
+| Branch is `main`, `develop`, `release/*`, or similar | **WARN** — "Current branch is `{branch}`. Story work should be on a `story/s{N}.{M}/...` branch. Continue anyway? (y/n)" |
+| Branch doesn't match convention | **WARN** — "Branch `{branch}` doesn't follow story convention. Continue anyway? (y/n)" |
+
+**Do NOT proceed to Step 1 until the user acknowledges the warning.** This gate is advisory but prevents the common mistake of forgetting `rai story start` before implementation.
+
+<verification>
+Story branch verified or user explicitly chose to continue on non-story branch.
+</verification>
+
 ### Step 1: Mission Selection
 
 Select the mission for this session **before** loading the context bundle. The bundle includes mission-scoped memory, objectives, and patterns — these are only available if the mission is active when the bundle loads.

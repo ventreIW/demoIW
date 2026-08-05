@@ -192,13 +192,35 @@ echo "Merge target: $MERGE_TARGET"
 Merge the story branch into `$MERGE_TARGET` locally with `--no-ff` to preserve story history:
 
 ```bash
-git checkout $MERGE_TARGET && \
-git branch --show-current | grep -qx "$MERGE_TARGET" && \
+git checkout $MERGE_TARGET && \\
+git branch --show-current | grep -qx "$MERGE_TARGET" && \\
 git merge story/s{N}.{M}/{slug} --no-ff -m "Merge branch 'story/s{N}.{M}/{slug}' into $MERGE_TARGET
 
 S{N}.{M}: {story-name} — {1-line summary}
 
 Tracker: {JIRA_KEY} / E{N}"
+```
+
+**Handle missing story branch (commits on main):** If `git branch --list "story/s{N}.{M}/*"` returns empty, the story was committed directly to `{dev_branch}` (e.g., `main`). This happens when `/rai-story-start` was skipped. In this case:
+1. **Do not attempt a merge** — there is no branch to merge
+2. **Skip to Step 4** — epic scope update and artifact commit are the only actions needed
+3. **Document in retrospective** that the story branch was missing (already done in S6.0 retrospective)
+4. **Update pull-board/scope.md manually** to reflect completion
+
+```bash
+STORY_BRANCH=$(git branch --list "story/s{N}.{M}/*" | tr -d ' ' | head -1)
+if [ -z "$STORY_BRANCH" ]; then
+    echo "⚠ No story branch found — commits already on $MERGE_TARGET. Skipping merge."
+    # Skip to Step 4
+else
+    git checkout $MERGE_TARGET && \\
+    git branch --show-current | grep -qx "$MERGE_TARGET" && \\
+    git merge $STORY_BRANCH --no-ff -m "Merge branch '$STORY_BRANCH' into $MERGE_TARGET
+
+S{N}.{M}: {story-name} — {1-line summary}
+
+Tracker: {JIRA_KEY} / E{N}"
+fi
 ```
 
 If running this merge from a non-CWD worktree, prefix the checkout and guarded merge with `cd /path/to/worktree &&`. The branch assertion must happen in the same command chain before merge or any later staging.
