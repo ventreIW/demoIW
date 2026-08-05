@@ -1,0 +1,88 @@
+session_id: "SES-S5.4-CLOSE"
+summary: "SES-S5.4-CLOSE: E5 Operator Workspace - S5.4 Communications Generator Backend complete"
+type: feature
+outcomes:
+  - "Implemented Communications Generator backend endpoint POST /api/v1/scenarios/{scenario_id}/clients/{client_id}/communications"
+  - "Created CommunicationDraftService with config-driven prompt template (prompts/communications/v1_draft.txt)"
+  - "Created GenerateCommunicationDraft use case orchestrating: validate -> fetch case aggregate -> generate -> persist -> return"
+  - "Extracted shared fetch_case_aggregate() service for single source of truth (router + use case)"
+  - "Added container wiring for CommunicationDraftService and GenerateCommunicationDraft"
+  - "Added router endpoint with proper error handling (404, 502)"
+  - "Full test coverage: 10 unit tests (service) + 6 unit tests (use case) + 9 router/contract tests + 3 integration tests (mocked OpenRouter)"
+  - "All 405 backend tests pass, mypy --strict clean, ruff check clean"
+  - "Updated epic scope.md: s5.4 marked done, acceptance criteria checked off"
+patterns:
+  - description: "Shared case aggregate service — Extract fetch_case_aggregate() to a service used by both router and use cases. Single source of truth for composed data."
+    context: "case-aggregate, shared-service, router-use-case-reuse, s5.4"
+    type: process
+  - description: "LLM prompt as config file — Store prompts in prompts/{domain}/v{N}_name.txt, load at service init. Enables iteration without code changes."
+    context: "llm-prompt-config, config-driven, s5.4"
+    type: technical
+  - description: "500-after-retries → 502 pattern — Catch ExternalServiceError in router and return 502. LLM adapter handles retries internally (MAX_RETRIES=3)."
+    context: "llm-error-handling, 502-bad-gateway, external-service-error, s4.8, s5.4"
+    type: process
+corrections:
+  - what: "OpenRouterAdapter retry logic testing with respx TimeoutException"
+    lesson: "respx wraps TimeoutException in SideEffectError which bypasses adapter's retry logic. Documented limitation in integration tests."
+  - what: "JSONDecodeError not caught by OpenRouterAdapter"
+    lesson: "Adapter only catches HTTPStatusError and TimeoutException. Malformed JSON propagates as 500. Pre-existing gap, not introduced here."
+  - what: "Frontend missing dependencies (next-intl, sonner, lucide-react)"
+    lesson: "Pre-existing frontend issues not related to this story. Backend fully functional."
+coaching:
+  trust_level: "established"
+  strengths: ["structured thinking", "TDD discipline", "refactoring for single source of truth"]
+  growth_edge: "async patterns, test isolation with mocked external services"
+  autonomy: "high within defined scope"
+  relationship:
+    quality: "productive"
+    trajectory: "stable"
+current_work:
+  release: V3.0
+  epic: E5
+  story: S5.4
+  phase: close
+  branch: main
+pending:
+  decisions: []
+  blockers: []
+  next_actions:
+    - "S5.5 Frontend flow for Communications Generator (when Renata is ready)"
+    - "E2E integration test M4 checkpoint for E5"
+narrative: |
+  ## Decisions
+  - Extracted shared fetch_case_aggregate() to case_aggregate_service.py — eliminates ~40 lines duplicate logic between router and use case
+  - Config-driven prompt template in prompts/communications/v1_draft.txt following data_enrichment pattern
+  - ExternalServiceError caught in router → 502 Bad Gateway, matching s4.8 pattern
+  - Container provider ordering follows PAT-N-4: get_draft_service before get_generate_communication_draft_use_case
+
+  ## Research
+  - Verified OpenRouterAdapter retry behavior: 3 retries on 5xx/timeout, then ExternalServiceError
+  - respx SideEffectError limitation for timeout testing documented in integration tests
+  - JSONDecodeError not caught by adapter → 500 (pre-existing, not introduced)
+
+  ## Artifacts
+  - prompts/communications/v1_draft.txt (prompt template)
+  - backend/app/application/services/communication_draft_service.py
+  - backend/app/application/services/case_aggregate_service.py
+  - backend/app/application/use_cases/generate_communication_draft.py
+  - backend/app/container.py (+2 providers)
+  - backend/app/routers/cases.py (POST /communications endpoint)
+  - backend/tests/unit/test_communication_draft_service.py (10 tests)
+  - backend/tests/unit/test_generate_communication_draft.py (6 tests)
+  - backend/tests/unit/test_communication_router.py (9 tests)
+  - backend/tests/integration/test_communications_integration.py (3 tests)
+  - work/epics/e5-operator-workspace/stories/s5.4-retrospective.md
+  - work/epics/e5-operator-workspace/scope.md (updated s5.4 to done)
+
+  ## Branch State
+  - Story branch story/s5.4/communications-generator merged to main via --no-ff
+  - Story branch deleted locally
+  - Merge commit: c9d539e
+  - Follow-up commits: b1ff6f8 (lint/format fixes), a04e170 (scope.md update)
+
+next_session_prompt: |
+  S5.4 complete. Next: S5.5 Frontend flow for Communications Generator (Renata).
+  E5 M2 milestone: Core MVP (s5.3 + s5.4 done). Next unblocks: s5.5.
+  Watch for: E5 M4 E2E integration checkpoint (mandatory per E4 lesson).
+  S5.5 will consume POST /communications endpoint — verify contract compatibility.
+  Pre-existing frontend dependency issues (next-intl, sonner, lucide-react) need resolution before S5.5.

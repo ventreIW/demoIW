@@ -14,9 +14,8 @@ metadata:
   raise.fase: '6'
   raise.frequency: per-story
   raise.gate: gate-code
-  raise.inputs: '- plan_md: file_path, required, previous_skill
-
-    '
+  raise.inputs:
+  - plan_md: file_path, required, previous_skill
   raise.introspection:
     affected_modules: []
     context_source: plan doc
@@ -28,9 +27,8 @@ metadata:
     - testing patterns for {test_type} in {language}
     - integration patterns for {upstream_dependencies}
   raise.next: story-review
-  raise.outputs: '- code_commits: list, git
-
-    '
+  raise.outputs:
+  - code_commits: list, git
   raise.prerequisites: story-plan
   raise.version: 2.4.0
   raise.visibility: public
@@ -64,6 +62,7 @@ See `raise.mastery` in frontmatter.
 
 - `references/integration-test-patterns.md` — Patterns for integration tests with mocked external services (LLM, payment APIs). Includes bug detection lesson about producer/consumer field mismatches.
 - `references/fastapi-python-patterns.md` — demoIW-specific patterns: Pydantic/FastAPI, DI container, respx mocking, async SQLAlchemy, enum validation, nullable FKs, container provider ordering, RawDataset columns.
+- `references/llm-adapter-error-handling.md` — Patterns for hardening LLM adapters (OpenRouter, etc.) so provider failures degrade to `ExternalServiceError` → HTTP 502. Covers missing `choices`, timeout handling, respx testing patterns, and router mapping.
 
 ## Steps
 
