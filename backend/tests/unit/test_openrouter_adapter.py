@@ -171,3 +171,19 @@ async def test_generate_raises_on_empty_choices():
 
     # Assert: only one call was made
     assert mock_route.call_count == 1
+
+
+@respx.mock
+async def test_generate_raises_on_timeout():
+    # Arrange: simulate a ReadTimeout from httpx
+    mock_route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        side_effect=httpx.ReadTimeout("Request timed out")
+    )
+    adapter = OpenRouterAdapter(api_key="test-key", base_url="https://openrouter.ai/api/v1")
+
+    # Act & Assert
+    with pytest.raises(ExternalServiceError):
+        await adapter.generate("test prompt", model="test-model")
+
+    # Assert: only one call was made (timeout should not retry)
+    assert mock_route.call_count == 1

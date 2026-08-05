@@ -65,6 +65,9 @@ class OpenRouterAdapter(ILLMPort):
                 except (KeyError, IndexError) as e:
                     raise ExternalServiceError(f"OpenRouter response missing expected content: {e}")
                 return content
+            except httpx.TimeoutException as e:
+                # Timeout (ReadTimeout, ConnectTimeout, etc.) - fail fast, no retry
+                raise ExternalServiceError(f"OpenRouter request timed out: {e}")
             except httpx.HTTPStatusError as e:
                 last_error = e
                 if e.response.status_code not in self._RETRY_STATUSES:
