@@ -1,0 +1,76 @@
+session_id: "S-N-260804-2234"
+summary: "SES-S6.0: E6 OpenRouter Adapter Hardening completado — s6.0 closed, unblocks s6.3"
+type: feature
+outcomes:
+  - "S6.0 OpenRouterAdapter hardened: missing/empty choices + ReadTimeout now raise ExternalServiceError → 502 (was 500)"
+  - "3 new unit tests added: test_generate_raises_on_missing_choices, test_generate_raises_on_empty_choices, test_generate_raises_on_timeout"
+  - "All 453 backend tests pass; integration tests confirm 502 path through router"
+  - "Epic scope.md and pull-board.md updated: s6.0 marked done, unblocks s6.3"
+  - "Retrospective written: work/epics/e6-executive-panel/stories/s6.0-retrospective.md"
+  - "2 technical patterns persisted: PAT-N-14 (timeout handling), PAT-N-15 (response parsing)"
+patterns:
+  - description: "Catch httpx.TimeoutException before retry loop; fail fast with ExternalServiceError"
+    context: "adapter,http,retry,timeout"
+    type: technical
+  - description: "Wrap response parsing in try/except KeyError/IndexError and raise ExternalServiceError"
+    context: "adapter,http,error-handling,openrouter"
+    type: technical
+corrections:
+  - what: "Olvidé /rai-story-start antes de implementar S6.0 — commits directos a main sin rama de story"
+    lesson: "Siempre ejecutar /rai-story-start primero; el check de working tree habría detectado el problema"
+  - what: "Task 3 (manual integration test) era redundante — test de integración existente ya cubre 502 path"
+    lesson: "En stories XS de adapters aislados, omitir test manual si integración ya valida el contrato"
+coaching:
+  trust_level: "established"
+  strengths: ["structured thinking", "TDD discipline", "risk-first ordering"]
+  growth_edge: "session hygiene (story-start gate)"
+  autonomy: "high within defined scope"
+  relationship:
+    quality: "productive"
+    trajectory: "stable"
+current_work:
+  release: "demo"
+  epic: "E6"
+  story: "S6.0"
+  phase: "close"
+  branch: "main"
+pending:
+  decisions: []
+  blockers: []
+  next_actions:
+    - "Iniciar S6.3 (NL query — backend) ahora que S6.0 está done"
+    - "S6.2 (frontend dashboard) sigue en backlog para Renata"
+narrative: |
+  ## Decisions
+  - S6.0 implementado directamente en main sin rama de story (ya discutido y aceptado trade-off)
+  - Dos fixes TDD: KeyError/IndexError en choices vacío + TimeoutException antes de retry loop
+  - Task 3 manual skippeada por redundancia con test de integración existente
+
+  ## Research
+  - httpx.TimeoutException es clase base para ReadTimeout, ConnectTimeout, WriteTimeout, PoolTimeout
+  - respx side_effect con excepción lanza SideEffectError que wrapea la original
+  - Router ExternalServiceError → 502 ya existía desde S5.4 (caso communications)
+
+  ## Artifacts
+  - backend/app/adapters/llm/openrouter_adapter.py (modificado)
+  - backend/tests/unit/test_openrouter_adapter.py (3 tests nuevos)
+  - work/epics/e6-executive-panel/stories/s6.0-plan.md
+  - work/epics/e6-executive-panel/stories/s6.0-retrospective.md
+  - work/epics/e6-executive-panel/scope.md (actualizado)
+  - work/epics/e6-executive-panel/pull-board.md (actualizado)
+
+  ## Branch State
+  - 4 commits en main (2 feat, 2 docs): 21f9c9c, 0b11d9e, f34dbe0, e343246
+  - No rama story/s6.0/* creada
+  - Sin push a origin
+
+next_session_prompt: |
+  S6.0 COMPLETADO — OpenRouterAdapter endurecido contra 2 fallos free-tier:
+  1. choices vacío/faltante → ExternalServiceError (no KeyError/IndexError)
+  2. ReadTimeout/TimeoutException → ExternalServiceError (no 500)
+
+  PRÓXIMO: S6.3 (NL query backend) ahora desbloqueado. S6.0 era gate de S6.3 per E6 plan.
+  S6.2 (frontend dashboard) sigue en backlog para Renata.
+
+  Watch: S6.3 depende de adapter estable + prompts. Revisar ADR-008 (QueryIntent) y ADR-009 (persisted scores).
+  Demo deadline: 2026-08-14 (10 días). E7 no empezado.

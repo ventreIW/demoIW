@@ -4,6 +4,13 @@
 
 # RaiSE drift-check cache (auto-generated, per-run)
 .raise/drift/
+backend/.raise/
+
+# RaiSE session temp files
+.raise/rai/sessions/ar-reviewed
+
+# RaiSE session artifacts (committed per-session)
+!.raise/rai/sessions/*/output.yaml
 .env
 !.env.example
 
