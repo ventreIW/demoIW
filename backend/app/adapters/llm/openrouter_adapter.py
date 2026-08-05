@@ -60,7 +60,10 @@ class OpenRouterAdapter(ILLMPort):
                 response.raise_for_status()
                 data = response.json()
                 self._log(model, data, time.monotonic() - start)
-                content: str = data["choices"][0]["message"]["content"]
+                try:
+                    content: str = data["choices"][0]["message"]["content"]
+                except (KeyError, IndexError) as e:
+                    raise ExternalServiceError(f"OpenRouter response missing expected content: {e}")
                 return content
             except httpx.HTTPStatusError as e:
                 last_error = e

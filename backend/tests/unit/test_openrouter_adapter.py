@@ -139,3 +139,35 @@ async def test_generate_logs_on_success():
         assert route.called
         # Verify that the log.info method was called with the expected event
         assert mock_log.info.called
+
+
+@respx.mock
+async def test_generate_raises_on_missing_choices():
+    # Arrange: 200 response but missing "choices" key entirely
+    mock_route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json={})
+    )
+    adapter = OpenRouterAdapter(api_key="test-key", base_url="https://openrouter.ai/api/v1")
+
+    # Act & Assert
+    with pytest.raises(ExternalServiceError):
+        await adapter.generate("test prompt", model="test-model")
+
+    # Assert: only one call was made
+    assert mock_route.call_count == 1
+
+
+@respx.mock
+async def test_generate_raises_on_empty_choices():
+    # Arrange: 200 response but "choices" is an empty list
+    mock_route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": []})
+    )
+    adapter = OpenRouterAdapter(api_key="test-key", base_url="https://openrouter.ai/api/v1")
+
+    # Act & Assert
+    with pytest.raises(ExternalServiceError):
+        await adapter.generate("test prompt", model="test-model")
+
+    # Assert: only one call was made
+    assert mock_route.call_count == 1
