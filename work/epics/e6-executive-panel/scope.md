@@ -190,13 +190,13 @@ cheaper made now than on 2026-08-12.
 
 ## Progress tracking
 
-| Story | Owner | Status | Started | Merged | Notes |
-|---|---|---|---|---|---|
-| s6.0 | — | backlog | — | — | |
-| s6.1 | Rodrigo | **done** ✓ | 2026-08-04 | 2026-08-04 | Gemba cut the composition from five repos to two — `get_raw_dataset()` already returns the DataFrames `outstanding_by_client()` consumes. 38 new tests, 450 total. Verified live at 149 ms on 120 clients; payload captured as `s6.1-payload.json` for s6.2 to type against |
-| s6.2 | — | backlog | — | — | Unblocked. Build the TS type from `s6.1-payload.json`, not from the domain classes |
-| s6.3 | — | backlog | — | — | Still gated on s6.0 |
-| s6.4 | — | backlog | — | — | |
+|| Story | Owner | Status | Started | Merged | Notes ||
+||---|---|---|---|---|---|---|
+|| s6.0 | — | **done** ✓ | 2026-08-04 | 2026-08-04 | Hardened OpenRouterAdapter: missing/empty choices + ReadTimeout now raise ExternalServiceError → 502. 3 new tests, 453 total. Integration test confirms 502 path. |
+|| s6.1 | Rodrigo | **done** ✓ | 2026-08-04 | 2026-08-04 | Gemba cut the composition from five repos to two — `get_raw_dataset()` already returns the DataFrames `outstanding_by_client()` consumes. 38 new tests, 450 total. Verified live at 149 ms on 120 clients; payload captured as `s6.1-payload.json` for s6.2 to type against |
+|| s6.2 | — | backlog | — | — | Unblocked. Build the TS type from `s6.1-payload.json`, not from the domain classes |
+|| s6.3 | — | backlog | — | — | Still gated on s6.0 |
+|| s6.4 | — | backlog | — | — | |
 
 ## Sequencing risks
 

@@ -4,7 +4,7 @@ Last updated: 2026-08-04
 
 | Story | Title | Owner | State | Notes |
 |---|---|---|---|---|
-| s6.0 | OpenRouter adapter hardening | — | backlog | Gates s6.3. Independent — can start now |
+| s6.0 | OpenRouter adapter hardening | — | **done** | Merged to `main` 2026-08-04. Adapter raises ExternalServiceError for missing choices and timeout. |
 | s6.1 | KPI aggregation — backend | Rodrigo | **done** | Merged to `main` 2026-08-04. Retrospective written |
 | s6.2 | Executive dashboard + segmentation — frontend | — | backlog | **Unblocked.** Type against `stories/s6.1-payload.json` |
 | s6.3 | NL query — backend | — | backlog | Blocked on s6.0 only; s6.1 has landed |
