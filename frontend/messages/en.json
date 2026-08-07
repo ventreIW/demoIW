@@ -194,6 +194,8 @@
       "expectedRecoverable": "Expected recoverable"
     },
     "scoredAt": "Scored on",
+    "loading": "Loading executive panel…",
+    "noActiveScenario": "No active scenario. Select one in Scenarios.",
     "emptyState": {
       "title": "Unscored scenario",
       "description": "This scenario has no persisted scores. Run scoring to view the executive panel.",

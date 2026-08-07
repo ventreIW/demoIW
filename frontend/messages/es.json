@@ -194,6 +194,8 @@
       "expectedRecoverable": "Recuperable esperado"
     },
     "scoredAt": "Calculado el",
+    "loading": "Cargando panel ejecutivo…",
+    "noActiveScenario": "No hay un escenario activo. Selecciona uno en Escenarios.",
     "emptyState": {
       "title": "Escenario sin calificar",
       "description": "Este escenario no tiene scores persistidos. Ejecute el scoring para ver el panel ejecutivo.",
