@@ -171,5 +171,34 @@
     "generateError": "Failed to generate draft",
     "cancel": "Cancel",
     "confirm": "Confirm"
+  },
+  "executivePage": {
+    "title": "Executive Panel",
+    "description": "Portfolio view: KPIs and segmentation of the active scenario.",
+    "kpi": {
+      "totalOverdue": "Total overdue",
+      "expectedRecoverable": "Expected recoverable",
+      "casesByCategory": "Cases by category",
+      "recoveryRateActual": "Recovery rate (actual)",
+      "recoveryRateExpected": "Recovery rate (expected)",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "chart": {
+      "daysOverdue": "Days overdue",
+      "amountRange": "Amount range",
+      "scoreCategory": "Score category",
+      "clients": "clients",
+      "outstanding": "Outstanding",
+      "expectedRecoverable": "Expected recoverable"
+    },
+    "scoredAt": "Scored on",
+    "emptyState": {
+      "title": "Unscored scenario",
+      "description": "This scenario has no persisted scores. Run scoring to view the executive panel.",
+      "cta": "Score this scenario"
+    },
+    "errorLoading": "Failed to load executive panel"
   }
 }

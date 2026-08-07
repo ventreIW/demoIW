@@ -171,5 +171,34 @@
     "generateError": "Error al generar el borrador",
     "cancel": "Cancelar",
     "confirm": "Confirmar"
+  },
+  "executivePage": {
+    "title": "Panel ejecutivo",
+    "description": "Visión de cartera: KPIs y segmentación del escenario activo.",
+    "kpi": {
+      "totalOverdue": "Total vencido",
+      "expectedRecoverable": "Recuperable esperado",
+      "casesByCategory": "Casos por categoría",
+      "recoveryRateActual": "Tasa de recuperación (real)",
+      "recoveryRateExpected": "Tasa de recuperación (esperada)",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "chart": {
+      "daysOverdue": "Días de atraso",
+      "amountRange": "Rango de importe",
+      "scoreCategory": "Categoría de score",
+      "clients": "clientes",
+      "outstanding": "Saldo pendiente",
+      "expectedRecoverable": "Recuperable esperado"
+    },
+    "scoredAt": "Calculado el",
+    "emptyState": {
+      "title": "Escenario sin calificar",
+      "description": "Este escenario no tiene scores persistidos. Ejecute el scoring para ver el panel ejecutivo.",
+      "cta": "Calificar este escenario"
+    },
+    "errorLoading": "Error al cargar el panel ejecutivo"
   }
 }
