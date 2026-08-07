@@ -1,0 +1,224 @@
+{
+  "problem": "The finance director (P-02) has no portfolio-level view. E4/E5 produced intelligence for one collector at a time; there is no dashboard showing what the book is worth, where value concentrates, or how recovery is trending.",
+  "value": "First surface that shows the *portfolio* — the view that justifies the system to the person who funds it. Enables RF-06.1 (KPI cards) and RF-06.2 (segmentation charts) with ES-first copy and visible staleness (scored_at).",
+  "approach": "Create a new `/[locale]/executive` page as a server component that fetches KPIs from `GET /api/v1/scenarios/{id}/kpis`. Build KPI cards and three hand-rolled SVG/CSS segmentation charts (days-overdue buckets, amount ranges, score categories). Add API client typed from s6.1-payload.json. Update sidebar executive link from `#` to the new route. Add ES/EN i18n keys with full parity. All components use Vitest mocks — no backend dependency for tests.",
+  "components": [
+    {
+      "name": "frontend/src/app/[locale]/executive/page.tsx",
+      "change": "create",
+      "purpose": "Server component page for the executive dashboard. Fetches KPIs via API client, handles 409 (unscored) with actionable empty state, renders KPI cards and segmentation charts."
+    },
+    {
+      "name": "frontend/src/lib/api/executive.ts",
+      "change": "create",
+      "purpose": "API client for `GET /api/v1/scenarios/{id}/kpis` with types derived from s6.1-payload.json. Consistent error handling matching existing API clients."
+    },
+    {
+      "name": "frontend/src/types/executive.ts",
+      "change": "create",
+      "purpose": "TypeScript types for KPI response matching backend Pydantic schemas from s6.1. Includes PortfolioKpis, SegmentBucket, and segmentation dimension types."
+    },
+    {
+      "name": "frontend/src/components/executive/KpiCard.tsx",
+      "change": "create",
+      "purpose": "Reusable KPI card component showing label, value (formatted as currency or number), and optional sub-label. Used for the four KPI cards."
+    },
+    {
+      "name": "frontend/src/components/executive/SegmentationChart.tsx",
+      "change": "create",
+      "purpose": "Hand-rolled SVG/CSS horizontal bar chart for segmentation dimensions. Accepts SegmentBucket[] and renders bars proportional to outstanding/expected_recoverable with labels and values."
+    },
+    {
+      "name": "frontend/src/components/executive/ExecutiveDashboard.tsx",
+      "change": "create",
+      "purpose": "Client component composing KPI cards and three SegmentationCharts. Handles loading, error, and empty states. Receives data as props from the page."
+    },
+    {
+      "name": "frontend/src/components/layout/MainLayout.tsx",
+      "change": "modify",
+      "purpose": "Update sidebar executive link href from `#` to `/[locale]/executive` (dynamic locale via usePathname or similar)."
+    },
+    {
+      "name": "frontend/messages/es.json",
+      "change": "modify",
+      "purpose": "Add executive dashboard i18n keys: page title, description, KPI labels, chart labels, empty state copy, CTA text."
+    },
+    {
+      "name": "frontend/messages/en.json",
+      "change": "modify",
+      "purpose": "Add English parity for all executive dashboard i18n keys."
+    },
+    {
+      "name": "frontend/src/app/[locale]/executive/__tests__/page.test.tsx",
+      "change": "create",
+      "purpose": "Vitest tests for the executive page: scored scenario renders dashboard, unscored scenario shows actionable empty state, error handling, i18n rendering."
+    },
+    {
+      "name": "frontend/src/components/executive/__tests__/KpiCard.test.tsx",
+      "change": "create",
+      "purpose": "Vitest tests for KpiCard: renders label/value, formats currency correctly, handles edge cases."
+    },
+    {
+      "name": "frontend/src/components/executive/__tests__/SegmentationChart.test.tsx",
+      "change": "create",
+      "purpose": "Vitest tests for SegmentationChart: renders bars proportional to data, shows labels/values, handles empty data."
+    },
+    {
+      "name": "frontend/src/components/executive/__tests__/ExecutiveDashboard.test.tsx",
+      "change": "create",
+      "purpose": "Vitest tests for ExecutiveDashboard: composes all sections, handles loading/error/empty states, scored_at display."
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "title": "Server component for data fetching, client component for charts",
+      "rationale": "Next.js app router pattern: page.tsx (server) fetches data, passes to ExecutiveDashboard (client) which composes interactive SVG charts. Matches existing patterns in cases/page.tsx and scenarios/page.tsx."
+    },
+    {
+      "id": "D2",
+      "title": "Types derived from s6.1-payload.json, not hand-written",
+      "rationale": "s5.1 shipped a defect because every layer inherited one assumption read from domain classes. The captured s6.1 payload is the contract — TypeScript types must mirror it exactly. Prevents silent contract drift."
+    },
+    {
+      "id": "D3",
+      "title": "Hand-rolled SVG/CSS charts — no charting library",
+      "rationale": "Per E6 scope §Architecture decisions: charting is not an ADR; design.md §Charting specifies hand-rolled SVG/CSS. Keeps bundle size minimal and avoids supply chain risk. Three simple bar charts need ~100 LOC total."
+    },
+    {
+      "id": "D4",
+      "title": "409 unscored scenario → actionable empty state with 'Score this scenario' CTA",
+      "rationale": "ADR-009: zeros are a failure mode. An unscored scenario must show an actionable empty state, not a dashboard of zeros. The CTA navigates to the scoring page (existing `/scenarios` or a new score endpoint)."
+    },
+    {
+      "id": "D5",
+      "title": "scored_at visible on every dashboard view",
+      "rationale": "ADR-009 §Alternatives: surface scored_at in the UI. Visible staleness over silent inconsistency. Director can judge if dashboard reflects current scores."
+    },
+    {
+      "id": "D6",
+      "title": "Sidebar executive link uses dynamic locale from usePathname",
+      "rationale": "MainLayout is a client component (uses useTranslations). Can use next-intl/navigation's usePathname to construct the correct localized href. Ensures ES/EN routing works correctly."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "description": "Dashboard shows four KPI cards: total overdue, expected recoverable, cases by category (high/medium/low), recovery rate (actual and expected)",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC2",
+      "description": "Three segmentation charts render: days-overdue buckets (0-30, 31-60, 61-90, 90+), amount ranges (quartile labels), score categories (high/medium/low)",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC3",
+      "description": "scored_at timestamp is visible on the dashboard for scored scenarios",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC4",
+      "description": "Unscored scenario (409 response) shows actionable empty state with 'Score this scenario' link/button that navigates to scoring",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC5",
+      "description": "Sidebar executive link navigates to /[locale]/executive (not #) and works for both ES and EN locales",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC6",
+      "description": "All executive dashboard copy keys exist in both es.json and en.json with parity",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC7",
+      "description": "vitest green; no TypeScript errors",
+      "severity": "must",
+      "verifiable": true
+    },
+    {
+      "id": "AC8",
+      "description": "Dashboard renders within NFR-02 budget at 500 clients / 2,000 invoices",
+      "severity": "should",
+      "verifiable": true
+    }
+  ],
+  "examples": [
+    {
+      "title": "KPI API client usage",
+      "language": "typescript",
+      "code": "import { fetchKpis } from '@/lib/api/executive'\nimport type { PortfolioKpis } from '@/types/executive'\n\nconst kpis: PortfolioKpis = await fetchKpis(scenarioId)\n// kpis.total_outstanding, kpis.segmentation.days_overdue_bucket, etc.",
+      "explanation": "API client mirrors existing patterns in scenarios.ts and prioritized.ts. Returns typed PortfolioKpis or throws on 404/409."
+    },
+    {
+      "title": "Executive page server component",
+      "language": "tsx",
+      "code": "import { getTranslations } from 'next-intl/server'\nimport { cookies } from 'next/headers'\nimport MainLayout from '@/components/layout/MainLayout'\nimport ExecutiveDashboard from '@/components/executive/ExecutiveDashboard'\nimport { fetchKpis } from '@/lib/api/executive'\n\nexport default async function ExecutivePage() {\n  const t = await getTranslations('executivePage')\n  const cookieStore = await cookies()\n  const activeId = cookieStore.get('active_scenario_id')?.value\n  \n  let kpis: PortfolioKpis | null = null\n  let error: string | null = null\n  let isUnscored = false\n  \n  if (activeId) {\n    try {\n      kpis = await fetchKpis(activeId)\n    } catch (e) {\n      if (e instanceof Error && e.message.includes('409')) {\n        isUnscored = true\n      } else {\n        error = e instanceof Error ? e.message : t('errorLoading')\n      }\n    }\n  }\n  \n  return (\n    <MainLayout>\n      <div className=\"space-y-6\">\n        <h1 className=\"text-2xl font-bold text-slate-900\">{t('title')}</h1>\n        {error ? <ErrorMessage>{error}</ErrorMessage> :\n         isUnscored ? <UnscoredState /> :\n         kpis ? <ExecutiveDashboard kpis={kpis} /> :\n         <NoActiveScenario />}\n      </div>\n    </MainLayout>\n  )\n}",
+      "explanation": "Server component pattern matching cases/page.tsx. Fetches KPIs, handles 409 as unscored state, passes data to client component."
+    },
+    {
+      "title": "SegmentationChart SVG example",
+      "language": "tsx",
+      "code": "function SegmentationChart({ buckets, maxValue, t }: { buckets: SegmentBucket[]; maxValue: number; t: any }) {\n  return (\n    <div className=\"space-y-3\">\n      {buckets.map((bucket) => (\n        <div key={bucket.label} className=\"space-y-1\">\n          <div className=\"flex justify-between text-sm\">\n            <span>{bucket.label}</span>\n            <span className=\"font-medium\">{bucket.client_count} clientes · {formatCurrency(bucket.outstanding)}</span>\n          </div>\n          <div className=\"h-4 bg-slate-100 rounded overflow-hidden relative\">\n            <div \n              className=\"h-full bg-slate-600 transition-all\"\n              style={{ width: `${(bucket.outstanding / maxValue) * 100}%` }}\n            />\n            <span className=\"absolute inset-0 flex items-center justify-end pr-2 text-xs text-white font-medium\">\n              {formatCurrency(bucket.expected_recoverable)} rec.\n            </span>\n          </div>\n        </div>\n      ))}\n    </div>\n  )\n}",
+      "explanation": "Hand-rolled horizontal bar chart. Bar width proportional to outstanding/maxValue. Shows client count, outstanding, and expected recoverable. No external dependencies."
+    }
+  ],
+  "complexity": "moderate",
+  "dependencies": [
+    {
+      "description": "s6.1 KPI aggregation backend (done) — provides GET /api/v1/scenarios/{id}/kpis",
+      "blocks": true
+    },
+    {
+      "description": "s6.1-payload.json committed as frontend fixture source",
+      "blocks": false
+    }
+  ],
+  "legacy_sweep": "Net-new executive dashboard page and components. No V1 orphaned — this is the first portfolio-level view in the frontend. The sidebar executive link previously pointed to # (dead link); this story makes it functional.",
+  "drift_risks": [
+    {
+      "id": "AG2-clone-amplification",
+      "description": "Risk of duplicating formatting logic (currency, numbers) that exists in cases/components. Mitigation: reuse or extract shared formatting utilities from '@/lib/utils' or cases components.",
+      "mitigation": "Audit existing formatting in CaseTable and ScenarioCard before writing new formatters. Extract shared currency/number formatting to lib/utils if not already there."
+    },
+    {
+      "id": "AG4-fanout",
+      "description": "New executive module touches page, API client, types, 3 components, layout, i18n — 7+ files. Moderate fan-out but each file has single responsibility.",
+      "mitigation": "Keep components pure and composable. ExecutiveDashboard composes KpiCard + SegmentationChart; page only fetches and routes. No cross-component state."
+    }
+  ],
+  "testing_strategy": [
+    {
+      "layer": "unit",
+      "name": "KpiCard formatting",
+      "purpose": "Currency/number formatting matches locale, handles zero/negative/large values"
+    },
+    {
+      "layer": "unit",
+      "name": "SegmentationChart proportions",
+      "purpose": "Bar widths proportional to outstanding/maxValue; labels render; empty data handled"
+    },
+    {
+      "layer": "unit",
+      "name": "ExecutiveDashboard composition",
+      "purpose": "Renders 4 KPI cards + 3 charts; shows scored_at; loading/error/empty states"
+    },
+    {
+      "layer": "integration",
+      "name": "Executive page with mocked API",
+      "purpose": "Scored scenario → full dashboard; unscored (409) → actionable empty state; unknown (404) → error; i18n ES/EN"
+    }
+  ],
+  "open_questions": [
+    "Scoring page route for 'Score this scenario' CTA — does /scenarios suffice or is a dedicated score page needed?",
+    "NFR-02 budget specifics — what is the exact ms budget for 500 clients / 2000 invoices?"
+  ]
+}

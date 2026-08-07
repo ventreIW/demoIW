@@ -162,6 +162,51 @@ const footer = screen.getByRole("contentinfo") // or any container
 expect(within(footer).getByText("Activo")).toBeDefined()
 ```
 
+## `getByText` exact string fails when text shares a span with adjacent content
+
+**Problem:** `screen.getByText("44 clientes")` throws `Unable to find an element` even though the text visibly renders. This happens when the component renders the target string inline with other content in the SAME span, e.g.:
+
+```tsx
+<span>
+  {bucket.client_count} {t('clients')} ·{" "}
+  <span className="font-medium tabular-nums">{currency.format(bucket.outstanding)}</span>
+</span>
+```
+
+Here the outer span's full text content is `44 clientes · $170,465`, and `getByText("44 clientes")` does an **exact, normalized full-text match** against that element — it does not do substring matching. So the exact string never matches. (Note: `getByText("$170,465")` DID pass in the same test because that value lives in its own nested `<span>` whose text is exactly `$170,465`.)
+
+**Fix:** Use a regex — `getByText` with a RegExp matches against the element's text content, so a substring pattern works:
+
+```typescript
+expect(screen.getByText(/44 clientes/)).toBeDefined()
+expect(screen.getByText("$170,465")).toBeDefined()
+```
+
+**Rule of thumb:** when a component composes a label with a sibling value inside one span/`text` (any `{x} {label} · <value>` pattern), query the composed label with a regex, and separately assert the value if it's in its own element. Prefer this over changing the component to split spans purely to satisfy an exact-match assertion — the component's DOM is correct; the assertion was too strict.
+
+## Mocking `next-intl/server` `getTranslations` for server-page tests — nested keys
+
+**Problem:** Testing a Next.js **server** page that uses `getTranslations` from `next-intl/server` (the real helper is unavailable in jsdom). A common mock reads the JSON catalogue and returns `messages.namespace[key]`. That works for top-level keys (`title`, `description`) but **silently returns the raw key for nested keys** like `emptyState.title` / `emptyState.cta`, because `messages["executivePage"]["emptyState.title"]` is `undefined`.
+
+**Symptom:** Test fails with `Unable to find an element` and the rendered HTML shows the literal key (`emptyState.title`, `emptyState.cta`) instead of translated text. The UI is correct — the mock is wrong.
+
+**Fix:** Make the mock traverse dotted paths so nested namespace keys resolve:
+
+```ts
+vi.mock('next-intl/server', () => ({
+  getTranslations: async () => {
+    const messages = (await import('../../../../../messages/es.json')).default
+    const ns: any = messages.executivePage
+    return (key: string) =>
+      key.split('.').reduce((o: any, k: string) => (o ? o[k] : undefined), ns) ?? key
+  },
+}))
+```
+
+- The `import` depth depends on the test file's location relative to `messages/`.
+- If the server page also renders locale-aware **client** components (`useTranslations`, `useLocale`), wrap the rendered page in `renderWithIntl` from `@/test-utils/i18n` so those get real messages; the `getTranslations` mock only supplies the server-side page strings.
+- Serve the same locale in both (the mock reads e.g. `es.json`; `renderWithIntl` defaults to `es`) so server strings and client strings agree.
+
 ## WSL cross-filesystem: `tsc` not in PATH after `npm install`
 
 **Problem:** On WSL with files on `/mnt/c/` (Windows filesystem), `npm run typecheck` fails with `sh: 1: tsc: not found` even after `npm install` completes. The `node_modules/.bin/tsc` symlink may be broken on cross-filesystem mounts.

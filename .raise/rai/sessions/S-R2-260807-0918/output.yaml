@@ -1,0 +1,75 @@
+session_id: "S-R2-260807-0918"
+summary: "E6 Executive Panel — S6.2 dashboard implemented (KPI cards, charts, page, sidebar; 3 commits)"
+type: feature
+outcomes:
+  - "Completed S6.2 Executive Dashboard frontend, Tasks 3–5"
+  - "T3: KpiCard + SegmentationChart components with TDD tests (18 tests)"
+  - "T4: ExecutiveDashboard client component + /[locale]/executive server page (scored / 409-unscored CTA / error / no-active states, ES+EN)"
+  - "T5: Sidebar executive link wired from dead '#' to localized /[locale]/executive"
+  - "Full frontend suite green (133/133 tests, 23 files); tsc --noEmit clean"
+patterns:
+  - description: "getByText exact-string match fails when target text shares a span with sibling content; use a regex (getByText(/.../)) to match a composed label, and assert a value separately when it lives in its own element. Prefer fixing an over-strict assertion over splitting component DOM for the test."
+    context: "nextjs,vitest,testing-library"
+    type: process
+  - description: "next-intl getTranslations test mock must traverse dotted keys (e.g. emptyState.title): split on '.' and walk the messages object, else nested keys return raw the key string."
+    context: "next-intl,vitest,mocking"
+    type: process
+corrections:
+  - what: "Map current locale to a region (es->es-MX, en->en-US) so Intl.DateTimeFormat/currency/percent render consistently with existing components."
+    lesson: "Reuse the established REGIONAL locale map across all executive formatters to avoid ES/EN formatting drift (AG2)."
+coaching:
+  trust_level: "established"
+  autonomy: "high within defined scope"
+  strengths: ["tdd discipline", "pattern reuse", "honest blocker reporting"]
+  growth_edge: "verify full gate scope before committing"
+current_work:
+  epic: E6
+  story: S6.2
+  phase: implement
+  branch: story/s6.2/kpi-dashboard-segmentation
+pending:
+  decisions:
+    - "Live E2E for s6.2 deferred: backend requires PostgreSQL and this WSL host has neither Postgres nor Docker."
+  blockers:
+    - "Cannot run manual integration test against a real scored scenario without provisioning PostgreSQL."
+  next_actions:
+    - "Run live /es/executive and /en/executive E2E when backend infra is available, or provision Postgres."
+    - "Prepare MR via /rai-mr-create (full suite is the merge gate)."
+narrative: |
+  ## Decisions
+  - Split state handling at the page (server) vs dashboard (client): page owns error / 409-unscored /
+    no-active branches (ADR-009 zeros are a failure mode), dashboard composes given kpis. Matches
+    design.md D1 and the existing cases/page.tsx pattern.
+  - 4 KPI cards per AC1: total overdue, expected recoverable, cases by category (sub-label shows
+    High/Med/Low), recovery rate (actual value, expected as sub-label) — covers all five KPI labels
+    without exceeding the 4-card layout.
+  - Sidebar executive link built from useLocale() -> /{locale}/executive, matching the established
+    /{locale}/cases link convention rather than deriving a locale from usePathname (design D6).
+  - No new charting dependency: hand-rolled CSS bar charts per E6 scope (D3).
+  ## Research
+  - Confirmed active-scenario contract: active_scenario_id cookie read server-side via next/headers
+    cookies(); fetchKpis throws typed PortfolioNotScoredError (409) / ScenarioNotFoundError (404).
+  - Env fact: backend is Postgres-only (asyncpg, postgresql+asyncpg://...:5432/demoiw, Postgres-specific
+    alembic migrations); no Postgres/Docker on this WSL host => live E2E not runnable here.
+  ## Artifacts
+  - frontend/src/components/executive/{KpiCard,SegmentationChart,ExecutiveDashboard}.tsx + tests
+  - frontend/src/app/[locale]/executive/page.tsx + __tests__/page.test.tsx
+  - frontend/src/lib/api/executive.ts, frontend/src/types/executive.ts (T1, prior commit)
+  - frontend/src/test-utils/kpis-fixture.ts
+  - frontend/src/components/layout/MainLayout.tsx (sidebar link)
+  - messages/es.json, messages/en.json (+loading, +noActiveScenario keys)
+  - work/epics/e6-executive-panel/stories/s6.2-plan.md (duration tracking updated)
+  ## Branch State
+  - Branch story/s6.2/kpi-dashboard-segmentation; commits this session: a717c42 (T3),
+    c297fd3 (T4), 346e024 (T5). Full suite green.
+next_session_prompt: |
+  S6.2 Executive Dashboard code is complete (T1–T5) and all automated gates green
+  (133/133 tests, tsc clean). Two things remain:
+  1. LIVE E2E was deferred — no PostgreSQL/Docker on this WSL host, and the backend is
+     Postgres-only. Before MR, either provision Postgres or run the manual /es/executive
+     and /en/executive verification where infra exists. Plan Task 5 documents the steps.
+  2. Story artifacts (work/.../s6.2-plan.md, s6.2-design.md/.json) are still UNTRACKED —
+     decide whether to commit them with the story close or leave to MR.
+  Note: `rai gate check gate-tests --scope frontend/...` resolves paths relative to backend/
+  and cannot target frontend tests — run `npx vitest run <path> --no-coverage` directly as the
+  plan's documented fallback. This framework friction is already tracked in dev/parking-lot.md.

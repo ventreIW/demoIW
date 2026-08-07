@@ -173,6 +173,15 @@ cd backend && uv run pytest tests/ -q   # or equivalent per project
 
 Then run type/lint checks separately. The gate runner is a convenience, not a hard requirement — verified test output matters more than which CLI produced it.
 
+**Frontend scope goes to vitest, not the gate.** In demoIW the `gate-tests` `test_command` is backend pytest, so passing a **frontend** scope path (e.g. `--scope frontend/src/components/executive/`) makes pytest run from project root, collect 0 items, and fail with `ERROR: file or directory not found: frontend/...`. That is not a real test failure — it's the wrong runner. For any `frontend/` scope, skip the gate and run vitest directly from `frontend/`:
+
+```bash
+cd frontend && npx vitest run <path-or-glob> --no-coverage   # scoped
+cd frontend && npx vitest run --no-coverage                   # full frontend suite at story close
+```
+
+Run `tsc --noEmit` (via `node node_modules/typescript/bin/tsc --noEmit`) separately. End-of-story frontend confidence is achieved with the full `npx vitest run --no-coverage` suite + direct tsc — never trust the pytest gate to exercise frontend tests.
+
 #### Stale Python `__pycache__` after code changes
 
 When you edit Python files under an `app/` directory (adding new imports, changing function signatures, adding new routes), stale `.pyc` files in `__pycache__/` can retain old bytecode that produces confusing errors on the next run — e.g., `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'` when the current source doesn't even mention `on_startup`.
@@ -501,5 +510,5 @@ rai signal emit-work story "{story_id}" --event complete --phase implement 2>/de
 
 - Gate: `gates/gate-code.md`
 - Progress template: `references/progress-template.md`
-- Vitest patterns: `references/nextjs-vitest-patterns.md` (globals, route handlers, API routes, shadcn init, toBeDisabled, useRouter mock, getByText duplicates, WSL tsc)
+- Vitest patterns: `references/nextjs-vitest-patterns.md` (globals, route handlers, API routes, shadcn init, toBeDisabled, useRouter mock, getByText duplicates/span-sharing, next-intl getTranslations nested-key mock, WSL tsc)
 - shadcn init: `references/shadcn-v4-init.md`
