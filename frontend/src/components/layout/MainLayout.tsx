@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import LocaleSwitcher from '@/components/locale/LocaleSwitcher'
 
@@ -15,6 +15,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
 function Sidebar() {
   const t = useTranslations()
+  const locale = useLocale()
 
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r bg-slate-50 md:block">
@@ -27,7 +28,7 @@ function Sidebar() {
         </div>
         <nav className="flex-1 space-y-1 p-4">
           <SidebarLink href="/cases">{t('sidebar.operations')}</SidebarLink>
-          <SidebarLink href="#">{t('sidebar.executive')}</SidebarLink>
+          <SidebarLink href={`/${locale}/executive`}>{t('sidebar.executive')}</SidebarLink>
           <SidebarLink href="/scenarios">{t('sidebar.scenarios')}</SidebarLink>
         </nav>
       </div>
