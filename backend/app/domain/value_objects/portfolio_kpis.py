@@ -43,7 +43,12 @@ SCORE_CATEGORY: Final[str] = "score_category"
 
 #: Upper bounds of the ageing buckets, in whole days. The final bucket is open-ended.
 _DAYS_OVERDUE_EDGES: Final[tuple[int, ...]] = (30, 60, 90)
-_DAYS_OVERDUE_LABELS: Final[tuple[str, ...]] = ("0-30", "31-60", "61-90", "90+")
+
+#: Ageing bucket labels. Public for the same reason the dimension keys above are:
+#: s6.3's ``QueryIntent`` validates ``days_overdue_bucket`` filter values against
+#: this exact tuple (ADR-008), and a second copy of these strings would drift into
+#: a filter that matches nothing while looking correct.
+DAYS_OVERDUE_LABELS: Final[tuple[str, ...]] = ("0-30", "31-60", "61-90", "90+")
 
 
 @dataclass(frozen=True)
@@ -186,17 +191,17 @@ def _count_by_category(rows: list[ClientKpiRow]) -> dict[ScoreCategory, int]:
 
 def _bucket_by_days_overdue(rows: list[ClientKpiRow]) -> list[SegmentBucket]:
     """Fixed ageing bands. Every client falls in exactly one, including 0 days."""
-    grouped: dict[str, list[ClientKpiRow]] = {label: [] for label in _DAYS_OVERDUE_LABELS}
+    grouped: dict[str, list[ClientKpiRow]] = {label: [] for label in DAYS_OVERDUE_LABELS}
     for row in rows:
         grouped[_days_overdue_label(row.days_overdue)].append(row)
     return [_summarize(label, members) for label, members in grouped.items()]
 
 
 def _days_overdue_label(days_overdue: int) -> str:
-    for edge, label in zip(_DAYS_OVERDUE_EDGES, _DAYS_OVERDUE_LABELS, strict=False):
+    for edge, label in zip(_DAYS_OVERDUE_EDGES, DAYS_OVERDUE_LABELS, strict=False):
         if days_overdue <= edge:
             return label
-    return _DAYS_OVERDUE_LABELS[-1]
+    return DAYS_OVERDUE_LABELS[-1]
 
 
 def _bucket_by_amount_range(rows: list[ClientKpiRow]) -> list[SegmentBucket]:
