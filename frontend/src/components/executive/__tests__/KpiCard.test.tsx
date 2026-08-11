@@ -25,10 +25,9 @@ describe('KpiCard', () => {
   })
 
   it('formats percentage values correctly', () => {
-    renderWithIntl(
-      <KpiCard label="recoveryRateActual" value={0.4089} format="percentage" />,
-      { locale: 'es' },
-    )
+    renderWithIntl(<KpiCard label="recoveryRateActual" value={0.4089} format="percentage" />, {
+      locale: 'es',
+    })
 
     expect(screen.getByText('Tasa de recuperación (real)')).toBeDefined()
     // Percentage format: 40.9% (1 decimal)
@@ -36,10 +35,9 @@ describe('KpiCard', () => {
   })
 
   it('formats number values (no currency symbol)', () => {
-    renderWithIntl(
-      <KpiCard label="casesByCategory" value={120} format="number" />,
-      { locale: 'en' },
-    )
+    renderWithIntl(<KpiCard label="casesByCategory" value={120} format="number" />, {
+      locale: 'en',
+    })
 
     expect(screen.getByText('Cases by category')).toBeDefined()
     expect(screen.getByText('120')).toBeDefined()
@@ -48,10 +46,9 @@ describe('KpiCard', () => {
   })
 
   it('renders subLabel when provided', () => {
-    renderWithIntl(
-      <KpiCard label="totalOverdue" value={1000000} subLabel="vs last month" />,
-      { locale: 'en' },
-    )
+    renderWithIntl(<KpiCard label="totalOverdue" value={1000000} subLabel="vs last month" />, {
+      locale: 'en',
+    })
 
     expect(screen.getByText('vs last month')).toBeDefined()
   })

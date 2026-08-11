@@ -38,11 +38,7 @@ function getNumberFormatter(locale: string) {
   return new Intl.NumberFormat(region, { maximumFractionDigits: 0 })
 }
 
-export default function SegmentationChart({
-  buckets,
-  dimension,
-  title,
-}: SegmentationChartProps) {
+export default function SegmentationChart({ buckets, dimension, title }: SegmentationChartProps) {
   const locale = useLocale()
   const t = useTranslations('executivePage.chart')
   const currency = getCurrencyFormatter(locale)
@@ -55,8 +51,8 @@ export default function SegmentationChart({
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      {title && <h3 className="text-sm font-medium text-slate-700 mb-3">{title}</h3>}
-      <p className="text-xs text-slate-500 mb-3">{dimensionLabel}</p>
+      {title && <h3 className="mb-3 text-sm font-medium text-slate-700">{title}</h3>}
+      <p className="mb-3 text-xs text-slate-500">{dimensionLabel}</p>
       <div className="space-y-3">
         {buckets.map((bucket) => {
           const widthPercent = (bucket.outstanding / maxOutstanding) * 100
@@ -71,12 +67,12 @@ export default function SegmentationChart({
                   </span>
                 </span>
               </div>
-              <div className="h-3 bg-slate-100 rounded-full overflow-hidden relative">
+              <div className="relative h-3 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full bg-slate-600 transition-all duration-300"
                   style={{ width: `${widthPercent}%` }}
                 />
-                <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs text-white font-medium tabular-nums">
+                <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium tabular-nums text-white">
                   {currency.format(bucket.expected_recoverable)} {t('expectedRecoverable')}
                 </span>
               </div>
