@@ -27,8 +27,6 @@ import pytest
 
 from app.application.services.nl_query_translator import (
     NlQueryTranslator,
-    OutOfVocabularyError,
-    TranslationFailedError,
 )
 from app.application.use_cases.answer_nl_query import AnswerNlQuery, NlAnswer, RefusalReason
 from app.domain.enums import ScoreCategory, Sector

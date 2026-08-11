@@ -23,6 +23,7 @@ from uuid import UUID
 
 import pytest
 
+from app.application.services.query_executor import QueryResult, execute
 from app.domain.enums import ScoreCategory, Sector
 from app.domain.value_objects.portfolio_kpis import (
     AMOUNT_RANGE,
@@ -38,7 +39,6 @@ from app.domain.value_objects.query_intent import (
     Metric,
     QueryIntent,
 )
-from app.application.services.query_executor import QueryResult, execute
 
 _PAYLOAD = (
     Path(__file__).resolve().parents[2].parent

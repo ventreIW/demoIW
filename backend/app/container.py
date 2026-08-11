@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +29,10 @@ from app.adapters.persistence.sqlalchemy_score_repo import (
 from app.application.services.communication_draft_service import (
     CommunicationDraftService,
 )
+from app.application.services.kpi_aggregate_service import fetch_portfolio_kpis
 from app.application.services.llm_enrichment_service import LLMEnrichmentService
+from app.application.services.nl_query_translator import NlQueryTranslator
+from app.application.use_cases.answer_nl_query import AnswerNlQuery
 from app.application.use_cases.generate_communication_draft import (
     GenerateCommunicationDraft,
 )
@@ -38,6 +42,7 @@ from app.application.use_cases.record_contact_result import RecordContactResult
 from app.application.use_cases.rescore_scenario import RescoreScenario
 from app.application.use_cases.score_and_persist_scenario import ScoreAndPersistScenario
 from app.config import settings
+from app.domain.value_objects.portfolio_kpis import PortfolioKpis
 from app.infrastructure.database import get_session
 from app.ports.llm_port import ILLMPort
 from app.ports.repositories import (
@@ -200,3 +205,33 @@ async def get_prioritize_scenario_use_case() -> PrioritizeScenario:
 async def get_rescore_scenario_use_case() -> RescoreScenario:
     """Dependency that provides a RescoreScenario use case instance."""
     return RescoreScenario()
+
+
+async def get_nl_query_use_case(
+    llm_port: ILLMPort = Depends(get_llm_port),
+    scenario_repo: IScenarioRepository = Depends(get_scenario_repo),
+    score_repo: IScoreRepository = Depends(get_score_repo),
+) -> AnswerNlQuery:
+    """Dependency that provides an AnswerNlQuery use case instance.
+
+    The aggregate loader is bound here rather than injected as a repository
+    pair, so the use case depends on "something that yields PortfolioKpis"
+    instead of on persistence — which is what keeps its tests free of a
+    database and its 409 path identical to the one ``/kpis`` serves.
+    """
+    prompt_dir = Path(__file__).resolve().parents[2] / "prompts"
+
+    async def load_kpis(scenario_id: UUID) -> PortfolioKpis:
+        return await fetch_portfolio_kpis(scenario_id, scenario_repo, score_repo)
+
+    return AnswerNlQuery(
+        translator=NlQueryTranslator(
+            llm_port=llm_port,
+            prompt_dir=prompt_dir,
+            model=settings.MODEL_NL_QUERY,
+        ),
+        llm_port=llm_port,
+        prompt_dir=prompt_dir,
+        load_kpis=load_kpis,
+        model=settings.MODEL_NL_QUERY,
+    )

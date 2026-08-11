@@ -5,13 +5,15 @@ Every figure is derived in the domain layer, so the dashboard cannot disagree
 with the natural-language query layer that reads the same aggregate (ADR-008).
 """
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.application.services.kpi_aggregate_service import fetch_portfolio_kpis
-from app.container import get_scenario_repo, get_score_repo
+from app.application.use_cases.answer_nl_query import AnswerNlQuery, NlAnswer
+from app.container import get_nl_query_use_case, get_scenario_repo, get_score_repo
 from app.domain.enums import Sector
 from app.domain.exceptions import EntityNotFoundError, PortfolioNotScoredError
 from app.domain.value_objects.portfolio_kpis import PortfolioKpis
@@ -132,4 +134,108 @@ def _to_response(kpis: PortfolioKpis) -> PortfolioKpisResponse:
             ]
             for dimension, buckets in kpis.segmentation.items()
         },
+    )
+
+
+class NlQueryRequest(BaseModel):
+    """A plain-language question about the active scenario (RF-06.3)."""
+
+    question: str = Field(min_length=1, max_length=500)
+
+
+class SeriesPointResponse(BaseModel):
+    """One label/value pair — a bar in the chart, a figure in the narrative."""
+
+    label: str
+    value: float
+
+
+class QueryResultResponse(BaseModel):
+    """The numbers, drawn from the same aggregate ``/kpis`` serialises.
+
+    ``series`` always holds at least one point, including when a filter matches
+    nothing: "no clients are 61-90 days overdue" is a real answer, and a zero
+    bar is legible where an empty chart is indistinguishable from a failure.
+    """
+
+    metric: str
+    group_by: str | None
+    total: float
+    series: list[SeriesPointResponse]
+
+
+class NlQueryResponse(BaseModel):
+    """An answer, or an honest account of why there isn't one (ADR-008).
+
+    ``answerable=false`` is returned with **200**, not a 4xx. An unsupported
+    question is a successful determination that the vocabulary does not cover
+    it — distinct from a missing scenario (404), an unscored one (409) and a
+    provider failure. Flattening those into one error status would leave the
+    client unable to tell the director what to do next.
+
+    A refusal never carries ``result`` or ``narrative``. Returning a figure the
+    system could not justify is the one outcome ADR-008 rules out entirely.
+    """
+
+    answerable: bool
+    question: str
+    scenario: ScenarioCitation
+    scored_at: str
+    intent: dict[str, Any] | None = None
+    result: QueryResultResponse | None = None
+    narrative: str | None = None
+    reason: str | None = None
+    supported: dict[str, Any] | None = None
+
+
+@router.post("/{scenario_id}/query", response_model=NlQueryResponse)
+async def query_portfolio(
+    scenario_id: UUID,
+    request: NlQueryRequest,
+    use_case: AnswerNlQuery = Depends(get_nl_query_use_case),
+) -> NlQueryResponse:
+    """Answer a natural-language question about a scored scenario.
+
+    The question is translated into a constrained ``QueryIntent`` and executed
+    against the KPI aggregate this router already serves at ``/kpis`` — so the
+    answer and the dashboard cannot report different numbers (ADR-008). The
+    model never emits SQL and no string it returns reaches the database.
+
+    A scenario that has not been scored yields **409** *before* any request is
+    made to the language provider.
+    """
+    try:
+        answer = await use_case.execute(scenario_id, request.question)
+    except EntityNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Scenario with id={scenario_id} not found")
+    except PortfolioNotScoredError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+    return _to_query_response(answer)
+
+
+def _to_query_response(answer: NlAnswer) -> NlQueryResponse:
+    return NlQueryResponse(
+        answerable=answer.answerable,
+        question=answer.question,
+        scenario=ScenarioCitation(
+            id=answer.scenario_id, name=answer.scenario_name, sector=answer.sector
+        ),
+        scored_at=answer.scored_at.isoformat(),
+        intent=answer.intent.model_dump(mode="json") if answer.intent else None,
+        result=(
+            QueryResultResponse(
+                metric=answer.result.metric.value,
+                group_by=answer.result.group_by.value if answer.result.group_by else None,
+                total=answer.result.total,
+                series=[
+                    SeriesPointResponse(label=p.label, value=p.value) for p in answer.result.series
+                ],
+            )
+            if answer.result
+            else None
+        ),
+        narrative=answer.narrative,
+        reason=answer.reason.value if answer.reason else None,
+        supported=answer.supported,
     )
