@@ -25,21 +25,71 @@ const mockKpis: PortfolioKpis = {
   },
   segmentation: {
     days_overdue_bucket: [
-      { label: '0-30', client_count: 44, outstanding: 170464.97, expected_recoverable: 62593.805555 },
-      { label: '31-60', client_count: 8, outstanding: 174903.64, expected_recoverable: 92246.673639 },
-      { label: '61-90', client_count: 13, outstanding: 262726.83, expected_recoverable: 145536.499155 },
-      { label: '90+', client_count: 55, outstanding: 1227082.2, expected_recoverable: 713107.05778 },
+      {
+        label: '0-30',
+        client_count: 44,
+        outstanding: 170464.97,
+        expected_recoverable: 62593.805555,
+      },
+      {
+        label: '31-60',
+        client_count: 8,
+        outstanding: 174903.64,
+        expected_recoverable: 92246.673639,
+      },
+      {
+        label: '61-90',
+        client_count: 13,
+        outstanding: 262726.83,
+        expected_recoverable: 145536.499155,
+      },
+      {
+        label: '90+',
+        client_count: 55,
+        outstanding: 1227082.2,
+        expected_recoverable: 713107.05778,
+      },
     ],
     amount_range: [
       { label: '$0 – $2,812', client_count: 30, outstanding: 0.0, expected_recoverable: 0.0 },
-      { label: '$2,812 – $15,131', client_count: 30, outstanding: 299771.89, expected_recoverable: 148241.039795 },
-      { label: '$15,131 – $24,648', client_count: 30, outstanding: 605458.0, expected_recoverable: 326975.038191 },
-      { label: '> $24,648', client_count: 30, outstanding: 929947.75, expected_recoverable: 538267.958143 },
+      {
+        label: '$2,812 – $15,131',
+        client_count: 30,
+        outstanding: 299771.89,
+        expected_recoverable: 148241.039795,
+      },
+      {
+        label: '$15,131 – $24,648',
+        client_count: 30,
+        outstanding: 605458.0,
+        expected_recoverable: 326975.038191,
+      },
+      {
+        label: '> $24,648',
+        client_count: 30,
+        outstanding: 929947.75,
+        expected_recoverable: 538267.958143,
+      },
     ],
     score_category: [
-      { label: 'high', client_count: 43, outstanding: 655498.07, expected_recoverable: 549135.107938 },
-      { label: 'medium', client_count: 36, outstanding: 559408.73, expected_recoverable: 311738.24406 },
-      { label: 'low', client_count: 41, outstanding: 620270.84, expected_recoverable: 152610.684131 },
+      {
+        label: 'high',
+        client_count: 43,
+        outstanding: 655498.07,
+        expected_recoverable: 549135.107938,
+      },
+      {
+        label: 'medium',
+        client_count: 36,
+        outstanding: 559408.73,
+        expected_recoverable: 311738.24406,
+      },
+      {
+        label: 'low',
+        client_count: 41,
+        outstanding: 620270.84,
+        expected_recoverable: 152610.684131,
+      },
     ],
   },
 }
@@ -79,7 +129,8 @@ describe('fetchKpis', () => {
       status: 409,
       json: () =>
         Promise.resolve({
-          detail: 'Scenario aaaaaaaa-0000-4000-8000-000000000001 has no persisted scores. POST /api/v1/scenarios/aaaaaaaa-0000-4000-8000-000000000001/score first.',
+          detail:
+            'Scenario aaaaaaaa-0000-4000-8000-000000000001 has no persisted scores. POST /api/v1/scenarios/aaaaaaaa-0000-4000-8000-000000000001/score first.',
         }),
     })
     vi.stubGlobal('fetch', fetchMock)
