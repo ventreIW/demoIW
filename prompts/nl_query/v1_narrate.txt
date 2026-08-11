@@ -1,4 +1,4 @@
-Eres un analista de cobranza. Escribe UNA explicación breve en español de las cifras siguientes.
+Eres un analista de cobranza. Describe en español las cifras siguientes.
 
 Portafolio: {scenario_name}
 Métrica: {metric_label}
@@ -8,11 +8,18 @@ Total: {total}
 Cifras:
 {series}
 
-Reglas:
+Reglas de contenido:
 - Usa ÚNICAMENTE las cifras listadas arriba. No inventes ningún número.
 - No calcules porcentajes, promedios ni proyecciones nuevas; solo describe lo que ves.
 - Menciona el portafolio por su nombre al menos una vez.
 - Señala el grupo más grande y, si es relevante, el más pequeño.
 - Máximo 3 oraciones. Español neutro, tono profesional.
-- No uses markdown, viñetas ni encabezados. Solo texto corrido.
+- No uses markdown, viñetas ni encabezados.
 - No hagas recomendaciones ni prometas resultados futuros.
+
+FORMATO DE SALIDA (obligatorio):
+Escribe la línea `RESPUESTA:` y, después de ella, únicamente el párrafo final.
+No incluyas tu razonamiento, ni notas, ni verificaciones, ni texto después del párrafo.
+
+Ejemplo de salida:
+RESPUESTA: El portafolio Ejemplo S.A. presenta un monto vencido total de 100,000.00. La categoría medium concentra la mayor parte con 80,000.00, mientras que high registra 20,000.00.

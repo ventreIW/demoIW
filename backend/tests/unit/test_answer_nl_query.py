@@ -43,7 +43,10 @@ _PROMPT_DIR = Path(__file__).resolve().parents[2].parent / "prompts"
 _SCENARIO_ID = UUID("aaaaaaaa-0000-4000-8000-000000000001")
 
 _TRANSLATION = '{"metric": "outstanding", "group_by": "score_category", "filters": []}'
-_NARRATIVE = "En Retail Q3 (manual) el saldo vencido se concentra en la categoría alta."
+#: What the model is expected to return: the marker, then the prose. The prompt
+#: requires it and :class:`TestReasoningModelOutput` explains why.
+_NARRATIVE_TEXT = "En Retail Q3 (manual) el saldo vencido se concentra en la categoría alta."
+_NARRATIVE = f"RESPUESTA: {_NARRATIVE_TEXT}"
 
 
 def _kpis() -> PortfolioKpis:
@@ -130,7 +133,7 @@ class TestHappyPath:
         assert answer.answerable is True
         assert answer.intent is not None and answer.intent.metric is Metric.OUTSTANDING
         assert answer.result is not None and answer.result.series
-        assert answer.narrative == _NARRATIVE
+        assert answer.narrative == _NARRATIVE_TEXT
         assert answer.scenario_id == _SCENARIO_ID
         assert answer.scenario_name == "Retail Q3 (manual)"
         assert answer.sector is Sector.RETAIL
@@ -275,4 +278,58 @@ class TestNarrationDegradation:
 
         assert answer.answerable is True
         assert answer.result is not None and answer.result.series
+        assert answer.narrative is None
+
+
+class TestReasoningModelOutput:
+    """Regression cover for a defect only the live run found.
+
+    The configured free-tier model is a reasoning model. On the first live run
+    it returned its entire chain of thought — *"We need to produce a brief
+    explanation in Spanish… Let's craft: …"* — with the real sentence buried
+    inside. Every stubbed test passed, because a stub returns the prose it was
+    handed. The narrate prompt now demands a ``RESPUESTA:`` marker and the use
+    case takes only what follows it.
+    """
+
+    async def test_only_the_text_after_the_marker_is_returned(self) -> None:
+        llm = ScriptedLLM(
+            narration=(
+                "We need to produce a brief explanation in Spanish, max 3 sentences.\n"
+                "Let's craft something suitable.\n"
+                "RESPUESTA: El portafolio Retail Q3 (manual) presenta un monto vencido "
+                "total de 26,000.00."
+            )
+        )
+        answer = await _use_case(llm, _kpis()).execute(_SCENARIO_ID, "¿Cuánto está vencido?")
+
+        assert answer.narrative == (
+            "El portafolio Retail Q3 (manual) presenta un monto vencido total de 26,000.00."
+        )
+        assert "We need to produce" not in (answer.narrative or "")
+
+    async def test_last_marker_wins_when_the_model_echoes_the_example(self) -> None:
+        """The prompt contains a ``RESPUESTA:`` example; models repeat it."""
+        llm = ScriptedLLM(
+            narration="RESPUESTA: ejemplo copiado\nMejor dicho:\nRESPUESTA: El texto final."
+        )
+        answer = await _use_case(llm, _kpis()).execute(_SCENARIO_ID, "¿Cuánto?")
+        assert answer.narrative == "El texto final."
+
+    async def test_unmarked_reply_degrades_to_no_narrative(self) -> None:
+        """An unmarked reply is one whose shape could not be confirmed.
+
+        Returning it would risk showing the director the model talking to
+        itself. A chart with no paragraph is the better failure.
+        """
+        llm = ScriptedLLM(narration="Bla bla razonamiento sin marcador.")
+        answer = await _use_case(llm, _kpis()).execute(_SCENARIO_ID, "¿Cuánto?")
+
+        assert answer.answerable is True
+        assert answer.result is not None
+        assert answer.narrative is None
+
+    async def test_empty_after_marker_degrades_to_no_narrative(self) -> None:
+        llm = ScriptedLLM(narration="RESPUESTA:   \n  ")
+        answer = await _use_case(llm, _kpis()).execute(_SCENARIO_ID, "¿Cuánto?")
         assert answer.narrative is None

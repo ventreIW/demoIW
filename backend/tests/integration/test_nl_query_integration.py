@@ -27,7 +27,8 @@ from app.main import app
 from app.ports.llm_port import ILLMPort
 
 _TRANSLATION = '{"metric": "outstanding", "group_by": "score_category", "filters": []}'
-_NARRATIVE = "El saldo vencido se concentra en la categoría alta."
+_NARRATIVE_TEXT = "El saldo vencido se concentra en la categoría alta."
+_NARRATIVE = f"RESPUESTA: {_NARRATIVE_TEXT}"
 
 
 class StubLLM(ILLMPort):
@@ -96,7 +97,7 @@ class TestAnsweredQuestion:
         assert body["answerable"] is True
         assert body["intent"]["metric"] == "outstanding"
         assert body["result"]["group_by"] == "score_category"
-        assert body["narrative"] == _NARRATIVE
+        assert body["narrative"] == _NARRATIVE_TEXT
         assert body["scenario"]["id"] == scenario_id
         assert body["scenario"]["name"]
         assert body["scored_at"]

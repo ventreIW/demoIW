@@ -206,7 +206,40 @@ class AnswerNlQuery:
             series="\n".join(f"- {p.label or 'total'}: {p.value:,.2f}" for p in result.series),
         )
         try:
-            return await self._llm.generate(prompt, model=self._model, max_tokens=300)
+            raw = await self._llm.generate(prompt, model=self._model, max_tokens=500)
         except ExternalServiceError:
             log.warning("nl_query_narration_unavailable")
             return None
+        return _final_answer(raw)
+
+
+#: Marker the narrate prompt requires before the final paragraph.
+_ANSWER_MARKER = "RESPUESTA:"
+
+
+def _final_answer(raw: str) -> str | None:
+    """Extract the prose the director should read from a reasoning model's reply.
+
+    **Found by live verification, not by any test.** The configured free-tier
+    model (``nvidia/nemotron-3-ultra-550b-a55b:free``) is a reasoning model: on
+    the first live run it returned its entire chain of thought — "We need to
+    produce a brief explanation in Spanish… Let's craft: …" — with the actual
+    sentence buried in the middle. Every stubbed test passed, because a stub
+    returns whatever prose it was given.
+
+    The prompt therefore asks for the answer after a ``RESPUESTA:`` marker and
+    this takes what follows it. Instructing a model and *verifying* it complied
+    are different things; the marker makes compliance checkable instead of
+    assumed.
+
+    Returns ``None`` when the marker is absent or nothing follows it. That is
+    deliberate: an unmarked reply is one whose shape we could not confirm, and
+    ``narrative=None`` already degrades cleanly to a chart without prose. A
+    director seeing no paragraph is better served than one reading the model
+    talking to itself.
+    """
+    if _ANSWER_MARKER not in raw:
+        log.warning("nl_query_narration_unmarked")
+        return None
+    answer = raw.rsplit(_ANSWER_MARKER, 1)[1].strip()
+    return answer or None
