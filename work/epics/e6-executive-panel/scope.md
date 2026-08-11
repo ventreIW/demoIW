@@ -178,8 +178,11 @@ propagation bug is what that costs when it slips.
 - [ ] Translation failure degrades to a working KPI view, not a blank page
 **Demo:** the full P-02 loop — dashboard → ask a question → chart + narrative + citation.
 
-**If the schedule slips, this milestone is what gets cut**, and M2 is what ships. That decision is
-cheaper made now than on 2026-08-12.
+~~**If the schedule slips, this milestone is what gets cut**, and M2 is what ships.~~
+
+**Resolved 2026-08-11 — M3 is NOT cut.** M2 landed 2026-08-07, inside the 08-09 condition, and the
+2026-08-14 demo date turned out to be movable (confirmed by Rodrigo). The cut line was built on a
+fixed date that does not exist, so it never fired. E6 runs to completion: s6.3 → s6.4 → M4.
 
 ### M4 — E2E integration checkpoint + epic close
 **Stories:** none new — verification only. **(Mandatory: E4's M4 caught a generation-layer bug no unit test saw, and E5's M4 repeated the lesson.)** · **Target:** 2026-08-13
@@ -194,8 +197,8 @@ cheaper made now than on 2026-08-12.
 ||---|---|---|---|---|---|---|
 || s6.0 | — | **done** ✓ | 2026-08-04 | 2026-08-04 | Hardened OpenRouterAdapter: missing/empty choices + ReadTimeout now raise ExternalServiceError → 502. 3 new tests, 453 total. Integration test confirms 502 path. |
 || s6.1 | Rodrigo | **done** ✓ | 2026-08-04 | 2026-08-04 | Gemba cut the composition from five repos to two — `get_raw_dataset()` already returns the DataFrames `outstanding_by_client()` consumes. 38 new tests, 450 total. Verified live at 149 ms on 120 clients; payload captured as `s6.1-payload.json` for s6.2 to type against |
-|| s6.2 | — | backlog | — | — | Unblocked. Build the TS type from `s6.1-payload.json`, not from the domain classes |
-|| s6.3 | — | backlog | — | — | Still gated on s6.0 |
+|| s6.2 | — | **done** ✓ | 2026-08-06 | 2026-08-07 | Typed from `s6.1-payload.json` as instructed — no enum-case seam bug. 4 KPI cards, 3 hand-rolled CSS charts (no new dependency), 409-unscored CTA per ADR-009, `scored_at` visible, sidebar link wired. 133/133 frontend tests, `tsc` clean. **AC3 (NFR-02 at 500 clients) unverified — no Postgres.** Retrospective 2026-08-11 |
+|| s6.3 | — | **next** | — | — | Unblocked — s6.0 hardening done, s6.1 aggregate on `main` |
 || s6.4 | — | backlog | — | — | |
 
 ## Sequencing risks
