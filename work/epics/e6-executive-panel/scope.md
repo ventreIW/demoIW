@@ -198,7 +198,7 @@ fixed date that does not exist, so it never fired. E6 runs to completion: s6.3 �
 || s6.0 | — | **done** ✓ | 2026-08-04 | 2026-08-04 | Hardened OpenRouterAdapter: missing/empty choices + ReadTimeout now raise ExternalServiceError → 502. 3 new tests, 453 total. Integration test confirms 502 path. |
 || s6.1 | Rodrigo | **done** ✓ | 2026-08-04 | 2026-08-04 | Gemba cut the composition from five repos to two — `get_raw_dataset()` already returns the DataFrames `outstanding_by_client()` consumes. 38 new tests, 450 total. Verified live at 149 ms on 120 clients; payload captured as `s6.1-payload.json` for s6.2 to type against |
 || s6.2 | — | **done** ✓ | 2026-08-06 | 2026-08-07 | Typed from `s6.1-payload.json` as instructed — no enum-case seam bug. 4 KPI cards, 3 hand-rolled CSS charts (no new dependency), 409-unscored CTA per ADR-009, `scored_at` visible, sidebar link wired. 133/133 frontend tests, `tsc` clean. **AC3 (NFR-02 at 500 clients) unverified — no Postgres.** Retrospective 2026-08-11 |
-|| s6.3 | — | **next** | — | — | Unblocked — s6.0 hardening done, s6.1 aggregate on `main` |
+|| s6.3 | Rodrigo | **done** ✓ | 2026-08-11 | 2026-08-11 | Constrained-intent NL query per ADR-008. Security is structural — `execute()` takes a `QueryIntent`, which cannot hold a non-enum string, so there is no check to forget. 92 new tests (545 total), zero spending quota. **Live-verified 9/9** on the real free-tier model incl. 3 correct refusals and an injection attempt. Live run found what no stub could: the reasoning model returned its chain of thought as the narrative — fixed with a `RESPUESTA:` marker contract. ADR-008 amended (drops `avg_days_overdue` and `limit`). **Real-Postgres E2E still open** |
 || s6.4 | — | backlog | — | — | |
 
 ## Sequencing risks

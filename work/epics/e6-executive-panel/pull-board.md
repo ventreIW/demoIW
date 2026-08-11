@@ -1,14 +1,14 @@
 # Pull Board — e6: Executive Panel
 
-Last updated: 2026-08-11
+Last updated: 2026-08-11 (s6.3 closed)
 
 | Story | Title | Owner | State | Notes |
 |---|---|---|---|---|
 | s6.0 | OpenRouter adapter hardening | — | **done** | Merged to `main` 2026-08-04. Adapter raises ExternalServiceError for missing choices and timeout. |
 | s6.1 | KPI aggregation — backend | Rodrigo | **done** | Merged to `main` 2026-08-04. Retrospective written |
 | s6.2 | Executive dashboard + segmentation — frontend | — | **done** | Merged to `main` 2026-08-07 (`13c2389`→`346e024`, fast-forward — no merge commit). Retrospective written 2026-08-11. **M2 complete.** Live E2E deferred: AC3 (NFR-02 at 500 clients) unverified, no Postgres |
-| s6.3 | NL query — backend | — | **next** | **Unblocked** — s6.0 done, s6.1 aggregate on `main` |
-| s6.4 | NL query — frontend | — | backlog | Blocked on s6.3 only — s6.2 has landed |
+| s6.3 | NL query — backend | Rodrigo | **done** | Merged to `main` 2026-08-11 (`--no-ff`). 545 tests, 9/9 live translation hit rate. ADR-008 amended. Retrospective written. **M3 backend complete** |
+| s6.4 | NL query — frontend | — | **next** | **Unblocked** — s6.2 and s6.3 both landed. Endpoint returns `answerable`, a `reason` enum and a `supported` vocabulary built from the enums, so the UI can render example questions from the API rather than hardcoding a list that would drift. `narrative` may be `null` on a *successful* answer — a designed state, render the chart without the paragraph |
 
 **WIP limit:** 2 in-progress per epic (GR-PROC-003).
 **Cut line — RESOLVED 2026-08-11: E6 continues, s6.3/s6.4 are NOT cut.**
