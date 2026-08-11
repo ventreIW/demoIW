@@ -187,7 +187,7 @@ class TestCommunicationDraftService:
         prompt = service._build_prompt(case_detail, Channel.EMAIL, Tone.FORMAL)
         assert "N/A" in prompt
 
-    @ pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_generate_calls_llm_with_correct_params(
         self,
         mock_llm_port: MockLLMPort,
@@ -209,7 +209,7 @@ class TestCommunicationDraftService:
         assert max_tokens == 512
         assert "Empresa ABC" in prompt
         assert "phone" in prompt  # channel value (lowercase)
-        assert "firm" in prompt   # tone value (lowercase)
+        assert "firm" in prompt  # tone value (lowercase)
 
     @pytest.mark.asyncio
     async def test_generate_uses_default_model_from_settings(

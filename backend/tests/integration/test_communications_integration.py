@@ -89,9 +89,7 @@ async def test_generate_communication_integration_persists_draft(
             _enrichment_mock_response(20),
             _enrichment_mock_response(20),
             _enrichment_mock_response(20),
-            _llm_mock_response(
-                "Estimado cliente, le recordamos su pago pendiente de $50,000."
-            ),
+            _llm_mock_response("Estimado cliente, le recordamos su pago pendiente de $50,000."),
         ]
     )
 
