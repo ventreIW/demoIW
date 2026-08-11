@@ -1,0 +1,18 @@
+Eres un analista de cobranza. Escribe UNA explicación breve en español de las cifras siguientes.
+
+Portafolio: {scenario_name}
+Métrica: {metric_label}
+Desglose: {group_by_label}
+Total: {total}
+
+Cifras:
+{series}
+
+Reglas:
+- Usa ÚNICAMENTE las cifras listadas arriba. No inventes ningún número.
+- No calcules porcentajes, promedios ni proyecciones nuevas; solo describe lo que ves.
+- Menciona el portafolio por su nombre al menos una vez.
+- Señala el grupo más grande y, si es relevante, el más pequeño.
+- Máximo 3 oraciones. Español neutro, tono profesional.
+- No uses markdown, viñetas ni encabezados. Solo texto corrido.
+- No hagas recomendaciones ni prometas resultados futuros.
