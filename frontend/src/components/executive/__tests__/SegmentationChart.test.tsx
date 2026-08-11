@@ -14,7 +14,11 @@ const mockBuckets: SegmentBucket[] = [
 describe('SegmentationChart', () => {
   it('renders chart title when provided', () => {
     renderWithIntl(
-      <SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" title="Test Title" />,
+      <SegmentationChart
+        buckets={mockBuckets}
+        dimension="days_overdue_bucket"
+        title="Test Title"
+      />,
       { locale: 'es' },
     )
 
@@ -22,28 +26,25 @@ describe('SegmentationChart', () => {
   })
 
   it('renders dimension label from i18n', () => {
-    renderWithIntl(
-      <SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />,
-      { locale: 'es' },
-    )
+    renderWithIntl(<SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />, {
+      locale: 'es',
+    })
 
     expect(screen.getByText('Días de atraso')).toBeDefined()
   })
 
   it('renders dimension label in EN', () => {
-    renderWithIntl(
-      <SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />,
-      { locale: 'en' },
-    )
+    renderWithIntl(<SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />, {
+      locale: 'en',
+    })
 
     expect(screen.getByText('Days overdue')).toBeDefined()
   })
 
   it('renders all bucket labels', () => {
-    renderWithIntl(
-      <SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />,
-      { locale: 'es' },
-    )
+    renderWithIntl(<SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />, {
+      locale: 'es',
+    })
 
     expect(screen.getByText('0-30')).toBeDefined()
     expect(screen.getByText('31-60')).toBeDefined()
@@ -52,10 +53,9 @@ describe('SegmentationChart', () => {
   })
 
   it('renders client counts and outstanding values', () => {
-    renderWithIntl(
-      <SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />,
-      { locale: 'es' },
-    )
+    renderWithIntl(<SegmentationChart buckets={mockBuckets} dimension="days_overdue_bucket" />, {
+      locale: 'es',
+    })
 
     // First bucket: 44 clientes · $170,465
     // Client count + label share a span with the value, so match with a regex
@@ -111,10 +111,9 @@ describe('SegmentationChart', () => {
   })
 
   it('handles empty buckets array', () => {
-    renderWithIntl(
-      <SegmentationChart buckets={[]} dimension="days_overdue_bucket" />,
-      { locale: 'es' },
-    )
+    renderWithIntl(<SegmentationChart buckets={[]} dimension="days_overdue_bucket" />, {
+      locale: 'es',
+    })
 
     // Should render without errors, just empty space
     expect(screen.getByText('Días de atraso')).toBeDefined()
@@ -123,13 +122,17 @@ describe('SegmentationChart', () => {
   it('works with amount_range dimension', () => {
     const amountBuckets: SegmentBucket[] = [
       { label: '$0 – $2,812', client_count: 30, outstanding: 0, expected_recoverable: 0 },
-      { label: '> $24,648', client_count: 30, outstanding: 929947.75, expected_recoverable: 538267.958143 },
+      {
+        label: '> $24,648',
+        client_count: 30,
+        outstanding: 929947.75,
+        expected_recoverable: 538267.958143,
+      },
     ]
 
-    renderWithIntl(
-      <SegmentationChart buckets={amountBuckets} dimension="amount_range" />,
-      { locale: 'en' },
-    )
+    renderWithIntl(<SegmentationChart buckets={amountBuckets} dimension="amount_range" />, {
+      locale: 'en',
+    })
 
     expect(screen.getByText('Amount range')).toBeDefined()
     expect(screen.getByText('$0 – $2,812')).toBeDefined()
@@ -138,14 +141,23 @@ describe('SegmentationChart', () => {
 
   it('works with score_category dimension', () => {
     const scoreBuckets: SegmentBucket[] = [
-      { label: 'high', client_count: 43, outstanding: 655498.07, expected_recoverable: 549135.107938 },
-      { label: 'low', client_count: 41, outstanding: 620270.84, expected_recoverable: 152610.684131 },
+      {
+        label: 'high',
+        client_count: 43,
+        outstanding: 655498.07,
+        expected_recoverable: 549135.107938,
+      },
+      {
+        label: 'low',
+        client_count: 41,
+        outstanding: 620270.84,
+        expected_recoverable: 152610.684131,
+      },
     ]
 
-    renderWithIntl(
-      <SegmentationChart buckets={scoreBuckets} dimension="score_category" />,
-      { locale: 'es' },
-    )
+    renderWithIntl(<SegmentationChart buckets={scoreBuckets} dimension="score_category" />, {
+      locale: 'es',
+    })
 
     expect(screen.getByText('Categoría de score')).toBeDefined()
     expect(screen.getByText('high')).toBeDefined()

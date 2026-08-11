@@ -74,11 +74,7 @@ export default function ExecutiveDashboard({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="totalOverdue"
-          value={kpis.total_outstanding}
-          format="currency"
-        />
+        <KpiCard label="totalOverdue" value={kpis.total_outstanding} format="currency" />
         <KpiCard
           label="expectedRecoverable"
           value={kpis.total_expected_recoverable}
@@ -103,14 +99,8 @@ export default function ExecutiveDashboard({
           buckets={kpis.segmentation.days_overdue_bucket}
           dimension="days_overdue_bucket"
         />
-        <SegmentationChart
-          buckets={kpis.segmentation.amount_range}
-          dimension="amount_range"
-        />
-        <SegmentationChart
-          buckets={kpis.segmentation.score_category}
-          dimension="score_category"
-        />
+        <SegmentationChart buckets={kpis.segmentation.amount_range} dimension="amount_range" />
+        <SegmentationChart buckets={kpis.segmentation.score_category} dimension="score_category" />
       </div>
     </div>
   )

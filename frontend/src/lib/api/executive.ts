@@ -5,7 +5,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 /** Error raised when scenario has no persisted scores (409) */
 export class PortfolioNotScoredError extends Error {
   constructor(scenarioId: string) {
-    super(`Scenario ${scenarioId} has no persisted scores. POST /api/v1/scenarios/${scenarioId}/score first.`)
+    super(
+      `Scenario ${scenarioId} has no persisted scores. POST /api/v1/scenarios/${scenarioId}/score first.`,
+    )
     this.name = 'PortfolioNotScoredError'
   }
 }

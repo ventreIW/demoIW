@@ -49,23 +49,13 @@ export default function KpiCard({
   const t = useTranslations('executivePage.kpi')
   const formatter = getFormatter(locale, format)
 
-  const formattedValue =
-    format === 'percentage' ? formatter.format(value) : formatter.format(value)
+  const formattedValue = format === 'percentage' ? formatter.format(value) : formatter.format(value)
 
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-slate-200 bg-white p-4 shadow-sm',
-        className,
-      )}
-    >
+    <div className={cn('rounded-lg border border-slate-200 bg-white p-4 shadow-sm', className)}>
       <p className="text-sm text-slate-500">{t(label as any)}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900 tabular-nums">
-        {formattedValue}
-      </p>
-      {subLabel && (
-        <p className="mt-1 text-xs text-slate-400">{subLabel}</p>
-      )}
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{formattedValue}</p>
+      {subLabel && <p className="mt-1 text-xs text-slate-400">{subLabel}</p>}
     </div>
   )
 }
