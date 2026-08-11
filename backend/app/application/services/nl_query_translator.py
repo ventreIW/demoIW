@@ -24,6 +24,7 @@ import json
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 from app.config import settings
 from app.domain.value_objects.query_intent import QueryIntent
@@ -116,7 +117,7 @@ class NlQueryTranslator:
                 "the model produced an intent outside the supported vocabulary"
             ) from exc
 
-    def _extract_json(self, raw: str) -> dict:
+    def _extract_json(self, raw: str) -> dict[str, Any]:
         """Pull the JSON object out of a reply that may be wrapped in prose."""
         match = _JSON_BLOCK.search(raw or "")
         if match is None:
