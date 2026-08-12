@@ -22,7 +22,8 @@ const answerableResponse: NlQueryResponse = {
       { label: 'low', value: 578445.46 },
     ],
   },
-  narrative: 'De los $1,835,178 vencidos en Retail Q3 (manual), $655,498 corresponden a clientes de score alto.',
+  narrative:
+    'De los $1,835,178 vencidos en Retail Q3 (manual), $655,498 corresponden a clientes de score alto.',
   reason: null,
   supported: null,
 }
@@ -160,11 +161,11 @@ describe('NlQueryPanel', () => {
   })
 
   it('disables the submit button while a request is in flight', async () => {
-    let resolveFn: (v: NlQueryResponse) => void
+    let resolveRequest!: (v: NlQueryResponse) => void
     mockedAskQuestion.mockImplementation(
       () =>
         new Promise<NlQueryResponse>((resolve) => {
-          resolveFn = resolve
+          resolveRequest = resolve
         }),
     )
     renderWithIntl(<NlQueryPanel scenarioId={scenarioId} />, { locale: 'es' })
@@ -173,5 +174,7 @@ describe('NlQueryPanel', () => {
 
     const button = screen.getByRole('button', { name: /Preguntar/ }) as HTMLButtonElement
     await waitFor(() => expect(button.disabled).toBe(true))
+    // Settle the pending request so no unhandled promise remains.
+    resolveRequest(answerableResponse)
   })
 })

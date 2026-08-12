@@ -3,10 +3,7 @@
  */
 import type { ScenarioRef } from './executive'
 
-export type RefusalReason =
-  | 'out_of_vocabulary'
-  | 'translation_failed'
-  | 'translation_unavailable'
+export type RefusalReason = 'out_of_vocabulary' | 'translation_failed' | 'translation_unavailable'
 
 export interface SeriesPoint {
   label: string
