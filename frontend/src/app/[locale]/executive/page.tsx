@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import MainLayout from '@/components/layout/MainLayout'
 import ExecutiveDashboard from '@/components/executive/ExecutiveDashboard'
+import NlQueryPanel from '@/components/executive/NlQueryPanel'
 import { fetchKpis, PortfolioNotScoredError } from '@/lib/api/executive'
 import type { PortfolioKpis } from '@/types/executive'
 
@@ -56,7 +57,10 @@ export default async function ExecutivePage() {
             {t('noActiveScenario')}
           </div>
         ) : (
-          <ExecutiveDashboard kpis={kpis} />
+          <>
+            <ExecutiveDashboard kpis={kpis} />
+            {activeId && <NlQueryPanel scenarioId={activeId} />}
+          </>
         )}
       </div>
     </MainLayout>
