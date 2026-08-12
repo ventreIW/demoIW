@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchKpis, PortfolioNotScoredError, ScenarioNotFoundError } from '../executive'
+import {
+  fetchKpis,
+  askQuestion,
+  PortfolioNotScoredError,
+  ScenarioNotFoundError,
+} from '../executive'
 import type { PortfolioKpis } from '@/types/executive'
+import type { NlQueryResponse } from '@/types/nlQuery'
 
 const API_BASE = 'http://localhost:8000'
 
@@ -180,5 +186,95 @@ describe('fetchKpis', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(fetchKpis('bad-id')).rejects.toThrow('Invalid scenario ID, Malformed request')
+  })
+})
+
+const mockNlResponse: NlQueryResponse = {
+  answerable: true,
+  question: '¿Cuánto está vencido por categoría de score?',
+  scenario: {
+    id: 'aaaaaaaa-0000-4000-8000-000000000001',
+    name: 'Retail Q3 (manual)',
+    sector: 'retail',
+  },
+  scored_at: '2026-08-04T17:04:57.823152+00:00',
+  intent: { metric: 'outstanding', group_by: 'score_category', filters: [] },
+  result: {
+    metric: 'outstanding',
+    group_by: 'score_category',
+    total: 1835177.64,
+    series: [
+      { label: 'high', value: 655498.07 },
+      { label: 'medium', value: 601234.11 },
+      { label: 'low', value: 578445.46 },
+    ],
+  },
+  narrative: 'De los $1,835,178 vencidos en Retail Q3 (manual)…',
+  reason: null,
+  supported: null,
+}
+
+describe('askQuestion', () => {
+  const scenarioId = 'aaaaaaaa-0000-4000-8000-000000000001'
+
+  it('POSTs the question to /api/v1/scenarios/{id}/query and returns the typed response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockNlResponse),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const question = '¿Cuánto está vencido por categoría de score?'
+    const result = await askQuestion(scenarioId, question)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_BASE}/api/v1/scenarios/${scenarioId}/query`,
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      }),
+    )
+    expect(result).toEqual(mockNlResponse)
+    expect(result.answerable).toBe(true)
+    expect(result.result?.series).toHaveLength(3)
+  })
+
+  it('throws PortfolioNotScoredError on 409', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: () =>
+        Promise.resolve({
+          detail:
+            'Scenario aaaaaaaa-0000-4000-8000-000000000001 has no persisted scores. POST /api/v1/scenarios/aaaaaaaa-0000-4000-8000-000000000001/score first.',
+        }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(askQuestion(scenarioId, '¿Algo?')).rejects.toThrow(PortfolioNotScoredError)
+  })
+
+  it('throws ScenarioNotFoundError on 404', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: () => Promise.resolve({ detail: 'Scenario with id=unknown not found' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(askQuestion('unknown', '¿Algo?')).rejects.toThrow(ScenarioNotFoundError)
+  })
+
+  it('throws generic error with backend detail on other failures', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: () => Promise.resolve({ detail: 'Translation unavailable' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(askQuestion(scenarioId, '¿Algo?')).rejects.toThrow('Translation unavailable')
   })
 })
