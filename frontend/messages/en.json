@@ -194,6 +194,25 @@
       "expectedRecoverable": "Expected recoverable"
     },
     "scoredAt": "Scored on",
+    "query": {
+      "title": "Ask about this portfolio",
+      "placeholder": "Type a question in Spanish…",
+      "submit": "Ask",
+      "total": "Total",
+      "loading": "Answering…",
+      "noData": "No data to display.",
+      "cannotAnswer": "I cannot answer that question.",
+      "reason": {
+        "out_of_vocabulary": "The question is outside the vocabulary I support.",
+        "translation_failed": "The question could not be processed.",
+        "translation_unavailable": "The translation service is temporarily unavailable."
+      },
+      "examples": "You can ask:",
+      "groupBy": "grouped by",
+      "retry": "Try again",
+      "citation": "Portfolio",
+      "error": "Something went wrong. Please try again."
+    },
     "loading": "Loading executive panel…",
     "noActiveScenario": "No active scenario. Select one in Scenarios.",
     "emptyState": {
