@@ -194,6 +194,25 @@
       "expectedRecoverable": "Recuperable esperado"
     },
     "scoredAt": "Calculado el",
+    "query": {
+      "title": "Pregunta sobre esta cartera",
+      "placeholder": "Escribe una pregunta en español…",
+      "submit": "Preguntar",
+      "total": "Total",
+      "loading": "Respondiendo…",
+      "noData": "No hay datos para mostrar.",
+      "cannotAnswer": "No puedo responder esa pregunta.",
+      "reason": {
+        "out_of_vocabulary": "La pregunta está fuera del vocabulario que soporto.",
+        "translation_failed": "No se pudo procesar la pregunta.",
+        "translation_unavailable": "El servicio de traducción no está disponible temporalmente."
+      },
+      "examples": "Puedes preguntar por:",
+      "groupBy": "agrupado por",
+      "retry": "Reintentar",
+      "citation": "Cartera",
+      "error": "Algo salió mal. Inténtalo de nuevo."
+    },
     "loading": "Cargando panel ejecutivo…",
     "noActiveScenario": "No hay un escenario activo. Selecciona uno en Escenarios.",
     "emptyState": {
