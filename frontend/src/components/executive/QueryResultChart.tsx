@@ -57,7 +57,7 @@ export default function QueryResultChart({ result }: QueryResultChartProps) {
             </div>
           )
         })}
-        {result.series.length === 0 && <p className="text-sm text-slate-400">{t('noData')}</p>}
+        {result.series.length === 0 && <p className="text-sm text-slate-500">{t('noData')}</p>}
       </div>
     </div>
   )

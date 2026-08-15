@@ -55,7 +55,7 @@ export default function KpiCard({
     <div className={cn('rounded-lg border border-slate-200 bg-white p-4 shadow-sm', className)}>
       <p className="text-sm text-slate-500">{t(label as any)}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{formattedValue}</p>
-      {subLabel && <p className="mt-1 text-xs text-slate-400">{subLabel}</p>}
+      {subLabel && <p className="mt-1 text-xs text-slate-500">{subLabel}</p>}
     </div>
   )
 }
