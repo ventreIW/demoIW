@@ -105,7 +105,7 @@ export default function GenerateScenarioForm() {
           </Select>
         </div>
 
-        {/* Número de clientes */}
+        {/* Client count field */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="clientCount">
             {t('clientCount')}
