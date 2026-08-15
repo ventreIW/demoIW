@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+  Design tokens (S7.2 — a11y root cause fix).
+  The UI primitives (button/input/select) reference Tailwind tokens (bg-primary,
+  text-primary-foreground, ring-ring/50, border-ring, bg-muted, ...). These were
+  previously undefined (empty theme.extend + no CSS vars), so primary buttons rendered
+  transparent and focus rings were invisible. Defining the tokens here and wiring them
+  in tailwind.config.ts restores the primitives with WCAG 2.1 AA contrast.
+*/
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 215 34% 29%; /* slate-700 — dark neutral CTA, matches existing demo aesthetic */
+  --primary-foreground: 0 0% 98%;
+  --secondary: 215 25% 94%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 215 25% 94%;
+  --muted-foreground: 215 16% 42%; /* >= 4.5:1 on white */
+  --accent: 215 25% 94%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 72% 45%; /* dark red, >= 4.5:1 on white */
+  --border: 214 24% 82%;
+  --input: 214 24% 82%;
+  --ring: 215 34% 40%; /* visible focus ring */
+}
+
+/* Global focus-visible fallback — guarantees a visible keyboard focus indicator
+   even on elements that don't opt into the ring utilities. */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
