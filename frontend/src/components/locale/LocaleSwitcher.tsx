@@ -12,7 +12,7 @@ export default function LocaleSwitcher() {
   return (
     <button
       onClick={() => router.replace(pathname, { locale: next })}
-      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+      className="text-xs font-medium text-slate-500 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
       aria-label={`Switch to ${next === 'en' ? 'English' : 'Spanish'}`}
     >
       {locale === 'es' ? 'EN' : 'ES'}

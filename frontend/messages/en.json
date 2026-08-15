@@ -2,7 +2,8 @@
   "sidebar": {
     "operations": "Operations",
     "executive": "Executive",
-    "scenarios": "Scenarios"
+    "scenarios": "Scenarios",
+    "navLabel": "Main navigation"
   },
   "scenario": {
     "status": {
@@ -32,7 +33,9 @@
   },
   "app": {
     "title": "demoIW",
-    "description": "Industrial wastewater treatment decision support"
+    "description": "Industrial wastewater treatment decision support",
+    "skipToContent": "Skip to main content",
+    "mainContentLabel": "Main content"
   },
   "locale": {
     "switchTo": "ES"
