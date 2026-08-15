@@ -70,7 +70,7 @@ export default function CaseTable({ cases }: CaseTableProps) {
         <tbody className="divide-y divide-slate-100">
           {cases.map((row) => (
             <tr key={row.client_id} className="hover:bg-slate-50">
-              <td className="px-4 py-3 tabular-nums text-slate-400">{row.rank}</td>
+              <td className="px-4 py-3 tabular-nums text-slate-500">{row.rank}</td>
               <td className="px-4 py-3 font-medium text-slate-900">
                 <Link
                   href={`/${locale}/cases/${row.client_id}`}

@@ -119,7 +119,7 @@ export default function GenerateScenarioForm() {
             onChange={(e) => setClientCount(Number(e.target.value))}
             disabled={generating}
           />
-          <p className="text-xs text-slate-400">{t('clientCountHelp', { min: 200, max: 500 })}</p>
+          <p className="text-xs text-slate-500">{t('clientCountHelp', { min: 200, max: 500 })}</p>
         </div>
 
         {/* Facturas por cliente */}
@@ -136,7 +136,7 @@ export default function GenerateScenarioForm() {
             onChange={(e) => setInvoiceVolume(Number(e.target.value))}
             disabled={generating}
           />
-          <p className="text-xs text-slate-400">{t('invoiceVolumeHelp', { min: 1, max: 10 })}</p>
+          <p className="text-xs text-slate-500">{t('invoiceVolumeHelp', { min: 1, max: 10 })}</p>
         </div>
 
         {/* Semilla */}
@@ -155,7 +155,7 @@ export default function GenerateScenarioForm() {
             }}
             disabled={generating}
           />
-          <p className="text-xs text-slate-400">{t('seedHelp')}</p>
+          <p className="text-xs text-slate-500">{t('seedHelp')}</p>
         </div>
 
         {/* Submit */}
