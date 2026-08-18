@@ -33,9 +33,11 @@
   },
   "app": {
     "title": "demoIW",
-    "description": "Industrial wastewater treatment decision support",
+    "description": "Gestión inteligente de cuentas por cobrar y cobranza",
     "skipToContent": "Saltar al contenido principal",
-    "mainContentLabel": "Contenido principal"
+    "mainContentLabel": "Contenido principal",
+    "homeTitle": "Bienvenido a demoIW",
+    "homeSubtitle": "Gestión integral de cobranza: prioriza, contacta y mide la recuperación."
   },
   "locale": {
     "switchTo": "EN"
@@ -224,5 +226,10 @@
       "cta": "Calificar este escenario"
     },
     "errorLoading": "Error al cargar el panel ejecutivo"
+  },
+  "offline": {
+    "title": "Sin conexión",
+    "body": "No hay conexión a internet. La aplicación se recuperará automáticamente cuando vuelva la red.",
+    "retry": "Reintentar"
   }
 }
