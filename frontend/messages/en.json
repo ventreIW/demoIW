@@ -35,7 +35,9 @@
     "title": "demoIW",
     "description": "Intelligent accounts receivable and collections management",
     "skipToContent": "Skip to main content",
-    "mainContentLabel": "Main content"
+    "mainContentLabel": "Main content",
+    "homeTitle": "Welcome to demoIW",
+    "homeSubtitle": "End-to-end collections management: prioritize, contact, and measure recovery."
   },
   "locale": {
     "switchTo": "ES"
@@ -224,5 +226,10 @@
       "cta": "Score this scenario"
     },
     "errorLoading": "Failed to load executive panel"
+  },
+  "offline": {
+    "title": "You are offline",
+    "body": "There is no internet connection. The app will recover automatically once the network returns.",
+    "retry": "Retry"
   }
 }
