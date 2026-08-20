@@ -1,6 +1,6 @@
 # E7 — Demo Readiness scope
 
-**Status:** All four stories complete (s7.1–s7.4) — epic close pending
+**Status:** **CLOSED 2026-08-20** — 4 of 4 stories delivered, all success criteria verified. See `retrospective.md`.
 
 ## Stories
 
