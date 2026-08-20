@@ -32,3 +32,27 @@ Done when: 1. `npm run build` exits 0 from `frontend/`.
            4. 151/151 frontend tests still pass (no test weakened or deleted).
            5. No `eslint-disable`, no `@ts-ignore`, and no rule downgraded in
               `eslint.config.mjs` — each `any` is replaced with a real type.
+
+TRIAGE:
+  Bug Type:    Regression
+  Severity:    S1-High
+  Origin:      Code
+  Qualifier:   Incorrect
+
+  Rationale:
+  - Regression, not latent defect. `git log --diff-filter=A` places 8 of the 11 errors in
+    `a717c42` (s6.2, 2026-08-07) and 3 in `1ff30fe` (s7.2, 2026-08-14). The production build
+    has been red for 13 days and no story since has been able to produce a bundle.
+  - S1 not S0: `next dev` and both test suites are unaffected (151/151 frontend tests pass),
+    so the demo is still runnable in dev. It is S1 rather than S2 because E7's entire purpose
+    is demo readiness and "no production build" contradicts the epic's done-criteria.
+  - Origin=Code: `eslint.config.mjs` is correct and unchanged; the source violates it. Nothing
+    is wrong with the environment or the configuration.
+  - Qualifier=Incorrect is the dominant half, though the set is mixed: 5 errors are `any`
+    type-lies (Incorrect — a declared type that does not describe the data) and 6 are unused
+    bindings (Extraneous). The Incorrect subset is the consequential one: it sits in shipped
+    components (`KpiCard.tsx`, `SegmentationChart.tsx`), and it is the reason s6.2 parked the
+    errors rather than sweeping them — replacing `any` requires real typing decisions.
+
+  Jira fields: not set — no backlog adapter configured (`.raise/backlog.yaml` absent).
+                Run rai-backlog-setup and add custom_fields.Bug to enable.
