@@ -4,6 +4,7 @@ import { kpisFixture } from '@/test-utils/kpis-fixture'
 import { caseFixture, secondCaseFixture } from '@/test-utils/prioritized-fixture'
 import { caseDetailFixture } from '@/test-utils/case-detail-fixture'
 import CaseTable from '@/components/cases/CaseTable'
+import CaseDetailView from '@/components/cases/CaseDetail'
 import KpiCard from '@/components/executive/KpiCard'
 import ExecutiveDashboard from '@/components/executive/ExecutiveDashboard'
 import LocaleSwitcher from '@/components/locale/LocaleSwitcher'
@@ -46,6 +47,13 @@ describe('a11y scan — WCAG 2.1 AA semantic rules (jsdom)', () => {
       <CaseTable cases={[caseFixture, secondCaseFixture]} />,
       { locale: 'es' },
     )
+    expect(r.violations).toEqual([])
+  })
+
+  // caseDetailFixture was imported by s7.2 but never scanned — CaseDetail is a primary
+  // operator surface, so the omission left a real gap in the "9 components" claim.
+  it('CaseDetail — 0 AA violations', async () => {
+    const r = await runAxeOn(<CaseDetailView detail={caseDetailFixture} />, { locale: 'es' })
     expect(r.violations).toEqual([])
   })
 

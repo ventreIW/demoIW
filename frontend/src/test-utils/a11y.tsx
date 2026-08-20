@@ -22,7 +22,8 @@ export async function runAxeOn(
   ui: ReactElement,
   options: { locale?: string } = {},
 ): Promise<A11yResult> {
-  const { container } = renderWithIntl(ui, { locale: options.locale })
+  // Rendered for its side effect only: axe.run targets `document`, not the container.
+  renderWithIntl(ui, { locale: options.locale })
 
   // Ensure document-level attributes present in the real root layout
   // are available to axe-core (jsdom renders without these by default).
