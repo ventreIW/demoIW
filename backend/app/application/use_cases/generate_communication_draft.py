@@ -143,8 +143,12 @@ class GenerateCommunicationDraft:
             # that issued the call, so the record states what was actually used rather
             # than what the caller believed was configured (BUG-08).
             operator_id=request.operator_id or settings.DEFAULT_OPERATOR_ID,
-            model_used=self._draft_service.model,
-            prompt_version=self._draft_service.prompt_version,
+            # `or None` is load-bearing: MODEL_COMMUNICATIONS defaults to "" when no .env
+            # is present, and an empty string in an audit column looks like a recorded
+            # value while carrying no information. Unknown provenance must read as unknown.
+            # Caught by CI, which has no .env — the local environment masked it.
+            model_used=self._draft_service.model or None,
+            prompt_version=self._draft_service.prompt_version or None,
             sent_at=None,
         )
         persisted = await self._communication_repo.add(communication)

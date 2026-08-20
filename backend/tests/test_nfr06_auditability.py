@@ -12,13 +12,19 @@ reached project close unimplemented (BUG-08). This is that test.
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
 from app.container import get_llm_port
 from app.main import app
 from tests.test_e2e_demo_flow import GENERATION, _ScriptedLLM
 
+#: Tests must not depend on whether the developer happens to have a .env. CI does not, so
+#: MODEL_COMMUNICATIONS is "" there — which is how the blank-provenance defect was found.
+TEST_MODEL = "test/communications-model"
+
 
 @pytest.fixture
-def _scripted():
+def _scripted(monkeypatch):
+    monkeypatch.setattr(settings, "MODEL_COMMUNICATIONS", TEST_MODEL)
     app.dependency_overrides[get_llm_port] = lambda: _ScriptedLLM()
     yield
     app.dependency_overrides.pop(get_llm_port, None)
@@ -120,8 +126,6 @@ async def test_recorded_model_is_the_model_actually_configured(
     client: AsyncClient, _scripted
 ) -> None:
     """The recorded model must come from the service that used it, not a hardcoded string."""
-    from app.config import settings
-
     scenario_id, client_id = await _case_ready(client)
     drafted = await client.post(
         f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications",
@@ -129,7 +133,35 @@ async def test_recorded_model_is_the_model_actually_configured(
     )
     assert drafted.status_code == 201, drafted.text[:300]
 
-    assert drafted.json()["model_used"] == settings.MODEL_COMMUNICATIONS, (
+    assert drafted.json()["model_used"] == TEST_MODEL, (
         "model_used does not match the configured communications model — it is being "
         "recorded from somewhere other than the service that made the call"
     )
+
+
+@pytest.mark.anyio
+async def test_unconfigured_model_records_unknown_not_blank(
+    client: AsyncClient, monkeypatch
+) -> None:
+    """An unset model must record NULL, never an empty string.
+
+    MODEL_COMMUNICATIONS defaults to "" when no .env is present — the state CI runs in. An
+    empty string in an audit column occupies the field while carrying no information, which
+    is the "invented provenance" failure this whole bug exists to prevent, in its quietest
+    form. Unknown must read as unknown.
+    """
+    monkeypatch.setattr(settings, "MODEL_COMMUNICATIONS", "")
+    app.dependency_overrides[get_llm_port] = lambda: _ScriptedLLM()
+    try:
+        scenario_id, client_id = await _case_ready(client)
+        drafted = await client.post(
+            f"/api/v1/scenarios/{scenario_id}/clients/{client_id}/communications",
+            json={"channel": "email", "tone": "formal"},
+        )
+        assert drafted.status_code == 201, drafted.text[:300]
+        assert drafted.json()["model_used"] is None, (
+            f"an unconfigured model recorded {drafted.json()['model_used']!r} — "
+            "a blank string in an audit column looks like a recorded value"
+        )
+    finally:
+        app.dependency_overrides.pop(get_llm_port, None)
