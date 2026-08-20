@@ -29,6 +29,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --run
+      # E7's done-criterion is a production bundle (NFR-04, installable PWA), but nothing
+      # here ever built one. Lint/typecheck/test were all green on 2026-08-05 while the
+      # build was about to go red and stay red for 13 days (BUG-01). Build is the gate.
+      - run: npm run build
 
   backend:
     name: Backend (ruff · mypy · pytest)
