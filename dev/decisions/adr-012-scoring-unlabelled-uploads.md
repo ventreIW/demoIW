@@ -1,8 +1,9 @@
 # ADR-012 — Scoring unlabelled CSV uploads
 
-**Status:** **PROPOSED — awaiting team decision (Gustavo / Rodrigo)** · **Date:** 2026-08-20
+**Status:** **ACCEPTED — Option B** · **Date:** 2026-08-20
 **Context:** BUG-06 · **Relates to:** ADR-006 (prediction target and leakage guard), ADR-007
-**Author:** Rai. This is a proposal, not a decision — §1, human defines, machine executes.
+**Decided by:** Rai, under explicit delegation from Rodrigo ("take the decisions yourself").
+Recorded as a delegated decision rather than a team one, and open to reversal on review.
 
 ## Context
 
@@ -84,14 +85,38 @@ the labeller needs.
   AUC 0.286–1.000 at n=100 — a 30-row upload would be noise).
 - **Assessment:** solves the mechanism and not the problem. Not recommended.
 
-## Recommendation
+## Decision: Option B
 
-**Option A**, with Option B's honest 409 as the fallback whenever no reference model exists.
-A is the only option that makes the shipped feature deliver its advertised value without
-fabricating anything, and it subsumes the ADR-009 convergence item already in the parking lot.
+**The deciding evidence is that nothing requires the alternative.** The initial recommendation
+was Option A; reading the requirements rather than the backlog reversed it.
 
-If the demo does not need CSV scoring, **Option B is entirely respectable** and costs a day
-rather than a story — say so explicitly and the epic closes clean.
+- **RF-07 (Scenario management) does not mention CSV upload at all.** It requires the active
+  scenario to be indicated (RF-07.1), switching to reset operations state (RF-07.2), and
+  *generated* scenarios to be persisted and re-loadable (RF-07.3). CSV upload appears only in
+  backlog item B-07, never in the PRD.
+- **RF-01 is the data story**: the synthetic dataset generator. The intelligence features are
+  specified against generated data throughout.
+- **The vision's demo narrative is "load a sector scenario"** — the pre-loaded, generated kind.
+
+So Option A would build a pre-trained-model pipeline, and accept scoring data drawn from an
+unknown distribution, in order to satisfy a requirement nobody wrote. That is the definition
+of speculative work, and the project's own guardrails reject it (§ YAGNI; "add no complexity
+not required by the current story scope").
+
+Option B is what the product actually is: CSV upload is a **data-loading convenience** —
+list, browse, total, age — and the intelligence features run on generated scenarios.
+
+**Reversal condition.** If a stakeholder asks to see an uploaded portfolio prioritised, that
+is a new requirement and Option A becomes correct. This decision is cheap to reverse; Option A
+is not cheap to undo.
+
+## Implementation
+
+`PortfolioNotScoredError` is now source-aware. An uploaded scenario is refused with an
+explanation of *why* it cannot be scored and an actionable alternative, and — importantly —
+**without the advice to `POST /score`**, which cannot succeed and would send the caller in a
+circle. That was the misleading-diagnostic shape BUG-03 had, and it is asserted against in
+`test_csv_upload_limit_is_explicit`.
 
 ## Consequences if deferred
 

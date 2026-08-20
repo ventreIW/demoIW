@@ -55,11 +55,13 @@ async def fetch_portfolio_kpis(
 
     scores = await score_repo.get_by_scenario(scenario_id)
     if not scores:
-        raise PortfolioNotScoredError(str(scenario_id))
+        # Pass the source so an uploaded scenario is refused with a reason that is true
+        # of it, rather than with advice that cannot work (BUG-06).
+        raise PortfolioNotScoredError(str(scenario_id), scenario.source)
 
     dataset = await scenario_repo.get_raw_dataset(scenario_id)
     if dataset is None:
-        raise PortfolioNotScoredError(str(scenario_id))
+        raise PortfolioNotScoredError(str(scenario_id), scenario.source)
 
     invoices, payments = dataset.invoices, dataset.payments
     outstanding = outstanding_by_client(invoices, payments)

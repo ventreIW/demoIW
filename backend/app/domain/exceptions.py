@@ -27,12 +27,32 @@ class PortfolioNotScoredError(Exception):
     (s6.3) is the second caller of the same aggregate and must be refused identically.
     """
 
-    def __init__(self, scenario_id: str) -> None:
-        super().__init__(
-            f"Scenario {scenario_id} has no persisted scores. "
-            f"POST /api/v1/scenarios/{scenario_id}/score first."
-        )
+    #: Scenario.source value written by the CSV upload path.
+    CSV_UPLOAD_SOURCE = "csv_upload"
+
+    def __init__(self, scenario_id: str, scenario_source: str | None = None) -> None:
+        if scenario_source == self.CSV_UPLOAD_SOURCE:
+            # Telling the caller to POST /score would be advice that cannot work: an
+            # uploaded CSV carries no payment history, so every client is assigned the
+            # same payment pattern, the outcome labeller draws a single label class and
+            # training aborts. Saying "score it first" would send them in a circle
+            # (BUG-06, ADR-012).
+            message = (
+                f"Scenario {scenario_id} was created from a CSV upload and cannot be "
+                f"scored. Scoring is trained per scenario on simulated collection "
+                f"outcomes, which require the payment history a generated scenario has "
+                f"and an uploaded file does not (ADR-006). Uploaded portfolios can be "
+                f"listed, browsed and totalled, but not prioritised or scored. Use a "
+                f"generated scenario for the intelligence features."
+            )
+        else:
+            message = (
+                f"Scenario {scenario_id} has no persisted scores. "
+                f"POST /api/v1/scenarios/{scenario_id}/score first."
+            )
+        super().__init__(message)
         self.scenario_id = scenario_id
+        self.scenario_source = scenario_source
 
 
 class InsufficientTrainingDataError(Exception):

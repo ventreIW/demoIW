@@ -449,9 +449,23 @@ async def test_csv_upload_limit_is_explicit(client: AsyncClient) -> None:
     kpis = await client.get(f"/api/v1/scenarios/{scenario_id}/kpis")
     assert kpis.status_code == 409, (
         f"BUG-06 boundary moved: /kpis on an uploaded scenario returned "
-        f"{kpis.status_code}, expected 409 (no persisted scores). "
-        f"If BUG-06 is fixed, widen this test to drive the full path on CSV data."
+        f"{kpis.status_code}, expected 409. "
+        f"If uploads become scorable, widen this test to drive the full path on CSV data."
     )
+
+    # ADR-012 accepted Option B: uploads are a data-loading convenience, not a scoring path.
+    # The refusal must therefore explain itself and must NOT tell the caller to score the
+    # scenario, which cannot work — that is the misleading-diagnostic shape BUG-03 had.
+    detail = kpis.json()["detail"]
+    assert (
+        "CSV upload" in detail
+    ), f"the refusal does not say why an uploaded scenario cannot be scored: {detail!r}"
+    assert (
+        "/score" not in detail
+    ), f"the refusal advises scoring an uploaded scenario, which cannot succeed: {detail!r}"
+    assert (
+        "generated scenario" in detail
+    ), f"the refusal offers no actionable alternative: {detail!r}"
 
 
 # ---------------------------------------------------------------------------
