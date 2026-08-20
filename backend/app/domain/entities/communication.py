@@ -16,4 +16,11 @@ class Communication(BaseModel):
     status: CommunicationStatus
     created_at: datetime
 
+    #: NFR-06 provenance. All optional: a record written before BUG-08, or one whose
+    #: operator is unknown, must be able to say so rather than carry an invented value.
+    operator_id: str | None = None
+    model_used: str | None = None
+    prompt_version: str | None = None
+    sent_at: datetime | None = None
+
     model_config = {"frozen": True}

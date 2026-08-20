@@ -89,6 +89,12 @@ def mock_communication_repo() -> MagicMock:
 def mock_draft_service() -> MagicMock:
     service = AsyncMock()
     service.generate = AsyncMock(return_value="Estimado cliente, le recordamos su saldo pendiente.")
+    # NFR-06 provenance (BUG-08): the use case reads these off the service so the record
+    # states what was actually used. They are plain properties, not coroutines — a bare
+    # AsyncMock returns a mock object here and Communication rejects it, which is the
+    # correct failure and the reason they are stubbed explicitly.
+    service.model = "test/model-v1"
+    service.prompt_version = "v1"
     return service
 
 

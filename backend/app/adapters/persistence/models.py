@@ -83,6 +83,13 @@ class CommunicationORM(Base):
     draft_text: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column()
+    # NFR-06 auditability (BUG-08). Nullable because rows written before this existed
+    # genuinely do not know their provenance — backfilling a plausible value would
+    # falsify the audit record, which is worse than recording that it is unknown.
+    operator_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    model_used: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
 
 class ContactResultORM(Base):

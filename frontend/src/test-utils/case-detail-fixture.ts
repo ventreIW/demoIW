@@ -54,6 +54,11 @@ export const caseDetailFixture: CaseDetail = {
       draft_text: 'Estimado cliente, le recordamos su saldo pendiente.',
       status: 'draft',
       created_at: '2026-07-20T10:00:00Z',
+      // NFR-06 provenance (BUG-08). sent_at is null because this fixture is a draft.
+      operator_id: 'demo-operator (unauthenticated)',
+      model_used: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+      prompt_version: 'v1',
+      sent_at: null,
     },
   ],
 }
