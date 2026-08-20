@@ -520,18 +520,31 @@ async def test_demo_path_is_repeatable_on_postgres(postgres_client: AsyncClient,
     assert first.scores == second.scores, "the same seed produced different scores on PostgreSQL"
 
 
-def test_migration_0004_roundtrip() -> None:
-    """Migration 0004 must reverse cleanly.
+def test_migrations_roundtrip_on_a_clean_database() -> None:
+    """Every migration must apply from zero and reverse cleanly.
 
-    0004 is BUG-05's migration, added today. Its backfill uses
-    `ROW_NUMBER() OVER (PARTITION BY scenario_id ORDER BY id)`, which has never executed
-    against any database — SQLite tests build the schema with `create_all` and skip Alembic
-    entirely. A migration that cannot be rolled back is a migration nobody can safely deploy.
+    Three of the six have never run anywhere until today: 0004 (BUG-05's `generation_index`,
+    whose backfill uses `ROW_NUMBER() OVER (PARTITION BY scenario_id ORDER BY id)`), 0005
+    (BUG-08's audit columns) and 0006 (BUG-09's nullability fix). A migration that cannot be
+    rolled back is a migration nobody can safely deploy.
+
+    Runs on an empty schema deliberately. Downgrades are only obliged to be safe on data the
+    forward migration could have produced, and 0006 relaxes a constraint that real rows
+    legitimately violate — re-imposing it over such rows *should* fail rather than delete
+    them. That is a data-safety property, not a reversibility one.
     """
+    import sqlalchemy as sa
+
     from tests.conftest import _postgres_url, _run_alembic
 
     url = _postgres_url()
+    sync_url = url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+    engine = sa.create_engine(sync_url)
+    with engine.begin() as conn:
+        conn.exec_driver_sql("DROP SCHEMA public CASCADE")
+        conn.exec_driver_sql("CREATE SCHEMA public")
+    engine.dispose()
 
     _run_alembic(url, "upgrade head")
-    _run_alembic(url, "downgrade -1")  # 0004 -> 0003, dropping the index and the column
-    _run_alembic(url, "upgrade head")  # and back, exercising the backfill on populated rows
+    _run_alembic(url, "downgrade base")
+    _run_alembic(url, "upgrade head")

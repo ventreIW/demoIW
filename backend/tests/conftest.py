@@ -193,7 +193,15 @@ async def postgres_client() -> AsyncGenerator[AsyncClient, None]:
         pytest.skip(f"{M4_SKIP_REASON}\nConnection attempt failed: {exc}")
 
     # Migrations from zero — the whole point of this fixture.
-    _run_alembic(url, "downgrade base")
+    #
+    # Reset by dropping the schema rather than by walking migrations down. `downgrade base`
+    # over a populated database is not a reset: 0006 relaxes a NOT NULL that real rows now
+    # violate, so its downgrade correctly refuses rather than destroying audit data. A test
+    # reset wants an empty database; downgrade safety is a separate question, tested on its
+    # own below.
+    async with engine.begin() as conn:
+        await conn.exec_driver_sql("DROP SCHEMA public CASCADE")
+        await conn.exec_driver_sql("CREATE SCHEMA public")
     _run_alembic(url, "upgrade head")
 
     session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
