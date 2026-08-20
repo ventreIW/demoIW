@@ -52,7 +52,10 @@ class GenerateDataset:
             name=f"Scenario-{params.sector.value}",
             sector=params.sector,
             seed=params.seed,
-            parameters=params.model_dump(),
+            # mode="json" — this dict goes straight into a JSON column, and the
+            # default python-mode dump keeps `reference_date` as a datetime.date,
+            # which the serializer rejects (BUG-04).
+            parameters=params.model_dump(mode="json"),
             source=source,
             status=ScenarioStatus.INACTIVE,
             created_at=datetime.now(UTC),

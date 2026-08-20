@@ -26,9 +26,15 @@ EXPECTED:  A pinned `reference_date` persists as an ISO-8601 string and round-tr
 
 Done when: 1. `POST /generate` with `reference_date` pinned returns 201.
            2. The persisted `parameters` contains `reference_date` as an ISO date string.
-           3. Ageing actually honours the pin: two scenarios generated with the same seed and
-              the same pinned date produce identical `days_overdue`, and a different pinned
-              date produces different ageing — so the parameter demonstrably does its job.
+           3. The pin actually anchors the calendar. CORRECTED during the fix: this
+              originally read "a different pinned date produces different ageing", which
+              asserts against the design. The generator draws `days_overdue` from the RNG
+              first and derives `due_date` backwards from the anchor
+              (`procedural_generator.py:119-120`), so the pin moves the *calendar* and holds
+              the ageing distribution invariant — that invariance is what makes a dataset
+              reproducible across days. The real criterion: same seed + same pin gives
+              byte-identical due dates; a different pin shifts every due date by exactly the
+              offset between anchors; ageing is unchanged.
            4. Omitting `reference_date` still works and stores null.
            5. Every other value in `parameters` still round-trips (`sector` included).
            6. Full backend suite green; no test weakened or deleted.

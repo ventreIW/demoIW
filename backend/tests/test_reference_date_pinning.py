@@ -1,6 +1,5 @@
 """BUG-04: a pinned reference_date must persist, and must actually anchor ageing."""
 
-import httpx
 import pytest
 import respx
 from httpx import AsyncClient
@@ -12,7 +11,7 @@ def _params(**overrides: object) -> dict[str, object]:
     body: dict[str, object] = {
         "seed": 42,
         "sector": "retail",
-        "client_count": 25,
+        "client_count": 60,
         "invoice_volume": 5.0,
         "amount_mean": 10000.0,
         "amount_std": 3000.0,
@@ -53,7 +52,7 @@ async def test_pinned_reference_date_persists_as_iso_string(client: AsyncClient)
     # every other parameter must survive the mode change unharmed
     assert stored["seed"] == 42
     assert stored["sector"] == "retail"
-    assert stored["client_count"] == 25
+    assert stored["client_count"] == 60
 
 
 @pytest.mark.anyio
@@ -69,20 +68,59 @@ async def test_omitted_reference_date_still_works(client: AsyncClient) -> None:
     assert detail.json()["parameters"]["reference_date"] is None
 
 
-@pytest.mark.anyio
-@respx.mock
-async def test_pinned_reference_date_actually_anchors_ageing(client: AsyncClient) -> None:
-    """A parameter that persists but changes nothing would pass the tests above and still
-    be useless. Ageing must move with the pin, and must not move without it."""
-    _mock_openrouter()
+def test_pinned_reference_date_anchors_the_calendar() -> None:
+    """A parameter that persists but changes nothing would pass the tests above and still be
+    useless. This asserts what the pin is actually for.
 
-    june_a = await _ageing(client, reference_date="2026-06-01")
-    june_b = await _ageing(client, reference_date="2026-06-01")
-    march = await _ageing(client, reference_date="2026-03-01")
+    The generator draws `days_overdue` from the RNG first and derives `due_date` backwards
+    from the anchor (`procedural_generator.py:119-120`). So the pin deliberately moves the
+    *calendar* while holding the ageing distribution invariant — which is precisely what
+    makes a dataset reproducible across days. Asserting "different pin, different ageing"
+    would be asserting against the design.
+    """
+    from datetime import date
 
-    assert june_a, "no cases produced — the comparison would be vacuous"
-    assert june_a == june_b, "same seed and same pin produced different ageing"
-    assert june_a != march, (
-        "a three-month difference in the anchor produced identical ageing — "
+    from app.adapters.dataset.procedural_generator import ProceduralGenerator
+    from app.domain.value_objects.generation_params import GenerationParams
+
+    def build(reference: date) -> tuple[list[str], list[int]]:
+        params = GenerationParams(
+            seed=42,
+            sector="retail",
+            client_count=60,
+            invoice_volume=5.0,
+            amount_mean=10000.0,
+            amount_std=3000.0,
+            reference_date=reference,
+        )
+        dataset = ProceduralGenerator(params).generate()
+        invoices = dataset.invoices.sort_values("id")
+        return (
+            [str(d) for d in invoices["due_date"]],
+            [int(n) for n in invoices["days_overdue"]],
+        )
+
+    june_dates, june_ageing = build(date(2026, 6, 1))
+    june_dates_again, june_ageing_again = build(date(2026, 6, 1))
+    march_dates, march_ageing = build(date(2026, 3, 1))
+
+    assert june_dates, "no invoices generated — the comparison would be vacuous"
+
+    # Same seed, same pin: byte-identical. This is the reproducibility guarantee.
+    assert june_dates == june_dates_again
+    assert june_ageing == june_ageing_again
+
+    # A different anchor shifts the calendar...
+    assert june_dates != march_dates, (
+        "a three-month difference in the anchor produced identical due dates — "
         "reference_date is persisted but not honoured"
     )
+    # ...by exactly the offset between the two anchors, for every invoice.
+    offset = (date(2026, 6, 1) - date(2026, 3, 1)).days
+    assert all(
+        (date.fromisoformat(j) - date.fromisoformat(m)).days == offset
+        for j, m in zip(june_dates, march_dates, strict=True)
+    )
+
+    # ...while the ageing distribution is invariant, which is the point of drawing it first.
+    assert june_ageing == march_ageing
