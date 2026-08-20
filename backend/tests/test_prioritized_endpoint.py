@@ -198,16 +198,63 @@ class TestPrioritizedEndpoint:
         )
         sid = gen_resp.json()["id"]
 
-        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category=High")
-        body = resp.json()
-        for case in body["cases"]:
-            assert case["category"] == "High"
-        assert body["value_share"] >= body["threshold"]
+        # Tally the unfiltered portfolio first. Asserting inside `for case in body["cases"]`
+        # passes unconditionally when the filter returns nothing, which is exactly how the
+        # broken filter stayed green for four epics (BUG-02). Derive the expectation from
+        # real data and assert the count, so an empty result fails instead of skipping.
+        unfiltered = (await client.get(f"/api/v1/scenarios/{sid}/prioritized")).json()
+        tally: dict[str, int] = {}
+        for case in unfiltered["cases"]:
+            tally[case["category"]] = tally.get(case["category"], 0) + 1
 
-        resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category=Low")
-        body = resp.json()
-        for case in body["cases"]:
-            assert case["category"] == "Low"
+        assert tally, "portfolio produced no cases — the filter test would be vacuous"
+
+        for category, expected_count in tally.items():
+            resp = await client.get(
+                f"/api/v1/scenarios/{sid}/prioritized?category={category}"
+            )
+            assert resp.status_code == 200
+            body = resp.json()
+            assert expected_count > 0
+            assert len(body["cases"]) == expected_count, (
+                f"?category={category} returned {len(body['cases'])} cases, "
+                f"expected {expected_count}"
+            )
+            for case in body["cases"]:
+                assert case["category"] == category
+            assert body["value_share"] >= body["threshold"]
+
+    @pytest.mark.anyio
+    @respx.mock
+    async def test_category_filter_is_case_insensitive(self, client: AsyncClient) -> None:
+        """BUG-02: `High` and `high` must resolve to the same ScoreCategory member.
+
+        The wire format is lowercase (ScoreCategory is a lowercase StrEnum), but the
+        endpoint historically advertised the capitalized spelling. Both must work so no
+        existing caller breaks.
+        """
+        _mock_openrouter()
+
+        gen_resp = await client.post(
+            "/api/v1/scenarios/generate",
+            json={
+                "seed": 42,
+                "sector": "retail",
+                "client_count": 100,
+                "invoice_volume": 5.0,
+                "amount_mean": 10000.0,
+                "amount_std": 3000.0,
+            },
+        )
+        sid = gen_resp.json()["id"]
+
+        lower = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category=high")
+        upper = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category=High")
+
+        assert lower.status_code == 200, f"lowercase rejected: {lower.text}"
+        assert upper.status_code == 200, f"capitalized rejected: {upper.text}"
+        assert len(lower.json()["cases"]) > 0, "the filter matched nothing in either casing"
+        assert lower.json()["cases"] == upper.json()["cases"]
 
     @pytest.mark.anyio
     @respx.mock
@@ -263,6 +310,9 @@ class TestPrioritizedEndpoint:
 
         assert payload["cases"], "expected a non-empty portfolio for seed 42"
         for group in ("cases", "pareto_subset"):
+            # BUG-02: guard each group, not just "cases" — an assert-only loop over an
+            # empty pareto_subset would pass without checking anything.
+            assert payload[group], f"expected a non-empty {group} for seed 42"
             for case in payload[group]:
                 assert case["client_name"], f"empty client_name in {group}"
                 assert case["client_name"] != case["client_id"]

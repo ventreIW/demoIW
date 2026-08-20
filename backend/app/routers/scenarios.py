@@ -19,7 +19,7 @@ from app.container import (
     get_score_and_persist_use_case,
 )
 from app.domain.entities.scenario import Scenario
-from app.domain.enums import ContactResultType, ScenarioStatus, Sector
+from app.domain.enums import ContactResultType, ScenarioStatus, ScoreCategory, Sector
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.generation_params import GenerationParams
 from app.domain.value_objects.prioritized_case import PrioritizedCase
@@ -365,7 +365,7 @@ async def get_prioritized(
     - threshold: Pareto threshold (default 0.80)
     - sort: one of rank, score, outstanding, expected_recoverable, days_overdue
     - order: asc | desc
-    - category: filter by High | Medium | Low
+    - category: filter by high | medium | low (case-insensitive)
     - days_overdue_min: filter by minimum days overdue
     """
     # Validate query parameters
@@ -385,14 +385,20 @@ async def get_prioritized(
             detail=f"Invalid order: '{order}'. Must be 'asc' or 'desc'",
         )
 
+    # Derived from ScoreCategory rather than hardcoded. A literal set here duplicated
+    # knowledge the enum already owns, and the two never agreed: the whitelist held
+    # "High" while the enum (and the wire format, and the frontend type) hold "high",
+    # so no input could both pass validation and match a case (BUG-02).
+    resolved_category: ScoreCategory | None = None
     if category is not None:
-        valid_categories = {"High", "Medium", "Low"}
-        if category not in valid_categories:
+        by_value = {member.value: member for member in ScoreCategory}
+        resolved_category = by_value.get(category.lower())
+        if resolved_category is None:
             raise HTTPException(
                 status_code=422,
                 detail=(
                     f"Invalid category: '{category}'. "
-                    f"Must be one of: {', '.join(sorted(valid_categories))}"
+                    f"Must be one of: {', '.join(sorted(by_value))}"
                 ),
             )
 
@@ -425,13 +431,8 @@ async def get_prioritized(
     cases = portfolio.cases
 
     # Filter by category if provided
-    if category:
-
-        def _cat_matches(c: "PrioritizedCase") -> bool:
-            cat = c.category
-            return (cat.value if hasattr(cat, "value") else str(cat)) == category
-
-        cases = [c for c in cases if _cat_matches(c)]
+    if resolved_category is not None:
+        cases = [c for c in cases if ScoreCategory(c.category) is resolved_category]
 
     # Filter by days_overdue_min if provided
     if days_overdue_min is not None:
