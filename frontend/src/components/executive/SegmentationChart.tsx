@@ -20,7 +20,7 @@ const DIMENSION_KEY: Record<
   score_category: 'scoreCategory',
 }
 
-/** Shared currency/number formatter matching CaseTable pattern */
+/** Shared currency formatter matching CaseTable pattern */
 function getCurrencyFormatter(locale: string) {
   const REGIONAL: Record<string, string> = { es: 'es-MX', en: 'en-US' }
   const region = REGIONAL[locale] ?? locale
@@ -32,17 +32,10 @@ function getCurrencyFormatter(locale: string) {
   })
 }
 
-function getNumberFormatter(locale: string) {
-  const REGIONAL: Record<string, string> = { es: 'es-MX', en: 'en-US' }
-  const region = REGIONAL[locale] ?? locale
-  return new Intl.NumberFormat(region, { maximumFractionDigits: 0 })
-}
-
 export default function SegmentationChart({ buckets, dimension, title }: SegmentationChartProps) {
   const locale = useLocale()
   const t = useTranslations('executivePage.chart')
   const currency = getCurrencyFormatter(locale)
-  const number = getNumberFormatter(locale)
 
   // Find max outstanding for proportional bar widths
   const maxOutstanding = Math.max(...buckets.map((b) => b.outstanding), 1)
