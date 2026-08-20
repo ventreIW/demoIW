@@ -39,11 +39,9 @@ vi.mock('next-intl/server', () => ({
     return (key: string) => {
       const resolved = key
         .split('.')
-        .reduce<MessageNode | undefined>(
-          (node, segment) =>
-            node !== undefined && typeof node !== 'string' ? node[segment] : undefined,
-          ns,
-        )
+        .reduce<
+          MessageNode | undefined
+        >((node, segment) => (node !== undefined && typeof node !== 'string' ? node[segment] : undefined), ns)
       // The real getTranslations always yields a string; fall back to the key itself
       // when a lookup lands on a missing leaf or on an intermediate namespace object.
       return typeof resolved === 'string' ? resolved : key
