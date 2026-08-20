@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from app.application.services.feature_extractor import outstanding_by_client
-from app.domain.enums import PaymentPattern
+from app.domain.enums import InvoiceStatus, PaymentPattern
 from app.domain.value_objects.payment_behaviour import PATTERN_PROFILES
 from app.domain.value_objects.raw_dataset import RawDataset
 
@@ -52,9 +52,24 @@ class OutcomeLabeller:
         with_balance = outstanding[outstanding > 0.0]
 
         if with_balance.empty:
+            # Report the statuses actually present. The previous message asserted
+            # "Every invoice in this scenario is settled", which is only one of the
+            # ways outstanding can be zero — and it was the wrong one for BUG-03,
+            # where every invoice carried an unrecognised status and so matched
+            # neither the open nor the settled branch. A status this code does not
+            # know about must name itself rather than be misattributed.
+            observed = dataset.invoices["status"].value_counts().to_dict()
+            known = {member.value for member in InvoiceStatus}
+            unknown = {value: n for value, n in observed.items() if value not in known}
+            detail = (
+                f" Unrecognised invoice status values present: {unknown} — these match "
+                f"neither the open nor the settled branch, so their balances are invisible."
+                if unknown
+                else " Every invoice in this scenario is settled."
+            )
             raise InsufficientOutstandingError(
                 "no clients with an outstanding balance — nothing to label. "
-                "Every invoice in this scenario is settled."
+                f"Invoice statuses observed: {observed}.{detail}"
             )
 
         clients = dataset.clients[dataset.clients["id"].isin(with_balance.index)]

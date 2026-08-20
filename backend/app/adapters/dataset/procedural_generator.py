@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from faker import Faker
 
-from app.domain.enums import PaymentPattern, Sector
+from app.domain.enums import InvoiceStatus, PaymentPattern, Sector
 from app.domain.value_objects.generation_params import GenerationParams
 from app.domain.value_objects.payment_behaviour import (
     PATTERN_PROFILES,
@@ -126,7 +126,7 @@ class ProceduralGenerator(IDatasetPort):
             "issue_date": due_date - timedelta(days=_PAYMENT_TERM_DAYS),
             "due_date": due_date,
             "days_overdue": days_overdue,
-            "status": "overdue",
+            "status": InvoiceStatus.OVERDUE.value,
         }
         payment: dict[str, object] | None = None
         if profile.partial_payer:
@@ -155,7 +155,7 @@ class ProceduralGenerator(IDatasetPort):
             "issue_date": due_date - timedelta(days=_PAYMENT_TERM_DAYS),
             "due_date": due_date,
             "days_overdue": 0,
-            "status": "paid",
+            "status": InvoiceStatus.PAID.value,
         }
         payment: dict[str, object] = {
             "id": self._uuid(),

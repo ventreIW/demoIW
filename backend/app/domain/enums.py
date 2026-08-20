@@ -21,6 +21,19 @@ class PaymentPattern(StrEnum):
     DEFAULT = "default"
 
 
+class InvoiceStatus(StrEnum):
+    """Lifecycle state of an invoice.
+
+    Values are the ones already persisted, so introducing this enum needs no migration.
+    Before it existed, three producers and two consumers each spelled these as their own
+    string literal and the CSV path invented a third word, ``"pending"``, which matched
+    neither branch of the feature extractor and made uploaded scenarios unscorable (BUG-03).
+    """
+
+    OVERDUE = "overdue"
+    PAID = "paid"
+
+
 class ScoreCategory(StrEnum):
     HIGH = "high"
     MEDIUM = "medium"

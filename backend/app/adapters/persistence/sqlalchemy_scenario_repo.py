@@ -9,7 +9,7 @@ from app.adapters.persistence.mappers import (
 )
 from app.adapters.persistence.models import ClientORM, InvoiceORM, PaymentORM, ScenarioORM
 from app.domain.entities.scenario import Scenario
-from app.domain.enums import PaymentPattern, ScenarioStatus
+from app.domain.enums import InvoiceStatus, PaymentPattern, ScenarioStatus
 from app.domain.exceptions import EntityNotFoundError
 from app.domain.value_objects.raw_dataset import RawDataset
 from app.ports.repositories import IScenarioRepository
@@ -115,7 +115,9 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
                 issue_date=datetime.now(UTC),
                 due_date=due_date,
                 days_overdue=days_overdue,
-                status="pending",
+                # Uploaded rows are unpaid receivables, which is what the
+                # extractor's open branch means (BUG-03).
+                status=InvoiceStatus.OVERDUE.value,
             )
             self._session.add(invoice_orm)
         await self._session.commit()
