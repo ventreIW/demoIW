@@ -310,6 +310,9 @@ class TestPrioritizedEndpoint:
 
         assert payload["cases"], "expected a non-empty portfolio for seed 42"
         for group in ("cases", "pareto_subset"):
+            # BUG-02: guard each group, not just "cases" — an assert-only loop over an
+            # empty pareto_subset would pass without checking anything.
+            assert payload[group], f"expected a non-empty {group} for seed 42"
             for case in payload[group]:
                 assert case["client_name"], f"empty client_name in {group}"
                 assert case["client_name"] != case["client_id"]
