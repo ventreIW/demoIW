@@ -17,6 +17,7 @@ Two subtleties, both found by reading the generator rather than the schema:
 
 import pandas as pd
 
+from app.domain.enums import InvoiceStatus
 from app.domain.value_objects.client_features import (
     CATEGORICAL_COLUMNS,
     FEATURE_COLUMNS,
@@ -25,8 +26,8 @@ from app.domain.value_objects.client_features import (
 )
 from app.domain.value_objects.raw_dataset import RawDataset
 
-_OPEN_STATUS = "overdue"
-_SETTLED_STATUS = "paid"
+_OPEN_STATUS = InvoiceStatus.OVERDUE.value
+_SETTLED_STATUS = InvoiceStatus.PAID.value
 
 #: Column holding the client identifier in ``RawDataset.clients``.
 ID_COLUMN_SOURCE = "id"
