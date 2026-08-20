@@ -379,3 +379,78 @@ async def test_demo_headline_moment_succeeds(client: AsyncClient, _scripted_llm)
         f"group_by={answer['result']['group_by']} "
         f"series={len(answer['result']['series'])} narrative={narrative[:60]!r}"
     )
+
+
+@pytest.mark.anyio
+async def test_demo_path_is_repeatable(client: AsyncClient, _stub_llm) -> None:
+    """AC5 — the demo must give the same answer twice (BUG-05, ADR-011).
+
+    Asserted at the demo level rather than the unit level on purpose: what matters to a
+    presenter is that rehearsing the demo predicts the demo, and that a director asking the
+    same question twice is not shown two different portfolios.
+
+    Client ids are random surrogate keys by design, so the comparison is over portfolio
+    *content* — the score multiset and the category tally — not over identity.
+    """
+    first = await _run_demo_path(client)
+    second = await _run_demo_path(client)
+
+    assert first.scores, "empty portfolio — the repeatability comparison would be vacuous"
+
+    assert first.category_tally == second.category_tally, (
+        f"the same seed produced different category distributions across two runs: "
+        f"{first.category_tally} vs {second.category_tally}"
+    )
+    assert len(first.scores) == len(second.scores), (
+        f"the same seed produced portfolios of different sizes: "
+        f"{len(first.scores)} vs {len(second.scores)}"
+    )
+    assert first.scores == second.scores, "the same seed produced different scores"
+
+
+@pytest.mark.anyio
+async def test_csv_upload_limit_is_explicit(client: AsyncClient) -> None:
+    """AC7 — CSV upload is exercised to its real limit, and the limit is asserted.
+
+    B-07/RF-07 ships CSV upload, and the demo may show it. It works up to persistence and
+    then stops: BUG-06 means an uploaded scenario cannot be scored, because create_from_csv
+    assigns PaymentPattern.ON_TIME to every client (a CSV carries no payment history), so the
+    labeller draws a single class and training aborts.
+
+    Asserting the boundary rather than omitting the step keeps the gap visible in the
+    demo-readiness signal. This test will start failing when BUG-06 is fixed, which is the
+    intended signal to widen it.
+    """
+    rows = "\n".join(
+        f"Client {i:02d},{1000 + i * 137}.00,2026-01-{(i % 28) + 1:02d},INV-{i:03d}"
+        for i in range(30)
+    )
+    csv = "client_name,amount,due_date,invoice_id\n" + rows + "\n"
+
+    upload = await client.post(
+        "/api/v1/scenarios/upload-csv",
+        files={"file": ("demo.csv", csv.encode("utf-8"), "text/csv")},
+    )
+    assert upload.status_code == 201, _fail("csv upload", upload)
+    scenario_id = upload.json()["id"]
+    assert upload.json()["client_count"] == 30, (
+        f"CSV upload persisted {upload.json()['client_count']} clients, expected 30"
+    )
+
+    # It is listed and readable — the parts of the demo that do work.
+    listed = await client.get("/api/v1/scenarios")
+    assert listed.status_code == 200
+    assert any(s["id"] == scenario_id for s in listed.json()), (
+        "the uploaded scenario does not appear in the scenario list"
+    )
+
+    detail = await client.get(f"/api/v1/scenarios/{scenario_id}")
+    assert detail.status_code == 200, _fail("uploaded scenario detail", detail)
+
+    # And here is the wall. KPIs decline cleanly with a 409 rather than crashing.
+    kpis = await client.get(f"/api/v1/scenarios/{scenario_id}/kpis")
+    assert kpis.status_code == 409, (
+        f"BUG-06 boundary moved: /kpis on an uploaded scenario returned "
+        f"{kpis.status_code}, expected 409 (no persisted scores). "
+        f"If BUG-06 is fixed, widen this test to drive the full path on CSV data."
+    )
