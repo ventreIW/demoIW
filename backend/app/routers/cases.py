@@ -1,6 +1,7 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from app.application.services.case_aggregate_service import (
@@ -80,6 +81,11 @@ class CommunicationSummaryResponse(BaseModel):
     draft_text: str
     status: str
     created_at: str
+    # NFR-06 provenance. Surfaced so the audit record is inspectable, not merely stored.
+    operator_id: str | None = None
+    model_used: str | None = None
+    prompt_version: str | None = None
+    sent_at: str | None = None
 
 
 class ScoreSummaryResponse(BaseModel):
@@ -134,6 +140,10 @@ def _communication_to_summary(comm: Communication) -> CommunicationSummaryRespon
         draft_text=comm.draft_text,
         status=comm.status.value if hasattr(comm.status, "value") else str(comm.status),
         created_at=comm.created_at.isoformat(),
+        operator_id=comm.operator_id,
+        model_used=comm.model_used,
+        prompt_version=comm.prompt_version,
+        sent_at=comm.sent_at.isoformat() if comm.sent_at else None,
     )
 
 
@@ -237,6 +247,7 @@ async def generate_communication(
     client_id: UUID,
     body: GenerateCommunicationRequest,
     use_case: GenerateCommunicationDraft = Depends(get_generate_communication_draft_use_case),
+    x_operator_id: str | None = Header(default=None, alias="X-Operator-Id"),
 ) -> CommunicationSummaryResponse:
     """Generate a communication draft for a client (s5.4).
 
@@ -249,6 +260,7 @@ async def generate_communication(
                 client_id=client_id,
                 channel=body.channel,
                 tone=body.tone,
+                operator_id=x_operator_id,
             )
         )
     except EntityNotFoundError as e:
@@ -267,6 +279,7 @@ async def send_communication(
     client_id: UUID,
     comm_id: UUID,
     communication_repo: ICommunicationRepository = Depends(get_communication_repo),
+    x_operator_id: str | None = Header(default=None, alias="X-Operator-Id"),
 ) -> CommunicationSummaryResponse:
     """Send a communication draft (s5.5).
 
@@ -290,6 +303,14 @@ async def send_communication(
         draft_text=comm.draft_text,
         status=CommunicationStatus.SENT,
         created_at=comm.created_at,
+        # NFR-06: the send is the second action the requirement names, and it needs its own
+        # timestamp — `created_at` records when the draft was written, not when it went out.
+        # An operator supplied on the send overrides the drafter; otherwise provenance is
+        # carried forward unchanged, since this entity is rebuilt field-by-field (BUG-08).
+        operator_id=x_operator_id or comm.operator_id,
+        model_used=comm.model_used,
+        prompt_version=comm.prompt_version,
+        sent_at=datetime.now(UTC),
     )
     updated = await communication_repo.update(sent_comm)
     return _communication_to_summary(updated)

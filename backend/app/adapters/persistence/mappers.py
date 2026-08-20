@@ -160,6 +160,10 @@ def communication_orm_to_domain(orm: CommunicationORM) -> Communication:
         draft_text=orm.draft_text,
         status=CommunicationStatus(orm.status),
         created_at=_utc(orm.created_at),
+        operator_id=orm.operator_id,
+        model_used=orm.model_used,
+        prompt_version=orm.prompt_version,
+        sent_at=_utc(orm.sent_at) if orm.sent_at else None,
     )
 
 
@@ -173,6 +177,10 @@ def communication_domain_to_orm(domain: Communication) -> CommunicationORM:
         draft_text=domain.draft_text,
         status=domain.status.value,
         created_at=domain.created_at,
+        operator_id=domain.operator_id,
+        model_used=domain.model_used,
+        prompt_version=domain.prompt_version,
+        sent_at=domain.sent_at,
     )
 
 

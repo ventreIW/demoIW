@@ -29,6 +29,15 @@ export interface CommunicationSummary {
   draft_text: string
   status: string
   created_at: string
+  /**
+   * NFR-06 audit provenance. All nullable: records written before the audit fields existed
+   * genuinely do not know their provenance, and say so rather than carrying invented values.
+   */
+  operator_id: string | null
+  model_used: string | null
+  prompt_version: string | null
+  /** When the draft was sent. Null while it is still a draft. */
+  sent_at: string | null
 }
 
 export interface ScoreSummary {

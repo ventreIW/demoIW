@@ -51,9 +51,9 @@ async def test_draft_records_all_nfr06_provenance(client: AsyncClient, _scripted
     record = drafted.json()
 
     assert record["created_at"], "NFR-06: no draft timestamp"
-    assert record["operator_id"] == "renata.ortiz", (
-        f"NFR-06: operator identifier not recorded from the request: {record.get('operator_id')!r}"
-    )
+    assert (
+        record["operator_id"] == "renata.ortiz"
+    ), f"NFR-06: operator identifier not recorded from the request: {record.get('operator_id')!r}"
     assert record["model_used"], "NFR-06: no model recorded — cannot say which model wrote this"
     assert record["prompt_version"], "NFR-06: no prompt version recorded"
     assert record["sent_at"] is None, "a draft that was never sent must not carry a send time"
@@ -85,9 +85,7 @@ async def test_operator_defaults_to_a_self_describing_placeholder(
 
 
 @pytest.mark.anyio
-async def test_send_stamps_sent_at_and_preserves_provenance(
-    client: AsyncClient, _scripted
-) -> None:
+async def test_send_stamps_sent_at_and_preserves_provenance(client: AsyncClient, _scripted) -> None:
     """The send action is the second thing NFR-06 names, and it needs its own timestamp."""
     scenario_id, client_id = await _case_ready(client)
 
@@ -101,17 +99,16 @@ async def test_send_stamps_sent_at_and_preserves_provenance(
     comm_id = draft["id"]
 
     sent = await client.patch(
-        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}"
-        f"/communications/{comm_id}/send"
+        f"/api/v1/scenarios/{scenario_id}/clients/{client_id}" f"/communications/{comm_id}/send"
     )
     assert sent.status_code == 200, sent.text[:300]
     record = sent.json()
 
     assert record["status"] == "sent"
     assert record["sent_at"], "NFR-06: the send action recorded no timestamp"
-    assert record["sent_at"] != record["created_at"], (
-        "sent_at duplicates created_at — the send action is not being timed independently"
-    )
+    assert (
+        record["sent_at"] != record["created_at"]
+    ), "sent_at duplicates created_at — the send action is not being timed independently"
     # Provenance must survive the status transition; the send handler rebuilds the entity.
     assert record["operator_id"] == "nano"
     assert record["model_used"] == draft["model_used"]

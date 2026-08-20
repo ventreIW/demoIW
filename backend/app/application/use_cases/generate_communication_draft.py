@@ -11,6 +11,7 @@ from app.application.services.communication_draft_service import (
     CaseDetail,
     CommunicationDraftService,
 )
+from app.config import settings
 from app.domain.entities.communication import Communication
 from app.domain.enums import Channel, CommunicationStatus, Tone
 from app.ports.repositories import (
@@ -31,6 +32,9 @@ class GenerateCommunicationDraftRequest:
     client_id: UUID
     channel: Channel
     tone: Tone
+    #: NFR-06 operator identifier. Resolved at the router from the X-Operator-Id header,
+    #: falling back to settings.DEFAULT_OPERATOR_ID.
+    operator_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -135,6 +139,13 @@ class GenerateCommunicationDraft:
             draft_text=draft_text,
             status=CommunicationStatus.DRAFT,
             created_at=datetime.now(UTC),
+            # NFR-06 provenance. Model and prompt version are read back from the service
+            # that issued the call, so the record states what was actually used rather
+            # than what the caller believed was configured (BUG-08).
+            operator_id=request.operator_id or settings.DEFAULT_OPERATOR_ID,
+            model_used=self._draft_service.model,
+            prompt_version=self._draft_service.prompt_version,
+            sent_at=None,
         )
         persisted = await self._communication_repo.add(communication)
 

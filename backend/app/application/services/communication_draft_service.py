@@ -43,8 +43,27 @@ class CommunicationDraftService:
         self._model = model or settings.MODEL_COMMUNICATIONS
         self._template = self._load_template()
 
+    #: Prompt template filename. The version prefix is the NFR-06 "prompt version" —
+    #: derived from the file actually loaded, so it cannot drift from what was used.
+    TEMPLATE_FILENAME = "v1_draft.txt"
+
+    @property
+    def model(self) -> str:
+        """The model this service issues calls with. Recorded for NFR-06 provenance."""
+        return self._model
+
+    @property
+    def prompt_version(self) -> str:
+        """Version of the prompt template in use, e.g. ``v1``.
+
+        Read from the template filename rather than declared separately: a constant the
+        caller maintains by hand is a second source of truth, and this project has already
+        paid for that twice (BUG-02's category whitelist, BUG-03's invoice status).
+        """
+        return self.TEMPLATE_FILENAME.split("_", 1)[0]
+
     def _load_template(self) -> str:
-        template_path = self._prompt_dir / "communications" / "v1_draft.txt"
+        template_path = self._prompt_dir / "communications" / self.TEMPLATE_FILENAME
         try:
             return template_path.read_text(encoding="utf-8")
         except FileNotFoundError:
