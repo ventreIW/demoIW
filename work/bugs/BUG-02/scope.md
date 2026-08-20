@@ -47,3 +47,24 @@ Done when: 1. `?category=high` returns every high case and nothing else (count m
            5. `test_category_filter` no longer passes vacuously: it asserts a non-empty result
               before asserting the contents.
            6. Full backend suite green; no test weakened or deleted.
+
+TRIAGE:
+  Bug Type:    Interface
+  Severity:    S2-Medium
+  Origin:      Code
+  Qualifier:   Incorrect
+
+  Rationale:
+  - Interface: the defect is entirely in the HTTP contract — the accepted spelling of a query
+    parameter versus the spelling the same endpoint emits in its own response. Neither the
+    scoring logic nor the prioritizer is wrong; a correct result set is computed and then
+    filtered away by a string comparison that cannot succeed.
+  - S2 not S1: the operator queue works without the filter, and the E5 frontend does not send
+    `category` today, so nothing user-facing is currently broken. It is not S3 because the
+    parameter is documented, advertised in the docstring, and will be exercised by s7.4's demo
+    path — a demo that filters the queue would silently show an empty list.
+  - Origin=Code: `ScoreCategory` has been lowercase since E2; the endpoint simply hardcoded a
+    different spelling instead of deriving from it.
+  - Qualifier=Incorrect: the values exist and are wrong, not missing.
+
+  Jira fields: not set — no backlog adapter configured (`.raise/backlog.yaml` absent).
