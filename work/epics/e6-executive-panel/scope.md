@@ -1,6 +1,6 @@
 # E6 Scope — Executive Panel (KPI Dashboard + NL Query)
 
-**Status:** **CLOSED 2026-08-20** — 5 of 5 stories delivered; M4 verified 3 of 4 with the real-PostgreSQL run open by explicit decision. See `retrospective.md`.
+**Status:** **CLOSED 2026-08-20** — 5 of 5 stories delivered; **M4 complete, 4 of 4**. The real-PostgreSQL run closed the same day it was first executed, finding BUG-09 (S0). See `retrospective.md`.
 **Backlog:** B-12, B-13 · **Stories:** s6.0–s6.4 · **Size:** L
 **Branch model:** logical container; stories branch from `main`.
 **Designed after:** E5 closed (`87b1b85`).
@@ -193,9 +193,13 @@ fixed date that does not exist, so it never fired. E6 runs to completion: s6.3 �
       against a 3s budget (`test_nfr02_performance.py`). It never needed Postgres
 - [x] All story retrospectives written; parking-lot follow-ups filed 2026-08-20; epic
       retrospective written
-- [ ] ⛔ **Real-PostgreSQL run — OPEN.** No PostgreSQL on this host. Harness written and ready
-      (`postgres_client` fixture + 3 tests incl. migration 0004 up/down/up); skips loudly on
-      every run. Epic closed with this open by explicit decision (Rodrigo, 2026-08-20)
+- [x] ✅ **Real-PostgreSQL run — CLOSED 2026-08-20.** Ran against PostgreSQL 16.2 (userspace,
+      via `pgserver` — no root, no Docker). Full demo path **1.34s**, reproducibility holds,
+      all six migrations roundtrip. **It immediately found BUG-09 (S0): the backend could not
+      write to its own production database** — 16 identifier columns declared `uuid` in the
+      migrations and `String(36)` in the ORM, 8 naive-vs-aware timestamps, and one NOT NULL
+      that made the ordinary operator workflow impossible. Third vindication of M4 after E4's
+      and E5's, and by far the most severe. Now enforced by a `backend-postgres` CI job
 
 ## Progress tracking
 
