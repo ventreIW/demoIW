@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react'
 import { screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderWithIntl } from '@/test-utils/i18n'
@@ -26,14 +27,27 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: getCookie }),
 }))
 
+/** Recursive shape of the message catalogue, so the dotted-key walk below needs no cast. */
+type MessageNode = string | { [segment: string]: MessageNode }
+
 // next-intl's server helper is not available in the test environment; the page's
 // strings come from the same catalogue the client provider loads.
 vi.mock('next-intl/server', () => ({
   getTranslations: async () => {
     const messages = (await import('../../../../../messages/es.json')).default
-    const ns: any = messages.executivePage
-    return (key: string) =>
-      key.split('.').reduce((o: any, k: string) => (o ? o[k] : undefined), ns) ?? key
+    const ns: MessageNode = messages.executivePage
+    return (key: string) => {
+      const resolved = key
+        .split('.')
+        .reduce<MessageNode | undefined>(
+          (node, segment) =>
+            node !== undefined && typeof node !== 'string' ? node[segment] : undefined,
+          ns,
+        )
+      // The real getTranslations always yields a string; fall back to the key itself
+      // when a lookup lands on a missing leaf or on an intermediate namespace object.
+      return typeof resolved === 'string' ? resolved : key
+    }
   },
 }))
 
@@ -42,7 +56,7 @@ vi.mock('next-intl/server', () => ({
 vi.mock('@/i18n/routing', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
   usePathname: () => '/executive',
-  Link: ({ href, children, ...props }: any) => (
+  Link: ({ href, children, ...props }: ComponentProps<'a'>) => (
     <a href={href} {...props}>
       {children}
     </a>

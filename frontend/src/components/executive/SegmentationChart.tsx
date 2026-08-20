@@ -47,7 +47,7 @@ export default function SegmentationChart({ buckets, dimension, title }: Segment
   // Find max outstanding for proportional bar widths
   const maxOutstanding = Math.max(...buckets.map((b) => b.outstanding), 1)
 
-  const dimensionLabel = t(DIMENSION_KEY[dimension] as any)
+  const dimensionLabel = t(DIMENSION_KEY[dimension])
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
