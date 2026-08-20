@@ -1,6 +1,6 @@
 # E6 Scope — Executive Panel (KPI Dashboard + NL Query)
 
-**Status:** Designed 2026-08-04 — awaiting authorization (Gustavo).
+**Status:** **CLOSED 2026-08-20** — 5 of 5 stories delivered; M4 verified 3 of 4 with the real-PostgreSQL run open by explicit decision. See `retrospective.md`.
 **Backlog:** B-12, B-13 · **Stories:** s6.0–s6.4 · **Size:** L
 **Branch model:** logical container; stories branch from `main`.
 **Designed after:** E5 closed (`87b1b85`).
@@ -186,10 +186,16 @@ fixed date that does not exist, so it never fired. E6 runs to completion: s6.3 �
 
 ### M4 — E2E integration checkpoint + epic close
 **Stories:** none new — verification only. **(Mandatory: E4's M4 caught a generation-layer bug no unit test saw, and E5's M4 repeated the lesson.)** · **Target:** 2026-08-13
-- [ ] Full path verified against a running app: generate/load scenario → score → dashboard → NL question → answer
-- [ ] Frontend consumes each new API with **real** payloads, not hand-written fixtures
-- [ ] NFR-02 measured, not assumed, at 500 clients / 2,000 invoices
-- [ ] All story retrospectives written; parking-lot follow-ups filed; epic retrospective written
+- [x] Full path verified against a running app — `test_e2e_demo_flow.py` (s7.4), ten steps, 1.41s
+- [x] Frontend consumes each new API with **real** payloads — real payloads captured and
+      structurally diffed against `src/test-utils/*-fixture.ts`; 4 of 4 surfaces match, 0 drift
+- [x] NFR-02 measured, not assumed — **0.222s** priority queue at 500 clients / 2,073 invoices
+      against a 3s budget (`test_nfr02_performance.py`). It never needed Postgres
+- [x] All story retrospectives written; parking-lot follow-ups filed 2026-08-20; epic
+      retrospective written
+- [ ] ⛔ **Real-PostgreSQL run — OPEN.** No PostgreSQL on this host. Harness written and ready
+      (`postgres_client` fixture + 3 tests incl. migration 0004 up/down/up); skips loudly on
+      every run. Epic closed with this open by explicit decision (Rodrigo, 2026-08-20)
 
 ## Progress tracking
 
