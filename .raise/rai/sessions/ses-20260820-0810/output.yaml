@@ -1,0 +1,114 @@
+session_id: "SES-20260820-0810"
+summary: "SES-20260820-0810: E6 Executive Panel + E7 Demo Readiness ambos cerrados — s7.4 E2E entregado y 5 defectos del demo path corregidos (BUG-01..05, ADR-011)"
+type: feature
+outcomes:
+  - "E6 Executive Panel CLOSED and tagged (epic/e6-complete) — M4 verified 3 of 4; real-Postgres run open by explicit decision"
+  - "E7 Demo Readiness CLOSED and tagged (epic/e7-complete) — all four success criteria verified against observable state"
+  - "s7.4 delivered: full 10-step demo path E2E in 1.41s vs a 600s NFR-01 budget, proven able to fail via two deliberate breakages"
+  - "BUG-01 — production build restored after 13 days red; npm run build added as a CI gate; CaseDetail a11y scan gap closed"
+  - "BUG-02 — /prioritized?category= fixed; accepted values now derived from ScoreCategory so they cannot drift"
+  - "BUG-03 — InvoiceStatus enum introduced as single source of truth; uploaded invoices now counted (partial; BUG-06 escalated)"
+  - "BUG-04 — pinned reference_date persists (model_dump(mode='json'))"
+  - "BUG-05 — scoring made reproducible under a fixed seed; ADR-011 + migration 0004 (generation_index)"
+  - "NFR-02 measured for the first time: 0.222s priority queue at 500 clients / 2073 invoices vs a 3s budget"
+  - "E6 M4 Postgres harness written and loud: skips naming M4 and the five stories that deferred it"
+patterns:
+  - description: "A seeded draw applied along an unseeded axis is not seeded. Determinism is a property of a pipeline, not of its components — audit the ordering, not only the RNG."
+    context: "determinism,seed,ordering,rng,pipeline"
+    type: technical
+  - description: "A gate allowed to stay red stops being a gate. Parking a failure without pinning it destroys the signal, and the real defect is the second one that entered while the gate was dark."
+    context: "ci,gate,lint,parked,signal"
+    type: process
+  - description: "Tests that observe a proxy for the outcome rather than the outcome: a gate nobody runs, a loop asserting nothing when empty, a feature tested only up to persistence, a codepath behind an optional field, components seeded but composition not."
+    context: "testing,vacuous,coverage,proxy"
+    type: process
+  - description: "Verify the verifier: rai gate check exits 0 while printing FAILED: 5 of 15 gates failed, and rai pattern add reports success while writing nothing."
+    context: "tooling,raise,gate,verification"
+    type: process
+  - description: "When a defect is a pattern rather than a typo, fixing the first occurrence is how you find the second. Re-run the failing test after each fix and expect it to still fail."
+    context: "debugging,pattern,rca"
+    type: process
+corrections:
+  - what: "Wrote acceptance criteria before reading the implementation, twice in one session"
+    lesson: "s7.4's story artifact had three wrong API contracts and BUG-04's criterion 3 asserted against the generator's design — satisfying it would have broken the feature. The design phase's gemba walk is where criteria get re-verified, not merely elaborated."
+  - what: "Nearly shipped an E2E test that could only ever observe failure"
+    lesson: "An assertion permitting two outcomes (201 or 502) verifies neither until you confirm which one occurs. A stub that always fails proves degradation, not function."
+coaching:
+  trust_level: "established"
+  autonomy: "high within defined scope — asked on the four decisions that changed the work (Postgres route, bugfix ceremony, defect scope, BUG-05 fix, merge strategy, E6 close)"
+current_work:
+  epic: E7
+  story: s7.4
+  phase: closed
+  branch: main
+pending:
+  decisions: []
+  blockers:
+    - "Real-PostgreSQL E2E (E6 M4) — no Postgres on this WSL host; sudo apt install needs Rodrigo's password. Harness ready, one command."
+    - "main is 63 commits ahead of origin/main and has never seen CI — Rodrigo chose local merges and will push himself."
+    - "rai gate check exits 0 even when it finds the manifest and reports failures; rai pattern add writes nothing while reporting success; rai graph query broken for four epics."
+  next_actions:
+    - "Install PostgreSQL, then run: DEMOIW_TEST_POSTGRES_URL=... pytest tests/test_e2e_demo_flow.py -k postgres -v"
+    - "Push main and watch CI — 63 commits, first run since 2026-08-15"
+    - "ADR for BUG-06: how unlabelled CSV uploads get scored (pre-trained model vs per-scenario training)"
+narrative: |
+  ## Decisions
+  - Ran the full RaiSE ceremony for every unit: 5 complete bugfix pipelines (start→triage→
+    analyse→plan→fix→review→close) and the full story lifecycle for s7.4, per
+    raise-framework-fidelity.
+  - Merged locally with --no-ff rather than pushing/PRs, on Rodrigo's explicit choice.
+  - BUG-05 fixed via ADR-011 (stable ordinal column) over two rejected alternatives: honouring
+    the domain id collides on the client primary key for same-seed regeneration, and order-free
+    labelling would invalidate ADR-006/007's measured ROC-AUC figures.
+  - E6 closed with M4's Postgres item open, on Rodrigo's explicit decision rather than omission.
+  - BUG-03 stopped at partial rather than forcing a green test — the residual is architectural
+    and became BUG-06, held as a strict xfail so the criterion is recorded, not dropped.
+
+  ## Research
+  - BUG-05 root cause found by staged bisection: generator reproducible (ids/patterns/names
+    identical), scoring reproducible given fixed data, split sorted, estimator lbfgs — leaving
+    identity. sqlalchemy_client_repo.py:39 overwrites the generator's id with uuid4();
+    intersection between generator ids and persisted ids measured at 0 of 100.
+  - Fixing OutcomeLabeller did not make the test pass: BuildTrainingSet held the identical
+    shape one stage later, invisible until the first was fixed.
+  - NFR-02 never needed Postgres — s6.2's deferral inherited a neighbouring blocker.
+  - No test in this project has ever run an Alembic migration (conftest uses create_all).
+
+  ## Artifacts
+  - work/bugs/BUG-01..BUG-05/ — scope, analysis, plan, retro for each
+  - dev/decisions/adr-011-scoring-reproducibility.md
+  - backend/alembic/versions/0004_client_generation_index.py
+  - backend/tests/test_e2e_demo_flow.py, test_nfr02_performance.py,
+    test_scoring_reproducibility.py, test_reference_date_pinning.py
+  - work/epics/e6-executive-panel/retrospective.md, e7-demo-readiness/retrospective.md
+  - work/epics/e7-demo-readiness/stories/s7.4-{story,scope,design,plan,progress,retrospective}.md
+  - dev/parking-lot.md — 4 resolutions marked, 5 new items filed
+
+  ## Branch State
+  - main, tree clean, 63 commits ahead of origin/main, tags epic/e6-complete and
+    epic/e7-complete added.
+  - Backend 558 passed / 3 skipped / 1 xfailed, ruff + mypy clean.
+  - Frontend typecheck, lint, 207 tests, npm run build all green.
+next_session_prompt: |
+  Every planned story across E1–E7 is delivered and both remaining epics are closed and tagged.
+  There is no story work left. Two things are waiting on Rodrigo, not on you:
+
+  1. PostgreSQL. It is the last open gate (E6 M4) and the only reason E6 closed incomplete.
+     Ask him to run `sudo apt install -y postgresql && sudo service postgresql start` plus the
+     demoiw_test database, then run:
+       DEMOIW_TEST_POSTGRES_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/demoiw_test \
+       .venv/bin/pytest tests/test_e2e_demo_flow.py -k postgres -v
+     Expect real findings — migration 0004 has never executed against any database, and no test
+     in this project has ever run Alembic at all.
+
+  2. main is 63 commits ahead of origin and has had no CI since 2026-08-15. When he pushes,
+     watch the run; the frontend job now includes npm run build, which is new.
+
+  Do NOT trust `rai gate check` — it exits 0 while reporting failures. Use direct commands.
+  `rai pattern add` writes nothing, so anything worth keeping must go into a markdown artifact
+  or into memory by hand.
+
+  The next substantive piece of work is an ADR for BUG-06: a CSV upload carries no payment
+  history, so per-scenario supervised training cannot work on it. Deriving the pattern from
+  ageing is the leakage ADR-006 forbids; randomising it trains a confident model on noise. The
+  real question is whether uploads should be scored by a pre-trained model instead.
