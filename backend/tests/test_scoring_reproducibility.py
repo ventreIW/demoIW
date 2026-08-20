@@ -7,7 +7,6 @@ of the portfolio — the multiset of scores and the category tally — not over 
 
 import pytest
 import respx
-
 from httpx import AsyncClient
 
 from tests.test_prioritized_endpoint import _mock_openrouter

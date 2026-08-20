@@ -30,9 +30,14 @@ class SQLAlchemyClientRepository(IClientRepository):
     async def add_many(self, clients: list[Client]) -> list[Client]:
         """Persist multiple new clients and return them with assigned IDs."""
         orms = []
-        for client in clients:
+        for index, client in enumerate(clients):
             orm = client_domain_to_orm(client)
+            # `id` stays a random surrogate key owned by persistence, but it therefore
+            # carries no ordering information. The caller's list order is the generation
+            # order, and the labeller needs it to apply a seeded draw along a stable axis
+            # (BUG-05, ADR-011).
             orm.id = str(uuid4())
+            orm.generation_index = index
             self._session.add(orm)
             orms.append(orm)
         await self._session.commit()

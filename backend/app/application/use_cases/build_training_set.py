@@ -51,7 +51,13 @@ class BuildTrainingSet:
         total_clients = len(features)
 
         joined = features.merge(labels, left_on=ID_COLUMN, right_on="client_id", how="inner")
-        joined = joined.sort_values(ID_COLUMN).reset_index(drop=True)
+        # Order by the generation sequence when it is available. `_split_by_client` takes a
+        # *positional* split over this frame, so ordering by the random surrogate `id` makes
+        # the split — and therefore the fitted model — differ between runs of the same seed
+        # (BUG-05, ADR-011). `generation_index` is an ordering key only: `_design_matrix`
+        # selects FEATURE_COLUMNS explicitly, so it never becomes a feature (ADR-006).
+        order_column = "generation_index" if "generation_index" in joined.columns else ID_COLUMN
+        joined = joined.sort_values(order_column).reset_index(drop=True)
 
         excluded = total_clients - len(joined)
         self._guard(joined, excluded)
