@@ -454,3 +454,90 @@ async def test_csv_upload_limit_is_explicit(client: AsyncClient) -> None:
         f"{kpis.status_code}, expected 409 (no persisted scores). "
         f"If BUG-06 is fixed, widen this test to drive the full path on CSV data."
     )
+
+
+# ---------------------------------------------------------------------------
+# E6 M4 — the same path, against the real driver.
+#
+# Open across E4, E5, s6.2, s6.3, s6.4 and now E7. Everything above runs on SQLite via
+# `Base.metadata.create_all`, so neither asyncpg nor a single Alembic migration is exercised
+# by any other test in this project. These two close that gap — or skip loudly saying they
+# did not.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_full_demo_path_on_postgres(postgres_client: AsyncClient, _stub_llm) -> None:
+    """AC6, AC10, AC11 — the demo path on real PostgreSQL with migrations from zero.
+
+    Invokes the *same* `_run_demo_path` helper as the SQLite test (AC10) so the two runs
+    cannot drift. What differs is everything underneath: asyncpg instead of aiosqlite, real
+    Postgres type coercion, real foreign-key enforcement, and a schema built by Alembic rather
+    than by `create_all`.
+
+    E4's M4 caught a generation-layer bug no unit test saw. This is the same instrument.
+    """
+    result = await _run_demo_path(postgres_client)
+
+    assert result.steps_completed == [
+        "generate",
+        "activate",
+        "score",
+        "prioritized",
+        "filter",
+        "case_detail",
+        "contact_result",
+        "communication",
+        "kpis",
+        "nl_query",
+    ], f"the path did not complete on PostgreSQL: {result.steps_completed}"
+
+    assert result.elapsed_seconds < NFR_01_BUDGET_SECONDS, (
+        f"demo path on PostgreSQL took {result.elapsed_seconds:.1f}s, "
+        f"over the NFR-01 budget of {NFR_01_BUDGET_SECONDS:.0f}s"
+    )
+    print(
+        f"\n[s7.4 · M4] demo path on real PostgreSQL completed in "
+        f"{result.elapsed_seconds:.2f}s — {len(result.scores)} cases, "
+        f"categories {result.category_tally}"
+    )
+
+
+@pytest.mark.anyio
+async def test_demo_path_is_repeatable_on_postgres(
+    postgres_client: AsyncClient, _stub_llm
+) -> None:
+    """BUG-05's guarantee must hold on the real driver too.
+
+    Reproducibility depends on `generation_index` (migration 0004) being persisted and
+    ordered correctly. On SQLite that column comes from `create_all`; here it comes from the
+    migration, which is the only place its DDL and backfill are ever executed.
+    """
+    first = await _run_demo_path(postgres_client)
+    second = await _run_demo_path(postgres_client)
+
+    assert first.scores, "empty portfolio on PostgreSQL — the comparison would be vacuous"
+    assert first.category_tally == second.category_tally, (
+        f"the same seed produced different distributions on PostgreSQL: "
+        f"{first.category_tally} vs {second.category_tally}"
+    )
+    assert first.scores == second.scores, (
+        "the same seed produced different scores on PostgreSQL"
+    )
+
+
+def test_migration_0004_roundtrip() -> None:
+    """Migration 0004 must reverse cleanly.
+
+    0004 is BUG-05's migration, added today. Its backfill uses
+    `ROW_NUMBER() OVER (PARTITION BY scenario_id ORDER BY id)`, which has never executed
+    against any database — SQLite tests build the schema with `create_all` and skip Alembic
+    entirely. A migration that cannot be rolled back is a migration nobody can safely deploy.
+    """
+    from tests.conftest import _postgres_url, _run_alembic
+
+    url = _postgres_url()
+
+    _run_alembic(url, "upgrade head")
+    _run_alembic(url, "downgrade -1")  # 0004 -> 0003, dropping the index and the column
+    _run_alembic(url, "upgrade head")  # and back, exercising the backfill on populated rows
