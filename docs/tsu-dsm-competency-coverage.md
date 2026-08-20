@@ -1,19 +1,26 @@
 # TSU-DSM competency coverage — demoIW
 
-> ⚠ **DRAFT — the six components below are INFERRED, not authoritative.**
+> **Status: headings grounded in the published *perfil de egreso*; the six-item framing still
+> needs confirmation.**
 >
 > `governance/vision.md` lists as a measurable outcome: *"All six TSU-DSM profile components
-> are demonstrably exercised in the codebase."* The six components are **named nowhere in this
-> repository** — `vision.md` is the only file that mentions TSU-DSM at all, and it does not
-> enumerate them.
+> are demonstrably exercised in the codebase."* It does not enumerate them, and it is the only
+> file in this repository that mentions TSU-DSM.
 >
-> The headings below are inferred from the standard *TSU en Desarrollo de Software
-> Multiplataforma* competency profile. **Renata or Gustavo must replace them with the actual
-> six** before this document can support the vision's completion claim. The *evidence* columns
-> are factual regardless of how the components are finally named — they are drawn from the
-> merged codebase and can simply be re-grouped.
+> The headings below are no longer invented. They are drawn from the published graduate
+> profile of the *TSU en Tecnologías de la Información, área Desarrollo de Software
+> Multiplataforma* — which describes graduates as capable of *"análisis, diseño, desarrollo,
+> evaluación e implementación de software a la medida en diferentes plataformas"*, developing
+> *"soluciones tecnológicas para entornos Web mediante fundamentos de programación orientada a
+> objetos, base de datos y redes"*, and applying *"bases de datos, Internet de las cosas,
+> cómputo en la nube y seguridad de la información"*. Sources at the foot of this document.
 >
-> Created 2026-08-20 during the project-completion review.
+> **What still needs Renata or Gustavo:** the published profile is prose, not a numbered list
+> of six. The grouping into exactly six headings below is a reasonable reading of that prose,
+> not a citation. If the program's own documentation enumerates them differently, re-group the
+> evidence — the evidence rows are factual and survive any regrouping.
+>
+> Last updated 2026-08-20.
 
 ## Scale of the artifact
 
@@ -30,7 +37,9 @@
 
 ---
 
-## C1 — Análisis y diseño de software *(inferred)*
+## C1 — Análisis y diseño de sistemas de información
+
+*Profile: "análisis y diseño de Sistemas de Información", "capacidad de análisis, diseño".*
 
 | Evidence | Location |
 |---|---|
@@ -40,7 +49,9 @@
 | Twelve architecture decisions with rationale and rejected alternatives | `dev/decisions/adr-001…adr-012` |
 | Per-story technical design | 36 stories, each with design, plan and retrospective |
 
-## C2 — Desarrollo backend y APIs *(inferred)*
+## C2 — Programación y desarrollo de software a la medida
+
+*Profile: "programar en diversos lenguajes", "desarrollo… de software a la medida", "fundamentos de programación orientada a objetos".*
 
 | Evidence | Location |
 |---|---|
@@ -49,7 +60,9 @@
 | Layered use cases independent of transport | `app/application/use_cases/` |
 | Error contracts and graceful degradation | `ExternalServiceError` → 502; 409 for unscored; 422 with accepted values |
 
-## C3 — Persistencia de datos *(inferred)*
+## C3 — Bases de datos
+
+*Profile: "base de datos" named explicitly as a core concept in the graduate profile.*
 
 | Evidence | Location |
 |---|---|
@@ -58,7 +71,9 @@
 | Versioned migrations incl. a data backfill | `alembic/versions/0001…0004`; `0004` uses `ROW_NUMBER() OVER (PARTITION BY …)` |
 | Repository pattern over domain entities | `app/adapters/persistence/sqlalchemy_*_repo.py`, mappers |
 
-## C4 — Desarrollo frontend multiplataforma *(inferred)*
+## C4 — Desarrollo multiplataforma (web, móvil, escritorio)
+
+*Profile: "aplicaciones de escritorio, desarrollo web o dispositivos móviles", "soluciones tecnológicas para entornos Web".*
 
 | Evidence | Location |
 |---|---|
@@ -68,7 +83,9 @@
 | WCAG 2.1 AA — axe-core scan over 10 components, 0 violations | `src/components/__tests__/a11y-scan.test.tsx` |
 | Two role-specific surfaces | operator queue + case detail; executive dashboard + NL query |
 
-## C5 — Inteligencia artificial aplicada *(inferred)*
+## C5 — Cómputo en la nube y tecnologías emergentes
+
+*Profile: "Internet de las cosas, cómputo en la nube". Exercised here as applied AI through a cloud LLM gateway and a supervised ML pipeline — the emerging-technology component of this project.*
 
 | Evidence | Location |
 |---|---|
@@ -79,7 +96,9 @@
 | Constrained NL→intent translation, refusing out-of-vocabulary questions | ADR-008, `QueryIntent` with `extra="forbid"` |
 | Reproducibility as an engineering property | ADR-011, `generation_index`; regression-tested |
 
-## C6 — Calidad, pruebas y gestión del proceso *(inferred)*
+## C6 — Evaluación, implementación y seguridad
+
+*Profile: "evaluación e implementación", "seguridad de la información", plus "mantenimiento preventivo y correctivo".*
 
 | Evidence | Location |
 |---|---|
@@ -96,9 +115,19 @@
 
 ## Gaps to note before this is used as evidence
 
-1. **The six components are inferred.** Replace with the authoritative list.
-2. ~~NFR-06 (Auditability) is not yet implemented~~ — **RESOLVED 2026-08-20 (BUG-08).**
-   Communications now record operator, model, prompt version and send time; migration 0005;
-   verified by `tests/test_nfr06_auditability.py`. All six NFRs are now met and tested.
-3. **The real-PostgreSQL E2E has not run**, so C3's migration evidence is verified against
-   SQLite `create_all` plus review, not against an executed migration.
+1. **The six-item grouping is a reading of the published profile, not a citation.** The
+   profile is prose. Confirm against the program's own competency framework.
+2. **Security (C6) is the thinnest area.** The profile names *"seguridad de la información"*
+   and this project has no authentication — B-17 (role-based access) is still under
+   consideration, and NFR-06's operator identifier is a self-described placeholder because of
+   it. This is an honest gap, not an oversight: the project is demonstrative and explicitly
+   out of scope for production deployment.
+3. **IoT is not exercised at all.** The profile names *"Internet de las cosas"*; nothing in
+   this codebase touches it. C5 is covered through cloud and applied AI instead.
+
+## Sources
+
+- [TSU en TI Desarrollo de Software Multiplataforma — Universidad Tecnológica de Nayarit](https://vinculos.utn.edu.mx/planes_programas/view/TIDesarrollodeSoftwareMultiplataforma.php)
+- [TSU Tecnologías de la Información área Desarrollo de Software Multiplataforma — Universidad Tecnológica de Jalisco](https://www.utj.edu.mx/programas-educativos/dgs/tsu-tiadsm/)
+- [TSU en Desarrollo de Software Multiplataforma — Universidad Tecnológica de Durango](https://utd.edu.mx/oferta-educativa/tsu-en-tecnologias-de-la-informacion/)
+- [T.S.U. Desarrollo de Software Multiplataforma — Universidad Tecnológica de Xicotepec de Juárez](https://utxicotepec.edu.mx/tsu-dsm/)
