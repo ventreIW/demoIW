@@ -53,11 +53,7 @@ function Sidebar() {
         </div>
         <nav aria-label={t('sidebar.navLabel')} className="flex-1 space-y-1 p-4">
           {links.map((link) => (
-            <SidebarLink
-              key={link.href}
-              href={link.href}
-              isActive={isActive(link.href)}
-            >
+            <SidebarLink key={link.href} href={link.href} isActive={isActive(link.href)}>
               {link.label}
             </SidebarLink>
           ))}
@@ -81,7 +77,7 @@ function SidebarLink({
       href={href}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'block rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2',
+        'block rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         isActive
           ? 'bg-slate-200 font-medium text-slate-900'
           : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900',

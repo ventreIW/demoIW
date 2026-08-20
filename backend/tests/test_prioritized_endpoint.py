@@ -210,9 +210,7 @@ class TestPrioritizedEndpoint:
         assert tally, "portfolio produced no cases — the filter test would be vacuous"
 
         for category, expected_count in tally.items():
-            resp = await client.get(
-                f"/api/v1/scenarios/{sid}/prioritized?category={category}"
-            )
+            resp = await client.get(f"/api/v1/scenarios/{sid}/prioritized?category={category}")
             assert resp.status_code == 200
             body = resp.json()
             assert expected_count > 0

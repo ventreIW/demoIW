@@ -99,9 +99,9 @@ async def _run_demo_path(client: AsyncClient) -> DemoPathResult:
     # 2 — activate it (PATCH, not POST — verified against the live schema)
     response = await client.patch(f"/api/v1/scenarios/{scenario_id}/activate")
     assert response.status_code == 200, _fail("activate", response)
-    assert response.json()["status"] == "active", (
-        f"activate returned status {response.json()['status']!r}, expected 'active'"
-    )
+    assert (
+        response.json()["status"] == "active"
+    ), f"activate returned status {response.json()['status']!r}, expected 'active'"
     result.steps_completed.append("activate")
 
     # 3 — score and persist
@@ -140,9 +140,9 @@ async def _run_demo_path(client: AsyncClient) -> DemoPathResult:
         )
         assert response.status_code == 200, _fail(f"filter:{category}", response)
         filtered = response.json()["cases"]
-        assert len(filtered) == expected, (
-            f"?category={category} returned {len(filtered)} cases, expected {expected}"
-        )
+        assert (
+            len(filtered) == expected
+        ), f"?category={category} returned {len(filtered)} cases, expected {expected}"
     result.steps_completed.append("filter")
 
     # 6 — open the top case
@@ -329,9 +329,7 @@ async def test_demo_headline_moment_succeeds(client: AsyncClient, _scripted_llm)
     scenario_id = response.json()["id"]
 
     await client.patch(f"/api/v1/scenarios/{scenario_id}/activate")
-    assert (
-        await client.post(f"/api/v1/scenarios/{scenario_id}/score")
-    ).status_code == 201
+    assert (await client.post(f"/api/v1/scenarios/{scenario_id}/score")).status_code == 201
 
     queue = await client.get(f"/api/v1/scenarios/{scenario_id}/prioritized")
     cases = queue.json()["cases"]
@@ -355,9 +353,9 @@ async def test_demo_headline_moment_succeeds(client: AsyncClient, _scripted_llm)
     )
     assert answered.status_code == 200, _fail("nl query (scripted)", answered)
     answer = answered.json()
-    assert answer["answerable"] is True, (
-        f"the headline query was refused with a well-formed model: {answer}"
-    )
+    assert (
+        answer["answerable"] is True
+    ), f"the headline query was refused with a well-formed model: {answer}"
     assert answer["result"]["series"], "answerable query returned no chart series"
     assert answer["result"]["metric"] == "outstanding"
     assert answer["scenario"], "the answer cites no scenario — provenance would be missing"
@@ -368,12 +366,12 @@ async def test_demo_headline_moment_succeeds(client: AsyncClient, _scripted_llm)
     )
     # The scripted reply deliberately prefixes chain-of-thought before the marker.
     # s6.3 shipped a live bug where exactly that reasoning trace reached the director.
-    assert "Redactemos algo conciso" not in narrative, (
-        f"the model's reasoning trace leaked into the director-facing narrative: {narrative!r}"
-    )
-    assert narrative.startswith("La mayor parte"), (
-        f"marker extraction returned the wrong span: {narrative!r}"
-    )
+    assert (
+        "Redactemos algo conciso" not in narrative
+    ), f"the model's reasoning trace leaked into the director-facing narrative: {narrative!r}"
+    assert narrative.startswith(
+        "La mayor parte"
+    ), f"marker extraction returned the wrong span: {narrative!r}"
     print(
         f"\n[s7.4] headline moment OK — metric={answer['result']['metric']} "
         f"group_by={answer['result']['group_by']} "
@@ -433,16 +431,16 @@ async def test_csv_upload_limit_is_explicit(client: AsyncClient) -> None:
     )
     assert upload.status_code == 201, _fail("csv upload", upload)
     scenario_id = upload.json()["id"]
-    assert upload.json()["client_count"] == 30, (
-        f"CSV upload persisted {upload.json()['client_count']} clients, expected 30"
-    )
+    assert (
+        upload.json()["client_count"] == 30
+    ), f"CSV upload persisted {upload.json()['client_count']} clients, expected 30"
 
     # It is listed and readable — the parts of the demo that do work.
     listed = await client.get("/api/v1/scenarios")
     assert listed.status_code == 200
-    assert any(s["id"] == scenario_id for s in listed.json()), (
-        "the uploaded scenario does not appear in the scenario list"
-    )
+    assert any(
+        s["id"] == scenario_id for s in listed.json()
+    ), "the uploaded scenario does not appear in the scenario list"
 
     detail = await client.get(f"/api/v1/scenarios/{scenario_id}")
     assert detail.status_code == 200, _fail("uploaded scenario detail", detail)
@@ -504,9 +502,7 @@ async def test_full_demo_path_on_postgres(postgres_client: AsyncClient, _stub_ll
 
 
 @pytest.mark.anyio
-async def test_demo_path_is_repeatable_on_postgres(
-    postgres_client: AsyncClient, _stub_llm
-) -> None:
+async def test_demo_path_is_repeatable_on_postgres(postgres_client: AsyncClient, _stub_llm) -> None:
     """BUG-05's guarantee must hold on the real driver too.
 
     Reproducibility depends on `generation_index` (migration 0004) being persisted and
@@ -521,9 +517,7 @@ async def test_demo_path_is_repeatable_on_postgres(
         f"the same seed produced different distributions on PostgreSQL: "
         f"{first.category_tally} vs {second.category_tally}"
     )
-    assert first.scores == second.scores, (
-        "the same seed produced different scores on PostgreSQL"
-    )
+    assert first.scores == second.scores, "the same seed produced different scores on PostgreSQL"
 
 
 def test_migration_0004_roundtrip() -> None:

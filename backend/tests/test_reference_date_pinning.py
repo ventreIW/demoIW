@@ -38,17 +38,17 @@ async def test_pinned_reference_date_persists_as_iso_string(client: AsyncClient)
     resp = await client.post(
         "/api/v1/scenarios/generate", json=_params(reference_date="2026-06-01")
     )
-    assert resp.status_code == 201, (
-        f"pinning reference_date crashed persist: {resp.status_code} {resp.text[:300]}"
-    )
+    assert (
+        resp.status_code == 201
+    ), f"pinning reference_date crashed persist: {resp.status_code} {resp.text[:300]}"
     sid = resp.json()["id"]
 
     detail = await client.get(f"/api/v1/scenarios/{sid}")
     assert detail.status_code == 200
     stored = detail.json()["parameters"]
-    assert stored["reference_date"] == "2026-06-01", (
-        f"reference_date did not round-trip as an ISO string: {stored!r}"
-    )
+    assert (
+        stored["reference_date"] == "2026-06-01"
+    ), f"reference_date did not round-trip as an ISO string: {stored!r}"
     # every other parameter must survive the mode change unharmed
     assert stored["seed"] == 42
     assert stored["sector"] == "retail"

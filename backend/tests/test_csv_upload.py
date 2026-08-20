@@ -107,9 +107,9 @@ async def test_uploaded_csv_invoices_count_as_outstanding(client: AsyncClient) -
         f"uploaded invoices are still invisible to the extractor — outstanding is zero: "
         f"{outcome[:300]}"
     )
-    assert "Unrecognised invoice status" not in outcome, (
-        f"an unrecognised status is still being written by the CSV path: {outcome[:300]}"
-    )
+    assert (
+        "Unrecognised invoice status" not in outcome
+    ), f"an unrecognised status is still being written by the CSV path: {outcome[:300]}"
 
 
 @pytest.mark.xfail(
@@ -137,9 +137,9 @@ async def test_uploaded_csv_scenario_roundtrip_is_scorable(client: AsyncClient) 
     scenario_id = upload.json()["id"]
 
     prioritized = await client.get(f"/api/v1/scenarios/{scenario_id}/prioritized")
-    assert prioritized.status_code == 200, (
-        f"uploaded scenario is not scorable: {prioritized.status_code} {prioritized.text[:300]}"
-    )
+    assert (
+        prioritized.status_code == 200
+    ), f"uploaded scenario is not scorable: {prioritized.status_code} {prioritized.text[:300]}"
     body = prioritized.json()
     assert body["cases"], "uploaded scenario produced an empty portfolio"
 

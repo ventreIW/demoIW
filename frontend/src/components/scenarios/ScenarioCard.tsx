@@ -43,7 +43,7 @@ export default function ScenarioCard({
   const sectorLabel = t(`sectors.${scenario.sector}` as never)
 
   return (
-    <Card className={isActive ? 'ring-primary ring-2' : ''}>
+    <Card className={isActive ? 'ring-2 ring-primary' : ''}>
       <CardHeader>
         <CardTitle>{scenario.name}</CardTitle>
         <CardDescription>
@@ -66,7 +66,7 @@ export default function ScenarioCard({
       </CardContent>
       <CardFooter>
         {isActive ? (
-          <span className="text-primary text-sm font-medium">{t('scenario.status.active')}</span>
+          <span className="text-sm font-medium text-primary">{t('scenario.status.active')}</span>
         ) : (
           <Button onClick={() => onActivate(scenario.id)} disabled={isActivating} variant="default">
             {isActivating ? t('scenario.actions.activating') : t('scenario.actions.select')}

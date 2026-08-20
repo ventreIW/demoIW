@@ -28,6 +28,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      # format:check is declared in .raise/manifest.yaml as format_command but was absent
+      # here, so it was a gate nobody ran — 13 files drifted out of style unnoticed. Same
+      # pathology as BUG-01 one layer down (BUG-07).
+      - run: npm run format:check
       - run: npm test -- --run
       # E7's done-criterion is a production bundle (NFR-04, installable PWA), but nothing
       # here ever built one. Lint/typecheck/test were all green on 2026-08-05 while the
@@ -47,5 +51,6 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
+      - run: ruff format --check .
       - run: mypy app/
       - run: pytest tests/ -v --tb=short

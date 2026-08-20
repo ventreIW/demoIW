@@ -43,10 +43,9 @@ const promoScenario = {
 
 describe('a11y scan — WCAG 2.1 AA semantic rules (jsdom)', () => {
   it('CaseTable — 0 AA violations', async () => {
-    const r = await runAxeOn(
-      <CaseTable cases={[caseFixture, secondCaseFixture]} />,
-      { locale: 'es' },
-    )
+    const r = await runAxeOn(<CaseTable cases={[caseFixture, secondCaseFixture]} />, {
+      locale: 'es',
+    })
     expect(r.violations).toEqual([])
   })
 
@@ -59,33 +58,29 @@ describe('a11y scan — WCAG 2.1 AA semantic rules (jsdom)', () => {
 
   it('KpiCard — 0 AA violations', async () => {
     const r = await runAxeOn(
-      <KpiCard label="totalOverdue" value={1835177.64} format="currency" subLabel="vs last month" />,
+      <KpiCard
+        label="totalOverdue"
+        value={1835177.64}
+        format="currency"
+        subLabel="vs last month"
+      />,
       { locale: 'es' },
     )
     expect(r.violations).toEqual([])
   })
 
   it('ExecutiveDashboard — 0 AA violations (with data)', async () => {
-    const r = await runAxeOn(
-      <ExecutiveDashboard kpis={kpisFixture} />,
-      { locale: 'es' },
-    )
+    const r = await runAxeOn(<ExecutiveDashboard kpis={kpisFixture} />, { locale: 'es' })
     expect(r.violations).toEqual([])
   })
 
   it('ExecutiveDashboard — 0 AA violations (loading)', async () => {
-    const r = await runAxeOn(
-      <ExecutiveDashboard kpis={null} loading />,
-      { locale: 'es' },
-    )
+    const r = await runAxeOn(<ExecutiveDashboard kpis={null} loading />, { locale: 'es' })
     expect(r.violations).toEqual([])
   })
 
   it('ExecutiveDashboard — 0 AA violations (error)', async () => {
-    const r = await runAxeOn(
-      <ExecutiveDashboard kpis={null} error="API error" />,
-      { locale: 'es' },
-    )
+    const r = await runAxeOn(<ExecutiveDashboard kpis={null} error="API error" />, { locale: 'es' })
     expect(r.violations).toEqual([])
   })
 
