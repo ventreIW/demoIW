@@ -21,11 +21,11 @@
 |---|---|
 | Backend Python modules | 78 |
 | Frontend TypeScript/TSX modules | 80 |
-| Backend test modules | 58 (558 tests) |
+| Backend test modules | 59 (562 tests) |
 | Frontend test modules | 30 (207 tests) |
 | Database tables | 7 |
 | Alembic migrations | 4 |
-| Architecture decision records | 12 |
+| Architecture decision records | 12 (ADR-012 proposed) |
 | Stories with full lifecycle artifacts | 36 |
 
 ---
@@ -89,14 +89,16 @@
 | CI gating pushes and PRs across both stacks | `.github/workflows/ci.yml` — typecheck, lint, format, test, build |
 | Static analysis: ruff, mypy strict, eslint, tsc | all green |
 | Documented defect analysis with root cause | `work/bugs/BUG-01…BUG-07` — scope, triage, analysis, plan, retrospective each |
-| Methodology record | 36 stories × (design, plan, retrospective); 7 epic retrospectives; 12 ADRs |
+| Auditability of AI-generated output (NFR-06) | `communications` records operator, model, prompt version, drafted-at and sent-at; migration 0005 |
+| Methodology record | 36 stories × (design, plan, retrospective); 9 epic retrospectives; 12 ADRs |
 
 ---
 
 ## Gaps to note before this is used as evidence
 
 1. **The six components are inferred.** Replace with the authoritative list.
-2. **NFR-06 (Auditability) is not yet implemented** — see the open item at project close.
-   Until it is, C6's coverage claim has a hole the PRD itself names.
+2. ~~NFR-06 (Auditability) is not yet implemented~~ — **RESOLVED 2026-08-20 (BUG-08).**
+   Communications now record operator, model, prompt version and send time; migration 0005;
+   verified by `tests/test_nfr06_auditability.py`. All six NFRs are now met and tested.
 3. **The real-PostgreSQL E2E has not run**, so C3's migration evidence is verified against
    SQLite `create_all` plus review, not against an executed migration.
