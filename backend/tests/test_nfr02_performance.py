@@ -110,9 +110,7 @@ async def test_priority_queue_meets_nfr02_at_500_clients(
 
 
 @pytest.mark.anyio
-async def test_kpi_dashboard_responds_at_500_clients(
-    client: AsyncClient, _stub_llm_nfr02
-) -> None:
+async def test_kpi_dashboard_responds_at_500_clients(client: AsyncClient, _stub_llm_nfr02) -> None:
     """The executive dashboard reads persisted scores (ADR-009); it must stay responsive too.
 
     Not named by NFR-02, which speaks only of the priority queue, so it is held to the same
@@ -129,7 +127,7 @@ async def test_kpi_dashboard_responds_at_500_clients(
 
     assert kpis.status_code == 200, kpis.text[:300]
     assert kpis.json()["total_outstanding"] > 0
-    assert elapsed < QUEUE_BUDGET_SECONDS, (
-        f"KPI dashboard took {elapsed:.2f}s at 500 clients, over {QUEUE_BUDGET_SECONDS:.0f}s"
-    )
+    assert (
+        elapsed < QUEUE_BUDGET_SECONDS
+    ), f"KPI dashboard took {elapsed:.2f}s at 500 clients, over {QUEUE_BUDGET_SECONDS:.0f}s"
     print(f"[E6 M4 · NFR-02] KPI dashboard {elapsed:.3f}s at 500 clients")

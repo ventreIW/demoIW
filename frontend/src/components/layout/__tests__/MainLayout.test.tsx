@@ -13,7 +13,9 @@ vi.mock('@/i18n/routing', () => ({
 describe('MainLayout a11y (T2)', () => {
   it('renders a skip-to-content link as the first focusable element', () => {
     const { container } = renderWithIntl(
-      <MainLayout><p>content</p></MainLayout>,
+      <MainLayout>
+        <p>content</p>
+      </MainLayout>,
       { locale: 'es' },
     )
 
@@ -24,7 +26,12 @@ describe('MainLayout a11y (T2)', () => {
   })
 
   it('renders <main> with id="main-content" and an aria-label', () => {
-    renderWithIntl(<MainLayout><p>content</p></MainLayout>, { locale: 'es' })
+    renderWithIntl(
+      <MainLayout>
+        <p>content</p>
+      </MainLayout>,
+      { locale: 'es' },
+    )
 
     const main = document.getElementById('main-content')
     expect(main).not.toBeNull()
@@ -33,14 +40,24 @@ describe('MainLayout a11y (T2)', () => {
   })
 
   it('marks the sidebar <nav> as a navigation landmark', () => {
-    renderWithIntl(<MainLayout><p>content</p></MainLayout>, { locale: 'es' })
+    renderWithIntl(
+      <MainLayout>
+        <p>content</p>
+      </MainLayout>,
+      { locale: 'es' },
+    )
 
     const nav = screen.getByRole('navigation')
     expect(nav).toBeDefined()
   })
 
   it('sets aria-current="page" on the active sidebar link', () => {
-    renderWithIntl(<MainLayout><p>content</p></MainLayout>, { locale: 'es' })
+    renderWithIntl(
+      <MainLayout>
+        <p>content</p>
+      </MainLayout>,
+      { locale: 'es' },
+    )
 
     // With usePathname mocked to '/cases', the operations link should have aria-current
     const operationsLink = screen.getByRole('link', { name: /operaciones/i })

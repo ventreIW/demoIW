@@ -61,7 +61,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
             type="button"
             onClick={handleSelectClick}
             disabled={uploading}
-            className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+            className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
           >
             {t('csv.uploadButton')}
           </button>
@@ -72,7 +72,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
               type="button"
               onClick={handleUpload}
               disabled={uploading}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-transparent bg-slate-800 px-3 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-transparent bg-slate-800 px-3 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
             >
               {uploading ? t('csv.uploading') : t('csv.upload')}
             </button>
@@ -84,7 +84,7 @@ export default function CsvUpload({ onUploadComplete }: CsvUploadProps) {
                 setSuccess(null)
               }}
               disabled={uploading}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-500 hover:text-slate-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-500 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
               aria-label={t('csv.cancelSelection')}
             >
               ✕

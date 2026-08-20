@@ -48,11 +48,10 @@ async def test_same_params_produce_the_same_portfolio(client: AsyncClient) -> No
     scores_a, tally_a = await _portfolio(client)
     scores_b, tally_b = await _portfolio(client)
 
-    assert tally_a == tally_b, (
-        f"same seed produced different category distributions: {tally_a} vs {tally_b}"
-    )
+    assert (
+        tally_a == tally_b
+    ), f"same seed produced different category distributions: {tally_a} vs {tally_b}"
     assert len(scores_a) == len(scores_b), (
-        f"same seed produced portfolios of different sizes: "
-        f"{len(scores_a)} vs {len(scores_b)}"
+        f"same seed produced portfolios of different sizes: " f"{len(scores_a)} vs {len(scores_b)}"
     )
     assert scores_a == scores_b, "same seed produced different scores"
