@@ -28,6 +28,13 @@ class ClientORM(Base):
     name: Mapped[str] = mapped_column(String(200))
     sector_description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     payment_history_pattern: Mapped[str] = mapped_column(String(50))
+    #: Position of this client in its scenario's generation sequence.
+    #:
+    #: `id` is a random surrogate key assigned by persistence, so it carries no ordering
+    #: information. OutcomeLabeller applies a *seeded* random draw along an axis ordered by
+    #: this column — ordering it by `id` instead made the same seed produce a different
+    #: model on every run (BUG-05, ADR-011).
+    generation_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
 class InvoiceORM(Base):

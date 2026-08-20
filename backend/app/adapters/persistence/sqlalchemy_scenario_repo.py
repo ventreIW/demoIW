@@ -95,7 +95,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
         orm = scenario_domain_to_orm(scenario)
         orm.id = str(uuid4())
         self._session.add(orm)
-        for row in rows:
+        for index, row in enumerate(rows):
             client_id = str(uuid4())
             client_orm = ClientORM(
                 id=client_id,
@@ -103,6 +103,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
                 name=row["client_name"],
                 sector_description=None,
                 payment_history_pattern=PaymentPattern.ON_TIME.value,
+                generation_index=index,  # CSV row order (BUG-05, ADR-011)
             )
             self._session.add(client_orm)
             due_date = datetime.strptime(row["due_date"], "%Y-%m-%d").replace(tzinfo=UTC)
@@ -164,6 +165,7 @@ class SQLAlchemyScenarioRepository(IScenarioRepository):
                     "name": c.name,
                     "sector_description": c.sector_description,
                     "payment_history_pattern": c.payment_history_pattern,
+                    "generation_index": c.generation_index,
                 }
                 for c in clients
             ]

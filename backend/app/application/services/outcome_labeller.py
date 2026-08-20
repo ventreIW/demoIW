@@ -73,7 +73,14 @@ class OutcomeLabeller:
             )
 
         clients = dataset.clients[dataset.clients["id"].isin(with_balance.index)]
-        clients = clients.sort_values("id").reset_index(drop=True)
+        # Order by the generation sequence, NOT by `id`. `rng` below is seeded, so it emits
+        # the same draws every run — but those draws are applied along this axis. `id` is a
+        # random surrogate key assigned at persist time, so ordering by it applied a seeded
+        # sequence to a randomly permuted client list: same seed, different labels, different
+        # model, different scores (BUG-05, ADR-011). A seeded draw along an unseeded axis is
+        # not seeded.
+        order_column = "generation_index" if "generation_index" in clients.columns else "id"
+        clients = clients.sort_values(order_column).reset_index(drop=True)
 
         rng = np.random.default_rng(self._seed)
         scales = clients["payment_history_pattern"].map(
@@ -81,9 +88,15 @@ class OutcomeLabeller:
         )
         days_to_collect = rng.exponential(scale=scales.to_numpy())
 
-        return pd.DataFrame(
+        labelled = pd.DataFrame(
             {
                 "client_id": clients["id"],
                 LABEL_COLUMN: (days_to_collect <= horizon_days).astype(int),
             }
         )
+        # Carry the ordering key downstream. BuildTrainingSet sorts the joined frame before
+        # taking a positional train/test split, and sorting *there* by the random `id` would
+        # reintroduce exactly the defect fixed here, one stage later (BUG-05, ADR-011).
+        if order_column in clients.columns:
+            labelled[order_column] = clients[order_column]
+        return labelled
