@@ -1,3 +1,7 @@
+import os
+import pathlib
+import subprocess
+import sys
 from collections.abc import AsyncGenerator
 
 import pytest
@@ -113,3 +117,96 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with session_maker() as session:
         yield session
     await engine.dispose()
+
+
+# ---------------------------------------------------------------------------
+# s7.4 / E6 M4 — real PostgreSQL
+#
+# Every fixture above builds the schema with `Base.metadata.create_all` against SQLite, which
+# means the Alembic migrations are executed by no test in this project. That is the concrete
+# gap M4 exists to close, and it now matters more than before: migration 0004 (BUG-05) is new
+# and its `ROW_NUMBER() OVER (PARTITION BY …)` backfill has never run anywhere.
+#
+# This fixture runs the migrations from zero against a real PostgreSQL, so asyncpg and the
+# Postgres-specific DDL are exercised rather than assumed.
+#
+# It SKIPS LOUDLY when PostgreSQL is unreachable. It must never pass silently: M4 accumulated
+# five stories of deferral precisely because "not verified" was indistinguishable from "fine".
+# ---------------------------------------------------------------------------
+
+#: Set to run the M4 suite, e.g.
+#: postgresql+asyncpg://postgres:postgres@localhost:5432/demoiw_test
+POSTGRES_URL_ENV = "DEMOIW_TEST_POSTGRES_URL"
+
+M4_SKIP_REASON = (
+    "E6 M4 NOT VERIFIED: no PostgreSQL reachable. "
+    f"Set {POSTGRES_URL_ENV} to a live database to run the real-driver E2E "
+    "(asyncpg + Alembic migrations from zero, including 0004). "
+    "This suite has now been deferred across E4, E5, s6.2, s6.3, s6.4 and E7 — "
+    "a skip here is an OPEN GATE, not a pass."
+)
+
+
+def _postgres_url() -> str:
+    """Return the configured Postgres URL, or skip with an explicit M4 reason."""
+    url = os.environ.get(POSTGRES_URL_ENV, "").strip()
+    if not url:
+        pytest.skip(M4_SKIP_REASON)
+    return url
+
+
+def _run_alembic(url: str, command: str) -> None:
+    """Run an Alembic command against `url` in a subprocess.
+
+    A subprocess rather than the Python API because `alembic/env.py` reads
+    `settings.DATABASE_URL` at import time; overriding the env var for a child process is
+    both simpler and closer to how migrations actually run in deployment.
+    """
+    env = {**os.environ, "DATABASE_URL": url}
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", *command.split()],
+        cwd=pathlib.Path(__file__).resolve().parent.parent,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    if result.returncode != 0:
+        raise AssertionError(
+            f"alembic {command} failed against PostgreSQL:\n"
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+
+
+@pytest.fixture
+async def postgres_client() -> AsyncGenerator[AsyncClient, None]:
+    """An AsyncClient backed by real PostgreSQL with migrations applied from zero."""
+    url = _postgres_url()
+
+    from app.adapters.persistence import models as _  # noqa: F401
+
+    try:
+        engine = create_async_engine(url, echo=False)
+        async with engine.begin() as conn:
+            await conn.exec_driver_sql("SELECT 1")
+    except Exception as exc:  # noqa: BLE001 — any connection failure is the same outcome
+        pytest.skip(f"{M4_SKIP_REASON}\nConnection attempt failed: {exc}")
+
+    # Migrations from zero — the whole point of this fixture.
+    _run_alembic(url, "downgrade base")
+    _run_alembic(url, "upgrade head")
+
+    session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        async with session_maker() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+    await engine.dispose()
+    app.dependency_overrides.clear()

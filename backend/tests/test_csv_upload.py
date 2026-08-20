@@ -148,4 +148,7 @@ async def test_uploaded_csv_scenario_roundtrip_is_scorable(client: AsyncClient) 
 
     kpis = await client.get(f"/api/v1/scenarios/{scenario_id}/kpis")
     assert kpis.status_code == 200, f"kpis failed: {kpis.status_code} {kpis.text[:200]}"
-    assert kpis.json()["total_overdue"] > 0
+    # The KPI response field is total_outstanding; total_overdue does not exist.
+    # Unreached today (this test is xfail on BUG-06) but it would have failed for
+    # the wrong reason the moment BUG-06 landed. Caught in s7.4 gemba.
+    assert kpis.json()["total_outstanding"] > 0
