@@ -54,3 +54,38 @@ jobs:
       - run: ruff format --check .
       - run: mypy app/
       - run: pytest tests/ -v --tb=short
+
+  # The SQLite suite above cannot express the defects BUG-09 was made of: it builds its schema
+  # from the ORM via create_all, so the Alembic migrations never execute and the two
+  # declarations never meet. That is how the backend shipped unable to write to its own
+  # production database. This job is the only place they meet.
+  backend-postgres:
+    name: Backend on real PostgreSQL (E6 M4)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: demoiw_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - name: Full-path E2E + schema agreement against PostgreSQL
+        env:
+          DEMOIW_TEST_POSTGRES_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/demoiw_test
+        run: pytest tests/test_e2e_demo_flow.py tests/test_schema_agreement.py -v --tb=short
