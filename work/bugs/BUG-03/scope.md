@@ -49,3 +49,25 @@ Done when: 1. Upload a ≥20-client CSV, then `/prioritized` returns 200 with a 
               `"paid"`, so no migration of existing rows is required.
            5. A regression test covers upload → prioritize end to end, not just upload.
            6. Full backend suite green; no test weakened or deleted.
+
+TRIAGE:
+  Bug Type:    Data
+  Severity:    S1-High
+  Origin:      Design
+  Qualifier:   Incorrect
+
+  Rationale:
+  - Data, not Interface: unlike BUG-02 the HTTP contract is fine. The defect is in the value
+    written to storage — a domain attribute persisted in a vocabulary no reader shares.
+  - S1: this removes an entire advertised product capability. B-07/RF-07 ("Scenario management
+    API + UI — pre-loaded scenarios, CSV upload") is a delivered feature that cannot do the
+    thing it exists for. It also fails as a 500 rather than a handled error, and the CSV
+    upload is part of the demo narrative s7.4 must validate.
+  - **Origin=Design, not Code.** This is the one meaningful difference from BUG-02. There is
+    no `InvoiceStatus` enum to have been used incorrectly — the type was never modelled. Seven
+    other domain concepts got StrEnums; invoice status did not, so every site was free to
+    invent its own spelling and two of them agreed only by luck. Fixing the literal alone
+    would leave the next writer equally free.
+  - Qualifier=Incorrect: a value is written and it is the wrong one.
+
+  Jira fields: not set — no backlog adapter configured (`.raise/backlog.yaml` absent).
