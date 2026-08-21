@@ -1,0 +1,103 @@
+session_id: "SES-20260820-1935"
+summary: "SES-20260820-1935: demoIW v1.0.0 — proyecto cerrado; M4 ejecutado por fin y encontró BUG-09 (S0), NFR-06 implementado, 8 items de cierre"
+type: feature
+outcomes:
+  - "demoIW tagged v1.0.0 — project complete. All 7 epics closed and tagged, all 7 RF and all 6 NFR delivered"
+  - "E6 M4 CLOSED — real-PostgreSQL run executed for the first time after six deferrals, via a userspace pgserver needing no root"
+  - "BUG-09 (S0, first of the project) — the backend could not write to its own production database; three ORM/migration divergences"
+  - "BUG-08 — NFR-06 auditability implemented; it was the only NFR nothing tested and the only one unmet"
+  - "BUG-07 — format:check was in the manifest but absent from CI; added for both stacks and it immediately caught 6 unformatted backend files"
+  - "BUG-06 closed via ADR-012 Option B — RF-07 never required uploaded scenarios to be scorable"
+  - "tests/test_schema_agreement.py — diffs the migrated schema against the ORM; verified by reinjecting the original divergence"
+  - "backend-postgres CI job added; all three CI jobs green, first success since 2026-08-05"
+  - "E2/E5 tagged retroactively, E8/E9 closed, stray e1-stories/ removed, all 36 stories now have design+plan+retrospective"
+  - "docs/project-completion.md and docs/tsu-dsm-competency-coverage.md written"
+patterns:
+  - description: "Re-test an inherited blocker before repeating it. 'No PostgreSQL available' was recorded on 2026-08-07 and cited across six deferrals without anyone re-examining it; a userspace PostgreSQL was one pip install away and took four minutes."
+    context: "blocker,deferral,verification,assumptions"
+    type: process
+  - description: "Applying a migration is not using it. alembic upgrade head succeeded throughout while the ORM and the migrations declared the schema differently — they meet only on write, so a suite that builds its schema from the ORM can never see the difference."
+    context: "migrations,orm,schema,testing"
+    type: technical
+  - description: "A test environment weaker than production makes a class of defect inexpressible rather than merely unobserved. No amount of review finds it, because both sides are correct in isolation."
+    context: "testing,environment,sqlite,postgres"
+    type: process
+  - description: "After writing a guard, reintroduce the defect it exists for. My schema-agreement test keyed on type(column.type).__name__, so String(36) fell through an unmodelled-type branch and the reinjected BUG-09 divergence produced 5 passed."
+    context: "testing,guard,verification,false-negative"
+    type: process
+  - description: "Decide from the requirement, not from the backlog. ADR-012 reversed from Option A to Option B on reading RF-07, which never mentions CSV upload — Option A would have built a pre-trained-model pipeline to satisfy a requirement nobody wrote."
+    context: "adr,requirements,yagni,scope"
+    type: architecture
+corrections:
+  - what: "Reported four stories as missing artifacts; two were false positives"
+    lesson: "The audit scanned a stray duplicate directory (e1-stories/) and missed that s4.5-API shares its design with s4.5-formula by deliberate construction. Verify a gap before reporting it as one."
+  - what: "Wrote a schema-agreement guard that did not catch the bug it was written for"
+    lesson: "Writing the guard was not the work; proving it fails was. A silent skip branch is how it passed."
+coaching:
+  trust_level: "established"
+  autonomy: "high — the user delegated all remaining decisions explicitly; ADR-012, the TSU-DSM approach, and the completion tag were taken directly and recorded as delegated"
+current_work:
+  epic: "none — all closed"
+  story: "none"
+  phase: "project complete"
+  branch: main
+pending:
+  decisions:
+    - "ADR-012 accepted as Option B under delegation; open to reversal on team review"
+  blockers: []
+  next_actions:
+    - "Renata/Gustavo: confirm the six TSU-DSM competency components against the program's own framework"
+    - "Gustavo: the standing policy question worth acting on is that no collections practitioner has read the Spanish copy, which now includes LLM-generated narratives"
+    - "Consider reporting the three RaiSE tooling defects upstream"
+narrative: |
+  ## Decisions
+  - Took all remaining decisions under explicit delegation ("take the decisions yourself").
+  - ADR-012 accepted as Option B, reversing my own earlier recommendation after reading RF-07.
+  - Tagged v1.0.0 after verifying the vision's five measurable outcomes against observable
+    state rather than the epic tracker.
+  - Amended migration 0005 rather than superseding it (no database had applied it); added
+    0006 forward rather than amending 0002 (which may have been applied elsewhere).
+
+  ## Research
+  - PostgreSQL runs in userspace via the `pgserver` PyPI package — no root, no Docker. This
+    is what finally closed M4 after six deferrals.
+  - The backend venv had no pip; `python -m ensurepip --upgrade` bootstrapped it.
+  - TSU-DSM: the published perfil de egreso is prose, not a numbered list of six. Grounded the
+    coverage map in it with four sources; the grouping remains a reading, not a citation.
+
+  ## Artifacts
+  - work/bugs/BUG-06..BUG-09/, dev/decisions/adr-012, migrations 0005 and 0006
+  - backend/tests/: test_nfr06_auditability.py, test_schema_agreement.py
+  - docs/project-completion.md, docs/tsu-dsm-competency-coverage.md
+  - .github/workflows/ci.yml: format gates both stacks + backend-postgres job
+
+  ## Branch State
+  - main, clean, pushed. Tags epic/e1..e7-complete and v1.0.0.
+  - 571 backend tests with PostgreSQL (563 + 8 skipped without), 207 frontend. All three CI
+    jobs green.
+
+  ## Environment changes worth knowing
+  - `pip` was bootstrapped into `backend/.venv` via ensurepip. It was absent (uv-created
+    venv); this is standard venv furniture and is not in requirements.
+  - A scratch PostgreSQL lived in the session scratchpad and has been shut down cleanly.
+next_session_prompt: |
+  demoIW is tagged v1.0.0 and complete. All 7 epics closed and tagged, all 7 functional and
+  all 6 non-functional requirements delivered and tested, three CI jobs green including the
+  full path against real PostgreSQL. There is no outstanding development work.
+
+  If work resumes, the two things waiting on people are: Renata or Gustavo confirming the six
+  TSU-DSM competency components (docs/tsu-dsm-competency-coverage.md groups the published
+  profile's prose into six, which is a reading and not a citation), and Gustavo on the
+  standing policy questions — the one that matters is that no collections practitioner has
+  read the Spanish copy, which now includes LLM-generated director-facing narratives.
+
+  If you need PostgreSQL again: it runs in userspace via `pgserver`, no root required. Hold it
+  open in a background process, point DEMOIW_TEST_POSTGRES_URL at the unix socket. This is how
+  M4 was finally closed after six deferrals that each repeated "no Postgres" without checking.
+
+  Do NOT trust `rai gate check` — it exits 0 while reporting failures. `rai pattern add` and
+  `rai session close` both report patterns written and write nothing, so anything worth
+  keeping goes into markdown or memory by hand.
+
+  ADR-012 was accepted under delegation rather than by the team; if Gustavo disagrees that
+  uploaded scenarios should not be scorable, Option A is documented and ready to pick up.
